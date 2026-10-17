@@ -97,21 +97,18 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
           </nav>
         ) : (
           <nav className="hidden md:flex items-center gap-7">
-            <a href="#how" className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
-              How It Works
-            </a>
-            <a href="#calculator" className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+            <Link href="/about" className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+              Who We Are
+            </Link>
+            <Link href="/solutions" className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+              Our Solutions
+            </Link>
+            <Link href="/calculator" className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
               Takeover Calculator
-            </a>
-            <a href="#partners" className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
-              Lending Partners
-            </a>
-            <a href="#security" className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
-              Security & Compliance
-            </a>
-            <a href="#faq" className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
-              FAQ
-            </a>
+            </Link>
+            <Link href="/contact" className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+              Contact Us
+            </Link>
           </nav>
         )}
 
@@ -208,34 +205,34 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
             </>
           ) : (
             <>
-              <a
-                href="#how"
+              <Link
+                href="/about"
                 onClick={() => setMobileOpen(false)}
                 className="block px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900"
               >
-                How It Works
-              </a>
-              <a
-                href="#calculator"
+                Who We Are
+              </Link>
+              <Link
+                href="/solutions"
+                onClick={() => setMobileOpen(false)}
+                className="block px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900"
+              >
+                Our Solutions
+              </Link>
+              <Link
+                href="/calculator"
                 onClick={() => setMobileOpen(false)}
                 className="block px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900"
               >
                 Takeover Calculator
-              </a>
-              <a
-                href="#partners"
+              </Link>
+              <Link
+                href="/contact"
                 onClick={() => setMobileOpen(false)}
                 className="block px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900"
               >
-                Lending Partners
-              </a>
-              <a
-                href="#security"
-                onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900"
-              >
-                Security & Compliance
-              </a>
+                Contact Us
+              </Link>
               <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
                 <button
                   onClick={() => {
