@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import AuthModal from '@/components/AuthModal';
+import BeforeAfterSlider from '@/components/BeforeAfterSlider';
+import PartnerShowcase from '@/components/PartnerShowcase';
 import {
   CreditCard,
   Layers,
@@ -28,6 +30,12 @@ import {
 export default function Home() {
   const [authOpen, setAuthOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  const openAudit = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('navesta:open-audit'));
+    }
+  };
 
   // Takeover Simulator State
   const [loanAmt, setLoanAmt] = useState(600000);
@@ -226,7 +234,7 @@ export default function Home() {
 
               <div className="pt-5 sm:pt-6 mt-4 border-t border-amber-100/80">
                 <button
-                  onClick={() => setAuthOpen(true)}
+                  onClick={openAudit}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-sm transition-all min-h-[44px]"
                 >
                   <span>Show Me the Way Out</span>
@@ -263,7 +271,7 @@ export default function Home() {
 
               <div className="pt-5 sm:pt-6 mt-4 border-t border-blue-100/80">
                 <button
-                  onClick={() => setAuthOpen(true)}
+                  onClick={openAudit}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 shadow-sm transition-all min-h-[44px]"
                 >
                   <span>Show Me My Freedom Date</span>
@@ -299,13 +307,13 @@ export default function Home() {
               </div>
 
               <div className="pt-5 sm:pt-6 mt-4 border-t border-emerald-100/80">
-                <a
-                  href="#calculator"
+                <button
+                  onClick={openAudit}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-sm transition-all min-h-[44px]"
                 >
                   <span>Find My Consolidation Rate</span>
                   <ArrowRight className="w-4 h-4" />
-                </a>
+                </button>
               </div>
             </div>
           </div>
@@ -395,142 +403,9 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════
-          WHAT NAVESTA IS ABOUT: SIDE-BY-SIDE EXPLANATION
-          (Current Trap vs. The Navesta Solution)
+          INTERACTIVE BEFORE VS AFTER COMPARISON
       ═══════════════════════════════════════════════════════════════ */}
-      <section className="py-16 bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-12">
-            <span className="text-xs font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
-              The Reality of Indian Consumer Debt
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mt-3">
-              Why Minimum Payments Trap You — And How Navesta Fixes It
-            </h2>
-            <p className="text-sm sm:text-base text-slate-600 mt-2">
-              Banks design credit cards and high-rate loans so that you pay interest forever. Here is the exact mathematical difference between staying on your current path vs. taking the Navesta Way.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {/* Left: The Trap */}
-            <div className="bg-rose-50/50 border-2 border-rose-200 rounded-2xl p-6 sm:p-8 space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-rose-200">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-700 font-bold">
-                    <CloseIcon className="w-4 h-4" />
-                  </div>
-                  <h3 className="text-lg font-bold text-rose-950">
-                    The Current Trap: Minimum Due Cycle
-                  </h3>
-                </div>
-                <span className="text-xs font-bold text-rose-700 uppercase tracking-wider">
-                  Without Navesta
-                </span>
-              </div>
-
-              <div className="space-y-4 text-xs sm:text-sm text-slate-700">
-                <div className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-rose-200 text-rose-800 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold text-xs">
-                    ✕
-                  </div>
-                  <div>
-                    <strong className="text-slate-900">36% to 42% APR Compounding:</strong> Card issuers charge 3% to 3.5% per month on rolling balances, quietly doubling your debt every 2 years.
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-rose-200 text-rose-800 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold text-xs">
-                    ✕
-                  </div>
-                  <div>
-                    <strong className="text-slate-900">The 12-Year Minimum Trap:</strong> Paying the ₹18,000 &quot;Minimum Amount Due&quot; on ₹6 Lakhs of card debt takes over 12 years and costs ₹7,80,000+ in pure interest.
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-rose-200 text-rose-800 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold text-xs">
-                    ✕
-                  </div>
-                  <div>
-                    <strong className="text-slate-900">Multi-Lender Friction:</strong> Juggling 4–5 different EMI due dates causes accidental late fees, GST penalties, and sudden CIBIL score drops.
-                  </div>
-                </div>
-              </div>
-
-              {/* Sample Trap Math Callout */}
-              <div className="p-4 rounded-xl bg-white border border-rose-200 text-center space-y-1">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-rose-700">
-                  Example: ₹6,00,000 Card Debt at 38% APR
-                </div>
-                <div className="text-2xl font-extrabold text-rose-600 tabular-nums">
-                  ₹7,80,000+ Total Interest
-                </div>
-                <div className="text-xs text-slate-500">Takes 12+ years to reach zero debt</div>
-              </div>
-            </div>
-
-            {/* Right: The Navesta Way */}
-            <div className="bg-emerald-50/50 border-2 border-emerald-300 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
-              <div className="flex items-center justify-between pb-4 border-b border-emerald-200">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold">
-                    <Check className="w-4 h-4" />
-                  </div>
-                  <h3 className="text-lg font-bold text-emerald-950">
-                    The Navesta Way: Institutional Takeover
-                  </h3>
-                </div>
-                <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
-                  With Navesta
-                </span>
-              </div>
-
-              <div className="space-y-4 text-xs sm:text-sm text-slate-700">
-                <div className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold text-xs">
-                    ✓
-                  </div>
-                  <div>
-                    <strong className="text-slate-900">10.25% Institutional Benchmark:</strong> Top scheduled banks (HDFC, ICICI, SBI) pay off your high-APR debt directly and convert it into a single clean facility.
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold text-xs">
-                    ✓
-                  </div>
-                  <div>
-                    <strong className="text-slate-900">Verified Calendar Freedom Date:</strong> Your loan is structured to end on a specific month (e.g. 36 months). Every single rupee goes toward extinguishing principal.
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <div className="w-5 h-5 rounded-full bg-emerald-200 text-emerald-800 flex items-center justify-center flex-shrink-0 mt-0.5 font-bold text-xs">
-                    ✓
-                  </div>
-                  <div>
-                    <strong className="text-slate-900">Single Lower EMI + 100% Free:</strong> You replace multiple confusing statements with one lower monthly EMI, with zero fee charged to you.
-                  </div>
-                </div>
-              </div>
-
-              {/* Sample Navesta Math Callout */}
-              <div className="p-4 rounded-xl bg-white border border-emerald-300 text-center space-y-1">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
-                  Same ₹6,00,000 Takeover at 10.25% (36 Months)
-                </div>
-                <div className="text-2xl font-extrabold text-emerald-600 tabular-nums">
-                  ₹1,00,800 Total Interest
-                </div>
-                <div className="text-xs font-semibold text-emerald-700">
-                  Net Savings: ₹6,79,200 saved in interest!
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <BeforeAfterSlider onOpenAudit={openAudit} />
 
       {/* ═══════════════════════════════════════════════════════════════
           INTERACTIVE TAKEOVER & SAVINGS CALCULATOR
@@ -677,33 +552,9 @@ export default function Home() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════════
-          LENDING PARTNERS STRIP
+          INSTITUTIONAL PARTNERS SHOWCASE & RBI COMPLIANCE
       ═══════════════════════════════════════════════════════════════ */}
-      <section id="partners" className="py-12 bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-8">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              Institutional Network
-            </span>
-            <h2 className="text-lg font-bold text-slate-900 mt-1">
-              Direct Disbursals From India&apos;s Leading RBI-Regulated Lenders
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {partners.map((partner) => (
-              <div
-                key={partner.name}
-                className="bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 text-center shadow-subtle hover:border-slate-300 hover:bg-white transition-colors"
-              >
-                <div className="text-xs font-bold text-slate-900 truncate">{partner.name}</div>
-                <div className="text-[10px] text-slate-500 truncate mt-0.5">{partner.type}</div>
-                <div className="text-[11px] font-semibold text-blue-600 mt-1">{partner.rate}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PartnerShowcase />
 
       {/* ═══════════════════════════════════════════════════════════════
           HOW IT WORKS (4 SIMPLE STEPS FROM PREVIOUS DESIGN)

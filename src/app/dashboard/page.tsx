@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import ReminderModal from '@/components/ReminderModal';
+import AuthModal from '@/components/AuthModal';
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState<any>(null);
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   const [strategy, setStrategy] = useState<'avalanche' | 'snowball'>('avalanche');
   const [user, setUser] = useState<any>(null);
   const [isReminderOpen, setIsReminderOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
 
   const DEFAULT_AVALANCHE = {
     strategy: 'avalanche',
@@ -193,6 +195,38 @@ export default function DashboardPage() {
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Interactive Demo Mode Banner for Visitors */}
+        {!user && (
+          <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-4 sm:p-5 rounded-2xl shadow-md border border-blue-700/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/30 border border-blue-400/40 flex items-center justify-center text-blue-300 shrink-0">
+                <Sparkles className="w-5 h-5 text-amber-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-blue-300">
+                    Interactive Guest Demo Mode
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-400 text-slate-950">
+                    SAMPLE PORTFOLIO
+                  </span>
+                </div>
+                <p className="text-xs text-slate-200 mt-0.5 leading-relaxed">
+                  You are exploring a simulated borrower portfolio (₹5.7 Lakhs debt, 2 credit cards, 1 personal loan). Try toggling repayment strategies below or connect your real accounts.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setAuthOpen(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 transition-all shadow-sm shrink-0 whitespace-nowrap"
+            >
+              <span>Connect Real Accounts</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* Header Action Bar */}
         <div className="card-fintech p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white">
           <div>
@@ -201,7 +235,7 @@ export default function DashboardPage() {
               <span>Portfolio Risk &amp; Refinancing Console</span>
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Welcome back, {user?.name || 'Rahul Mehta'}
+              Welcome back, {user?.name || 'Guest Borrower (Demo)'}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
               Real-time debt exposure, optimal payoff priority, and matched takeover facilities.
@@ -529,6 +563,7 @@ export default function DashboardPage() {
       </main>
 
       <ReminderModal isOpen={isReminderOpen} onClose={() => setIsReminderOpen(false)} />
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
     </div>
   );
 }

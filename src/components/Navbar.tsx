@@ -13,6 +13,7 @@ import {
   X,
   ShieldCheck,
   ChevronRight,
+  Sparkles,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 
@@ -134,6 +135,17 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
           ) : (
             <div className="flex items-center gap-1.5 sm:gap-2.5">
               <button
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('navesta:open-audit'));
+                  }
+                }}
+                className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                <span>30-Sec Audit</span>
+              </button>
+              <button
                 onClick={onOpenAuth}
                 className="hidden sm:inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
               >
@@ -246,6 +258,18 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
               <div className="pt-3 mt-1 border-t border-slate-100 flex flex-col gap-2">
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new CustomEvent('navesta:open-audit'));
+                    }
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all min-h-[44px]"
+                >
+                  <Sparkles className="w-4 h-4 text-emerald-600" />
+                  <span>Free 30-Sec Debt Audit</span>
+                </button>
                 <button
                   onClick={() => {
                     setMobileOpen(false);
