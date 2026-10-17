@@ -57,23 +57,23 @@ export default function CalculatorPage() {
             <span>REAL-TIME AMORTIZATION SIMULATOR</span>
           </span>
 
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-950">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-slate-950">
             Debt Takeover &amp;{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-700">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-700 block sm:inline mt-1 sm:mt-0">
               Savings Calculator
             </span>
           </h1>
 
-          <p className="text-base text-slate-600 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
             Simulate the exact mathematical impact of moving high-interest credit card debt (24%–42% APR) or fragmented personal loans into an institutional 10.25% p.a. bank facility.
           </p>
         </div>
       </section>
 
       {/* Calculator Body */}
-      <section className="py-12 bg-slate-50 border-b border-slate-200">
+      <section className="py-8 sm:py-12 bg-slate-50 border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-elevated p-6 sm:p-10">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-elevated p-5 sm:p-10">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
               {/* Sliders Column */}
               <div className="lg:col-span-7 space-y-8">

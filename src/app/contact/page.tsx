@@ -106,7 +106,7 @@ export default function ContactPage() {
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder="e.g. Rahul Sharma"
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50"
+                        className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-base sm:text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50 min-h-[44px]"
                       />
                     </div>
                     <div>
@@ -119,7 +119,7 @@ export default function ContactPage() {
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         placeholder="+91 98765 43210"
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50"
+                        className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-base sm:text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50 min-h-[44px]"
                       />
                     </div>
                   </div>
@@ -134,7 +134,7 @@ export default function ContactPage() {
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="rahul@example.com"
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50"
+                      className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-base sm:text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50 min-h-[44px]"
                     />
                   </div>
 
@@ -145,7 +145,7 @@ export default function ContactPage() {
                     <select
                       value={formData.inquiryType}
                       onChange={(e) => setFormData({ ...formData, inquiryType: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50"
+                      className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-base sm:text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50 min-h-[44px]"
                     >
                       <option>Credit Card Takeover</option>
                       <option>Multi-Loan Consolidation</option>
@@ -164,7 +164,7 @@ export default function ContactPage() {
                       value={formData.message}
                       onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                       placeholder="Tell us about your current loan balances or questions..."
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50"
+                      className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-base sm:text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50"
                     />
                   </div>
 

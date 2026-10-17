@@ -14,6 +14,13 @@ export const metadata: Metadata = {
   description: 'Personal finance optimization platform for Indian borrowers. Debt visibility, algorithmic repayment planning, and bank-to-bank balance transfer takeovers.',
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#0F172A',
+};
+
 export default function RootLayout({
   children,
 }: {

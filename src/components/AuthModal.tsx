@@ -84,13 +84,13 @@ export default function AuthModal({ isOpen = true, onClose }: { isOpen?: boolean
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
-      <div className="relative w-full max-w-md bg-white rounded-xl shadow-elevated border border-slate-200 overflow-hidden my-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-elevated border border-slate-200 overflow-hidden my-auto max-h-[94vh] flex flex-col">
         {/* Header */}
-        <div className="relative p-6 bg-slate-900 text-white">
+        <div className="relative p-5 sm:p-6 bg-slate-900 text-white flex-shrink-0">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-all flex items-center justify-center cursor-pointer"
+            className="absolute top-4 right-4 w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-all flex items-center justify-center cursor-pointer min-h-[36px] min-w-[36px]"
             title="Close dialog"
             aria-label="Close dialog"
           >
@@ -119,7 +119,7 @@ export default function AuthModal({ isOpen = true, onClose }: { isOpen?: boolean
                 setMode('login');
                 setError(null);
               }}
-              className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+              className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer min-h-[36px] ${
                 mode === 'login' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -131,7 +131,7 @@ export default function AuthModal({ isOpen = true, onClose }: { isOpen?: boolean
                 setMode('register');
                 setError(null);
               }}
-              className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+              className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer min-h-[36px] ${
                 mode === 'register' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -141,7 +141,7 @@ export default function AuthModal({ isOpen = true, onClose }: { isOpen?: boolean
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1">
           {error && (
             <div className="flex items-center gap-2.5 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
               <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />

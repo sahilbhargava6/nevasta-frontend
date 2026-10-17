@@ -113,18 +113,18 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
         )}
 
         {/* Right CTA / User State */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {isLoggedIn ? (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800">
                 <div className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-[11px]">
                   {user?.name ? user.name.substring(0, 2).toUpperCase() : 'U'}
                 </div>
-                <span>{user?.name || 'User'}</span>
+                <span className="hidden sm:inline max-w-[120px] truncate">{user?.name || 'User'}</span>
               </div>
               <button
                 onClick={handleLogout}
-                className="p-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-500 hover:text-rose-600 transition-colors cursor-pointer"
+                className="p-2 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-500 hover:text-rose-600 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
                 title="Sign Out"
                 aria-label="Sign Out"
               >
@@ -132,40 +132,40 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 sm:gap-2.5">
               <button
                 onClick={onOpenAuth}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                className="hidden sm:inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 Sign In
               </button>
               <button
                 onClick={onOpenAuth}
-                className="btn-primary text-xs !py-1.5 !px-3.5 cursor-pointer"
+                className="btn-primary text-xs !py-1.5 !px-3 sm:!px-4 cursor-pointer font-bold shadow-subtle"
               >
                 Get Started
               </button>
             </div>
           )}
-        </div>
 
-        {/* Mobile menu trigger */}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden p-2 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
-          aria-label="Toggle navigation menu"
-        >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+          {/* Mobile menu trigger */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-2 rounded-lg text-slate-700 hover:bg-slate-100 active:bg-slate-200 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-b border-slate-200 px-4 py-4 space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="md:hidden bg-white border-b border-slate-200 px-4 py-4 space-y-1.5 shadow-elevated animate-in fade-in slide-in-from-top-1 duration-150">
           {isLoggedIn ? (
             <>
-              <div className="flex items-center gap-2.5 p-3 rounded-lg bg-slate-50 border border-slate-200 mb-2">
-                <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
+              <div className="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 mb-2">
+                <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
                   {user?.name ? user.name.substring(0, 2).toUpperCase() : 'U'}
                 </div>
                 <div>
@@ -181,11 +181,11 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium ${
+                    className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium min-h-[44px] transition-colors ${
                       isActive ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       <Icon className="w-4 h-4 text-slate-500" />
                       <span>{item.label}</span>
                     </div>
@@ -198,7 +198,7 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
                   setMobileOpen(false);
                   handleLogout();
                 }}
-                className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 mt-2"
+                className="w-full text-left px-3.5 py-3 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 mt-2 min-h-[44px]"
               >
                 <LogOut className="w-4 h-4" /> Sign Out
               </button>
@@ -208,49 +208,61 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
               <Link
                 href="/about"
                 onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900"
+                className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold min-h-[44px] transition-colors ${
+                  pathname === '/about' ? 'bg-blue-50 text-blue-900' : 'text-slate-700 hover:bg-slate-50'
+                }`}
               >
-                Who We Are
+                <span>Who We Are</span>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
               <Link
                 href="/solutions"
                 onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900"
+                className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold min-h-[44px] transition-colors ${
+                  pathname === '/solutions' ? 'bg-blue-50 text-blue-900' : 'text-slate-700 hover:bg-slate-50'
+                }`}
               >
-                Our Solutions
+                <span>Our Solutions</span>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
               <Link
                 href="/calculator"
                 onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900"
+                className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold min-h-[44px] transition-colors ${
+                  pathname === '/calculator' ? 'bg-blue-50 text-blue-900' : 'text-slate-700 hover:bg-slate-50'
+                }`}
               >
-                Takeover Calculator
+                <span>Takeover Calculator</span>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
               <Link
                 href="/contact"
                 onClick={() => setMobileOpen(false)}
-                className="block px-3 py-2 text-xs font-medium text-slate-600 hover:text-slate-900"
+                className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold min-h-[44px] transition-colors ${
+                  pathname === '/contact' ? 'bg-blue-50 text-blue-900' : 'text-slate-700 hover:bg-slate-50'
+                }`}
               >
-                Contact Us
+                <span>Contact Us</span>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
-              <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
+              <div className="pt-3 mt-1 border-t border-slate-100 flex flex-col gap-2">
                 <button
                   onClick={() => {
                     setMobileOpen(false);
                     onOpenAuth?.();
                   }}
-                  className="btn-secondary w-full text-xs"
+                  className="btn-secondary w-full text-xs !py-3 min-h-[44px] font-bold"
                 >
-                  Sign In
+                  Sign In to Account
                 </button>
                 <button
                   onClick={() => {
                     setMobileOpen(false);
                     onOpenAuth?.();
                   }}
-                  className="btn-primary w-full text-xs"
+                  className="btn-primary w-full text-xs !py-3 min-h-[44px] font-bold"
                 >
-                  Get Started
+                  Get Started Free
                 </button>
               </div>
             </>

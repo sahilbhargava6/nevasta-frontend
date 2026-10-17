@@ -178,43 +178,43 @@ export default function Home() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Hero Header */}
-          <div className="text-center max-w-3xl mx-auto space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200/80 shadow-subtle">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>AI DEBT ADVISORY &amp; INSTITUTIONAL BANK TAKEOVERS</span>
+          <div className="text-center max-w-3xl mx-auto space-y-4 px-1">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200/80 shadow-subtle max-w-full truncate">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+              <span className="truncate">AI DEBT ADVISORY &amp; INSTITUTIONAL BANK TAKEOVERS</span>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-950 leading-[1.12]">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-950 leading-[1.16]">
               Struggling With Debt?{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 block sm:inline mt-1 sm:mt-0">
                 Here&apos;s Your Way Out.
               </span>
             </h1>
 
-            <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-sm sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
               Being debt-free isn&apos;t a dream — it&apos;s an exact date on the calendar. Navesta connects your loans, detects high-interest traps, and structures institutional bank takeovers from <strong className="text-slate-900 font-semibold">10.25% p.a.</strong> to slash your monthly EMIs.
             </p>
           </div>
 
           {/* ═══ 3 DIRECT INTERACTIVE PATHWAY CARDS (From Original Design) ═══ */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 mt-8 sm:mt-10 max-w-6xl mx-auto">
             {/* Pathway 1: Credit Card Debt */}
-            <div className="bg-gradient-to-b from-white via-orange-50/30 to-amber-50/40 border-2 border-amber-200/80 rounded-2xl p-6 sm:p-7 flex flex-col justify-between shadow-card hover:shadow-card-hover hover:border-amber-300 transition-all duration-200 relative group">
+            <div className="bg-gradient-to-b from-white via-orange-50/30 to-amber-50/40 border-2 border-amber-200/80 rounded-2xl p-5 sm:p-7 flex flex-col justify-between shadow-card hover:shadow-card-hover hover:border-amber-300 transition-all duration-200 relative group">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-xl bg-amber-100/80 border border-amber-200 flex items-center justify-center text-amber-700 shadow-sm">
-                    <CreditCard className="w-6 h-6" />
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-100/80 border border-amber-200 flex items-center justify-center text-amber-700 shadow-sm">
+                    <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200">
+                  <span className="px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200">
                     24–42% APR Trap
                   </span>
                 </div>
 
                 <div>
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
+                  <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-amber-800">
                     Path 01 • Credit Card Debt
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mt-1">
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 mt-1">
                     Can&apos;t Clear Your Card Balance?
                   </h3>
                 </div>
@@ -224,10 +224,10 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="pt-6 mt-4 border-t border-amber-100/80">
+              <div className="pt-5 sm:pt-6 mt-4 border-t border-amber-100/80">
                 <button
                   onClick={() => setAuthOpen(true)}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-sm transition-all"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-sm transition-all min-h-[44px]"
                 >
                   <span>Show Me the Way Out</span>
                   <ArrowRight className="w-4 h-4" />
@@ -236,22 +236,22 @@ export default function Home() {
             </div>
 
             {/* Pathway 2: Loan & EMI Debt */}
-            <div className="bg-gradient-to-b from-white via-blue-50/30 to-indigo-50/40 border-2 border-blue-200/80 rounded-2xl p-6 sm:p-7 flex flex-col justify-between shadow-card hover:shadow-card-hover hover:border-blue-300 transition-all duration-200 relative group">
+            <div className="bg-gradient-to-b from-white via-blue-50/30 to-indigo-50/40 border-2 border-blue-200/80 rounded-2xl p-5 sm:p-7 flex flex-col justify-between shadow-card hover:shadow-card-hover hover:border-blue-300 transition-all duration-200 relative group">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-xl bg-blue-100/80 border border-blue-200 flex items-center justify-center text-blue-700 shadow-sm">
-                    <Landmark className="w-6 h-6" />
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-blue-100/80 border border-blue-200 flex items-center justify-center text-blue-700 shadow-sm">
+                    <Landmark className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-blue-100 text-blue-900 border border-blue-200">
+                  <span className="px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-blue-100 text-blue-900 border border-blue-200">
                     Salary Drain
                   </span>
                 </div>
 
                 <div>
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-blue-800">
+                  <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-blue-800">
                     Path 02 • High Loan EMIs
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mt-1">
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 mt-1">
                     EMIs Draining Your Salary?
                   </h3>
                 </div>
@@ -261,10 +261,10 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="pt-6 mt-4 border-t border-blue-100/80">
+              <div className="pt-5 sm:pt-6 mt-4 border-t border-blue-100/80">
                 <button
                   onClick={() => setAuthOpen(true)}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 shadow-sm transition-all"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 shadow-sm transition-all min-h-[44px]"
                 >
                   <span>Show Me My Freedom Date</span>
                   <ArrowRight className="w-4 h-4" />
@@ -273,22 +273,22 @@ export default function Home() {
             </div>
 
             {/* Pathway 3: Debt Consolidation */}
-            <div className="bg-gradient-to-b from-white via-emerald-50/30 to-teal-50/40 border-2 border-emerald-200/80 rounded-2xl p-6 sm:p-7 flex flex-col justify-between shadow-card hover:shadow-card-hover hover:border-emerald-300 transition-all duration-200 relative group">
+            <div className="bg-gradient-to-b from-white via-emerald-50/30 to-teal-50/40 border-2 border-emerald-200/80 rounded-2xl p-5 sm:p-7 flex flex-col justify-between shadow-card hover:shadow-card-hover hover:border-emerald-300 transition-all duration-200 relative group">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-100/80 border border-emerald-200 flex items-center justify-center text-emerald-700 shadow-sm">
-                    <Layers className="w-6 h-6" />
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-emerald-100/80 border border-emerald-200 flex items-center justify-center text-emerald-700 shadow-sm">
+                    <Layers className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-200">
+                  <span className="px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-200">
                     All Debts
                   </span>
                 </div>
 
                 <div>
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">
+                  <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-800">
                     Path 03 • Debt Consolidation
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mt-1">
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 mt-1">
                     Too Many EMIs? Roll Into One.
                   </h3>
                 </div>
@@ -298,10 +298,10 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="pt-6 mt-4 border-t border-emerald-100/80">
+              <div className="pt-5 sm:pt-6 mt-4 border-t border-emerald-100/80">
                 <a
                   href="#calculator"
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-sm transition-all"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-sm transition-all min-h-[44px]"
                 >
                   <span>Find My Consolidation Rate</span>
                   <ArrowRight className="w-4 h-4" />

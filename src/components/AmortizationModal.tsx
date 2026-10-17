@@ -34,32 +34,32 @@ export default function AmortizationModal({ loanId, onClose }: AmortizationModal
   if (!loanId) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
-      <div className="bg-white border border-slate-200 w-full max-w-4xl max-h-[90vh] rounded-xl shadow-elevated flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
+      <div className="bg-white border border-slate-200 w-full max-w-4xl max-h-[94vh] rounded-2xl shadow-elevated flex flex-col overflow-hidden my-auto">
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-5 bg-slate-900 text-white">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 uppercase tracking-wider">
-              <ShieldCheck className="w-4 h-4" />
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-between p-4 sm:p-5 bg-slate-900 text-white gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-400 uppercase tracking-wider">
+              <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
               <span>Amortization Schedule</span>
             </div>
-            <h2 className="text-lg font-bold mt-0.5">
+            <h2 className="text-base sm:text-lg font-bold mt-0.5 truncate">
               {data ? `${data.lenderName} (${data.loanType} Loan)` : 'Repayment Schedule'}
             </h2>
           </div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             {data && (
               <button
                 onClick={() => exportAmortizationPDF(data)}
-                className="btn-secondary text-xs !py-1.5 !px-3 flex items-center gap-1.5 cursor-pointer"
+                className="btn-secondary text-xs !py-1.5 !px-3 flex items-center gap-1.5 cursor-pointer min-h-[36px]"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Export PDF</span>
+                <span className="hidden xs:inline">Export PDF</span>
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors cursor-pointer"
+              className="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center flex-shrink-0"
               aria-label="Close dialog"
             >
               <X className="w-4 h-4" />
