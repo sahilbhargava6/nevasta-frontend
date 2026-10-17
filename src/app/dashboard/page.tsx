@@ -153,7 +153,6 @@ export default function DashboardPage() {
 
   const loadData = async () => {
     try {
-      setLoading(true);
       const [sumRes, avRes, sbRes, elRes, cibilRes]: [any, any, any, any, any] = await Promise.all([
         api.get('/dashboard/summary'),
         api.get('/solutions/avalanche'),
