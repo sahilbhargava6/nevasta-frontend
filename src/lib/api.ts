@@ -1,8 +1,21 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-// Origin of the API (without /api/v1), where Laravel serves the CSRF cookie
-const API_ORIGIN = new URL(API_BASE_URL).origin;
+const rawUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+const API_BASE_URL = rawUrl && rawUrl.length > 0 ? rawUrl : 'http://localhost:3001/api/v1';
+
+// Safely compute the API origin without throwing during static prerendering
+function getApiOrigin(urlStr: string): string {
+  try {
+    const formatted = urlStr.startsWith('http://') || urlStr.startsWith('https://')
+      ? urlStr
+      : `https://${urlStr}`;
+    return new URL(formatted).origin;
+  } catch {
+    return 'http://localhost:3001';
+  }
+}
+
+const API_ORIGIN = getApiOrigin(API_BASE_URL);
 
 // Sign-in uses an HTTP-only session cookie set by the API; no token is ever
 // stored in the browser. Axios sends the cookie (withCredentials) and echoes
@@ -26,7 +39,6 @@ export async function ensureCsrf(): Promise<void> {
 }
 
 if (typeof window !== 'undefined') {
-  // Tokens from older versions of the site are no longer used
   localStorage.removeItem('navesta_token');
 }
 
@@ -35,7 +47,6 @@ api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
-      // Session ended or expired: forget the cached profile
       localStorage.removeItem('navesta_user');
     }
     const message = error.response?.data?.error || error.message || 'An error occurred';
