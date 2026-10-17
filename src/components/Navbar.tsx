@@ -11,7 +11,6 @@ import {
   LogOut,
   Menu,
   X,
-  User,
   ShieldCheck,
   ChevronRight,
 } from 'lucide-react';

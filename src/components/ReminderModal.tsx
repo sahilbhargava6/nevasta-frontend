@@ -34,7 +34,7 @@ export default function ReminderModal({ isOpen, onClose }: ReminderModalProps) {
       });
       setSentResponse(res.payload);
       toast.success(`${channel.toUpperCase()} payment reminder dispatched successfully`);
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to send payment reminder notification');
     } finally {
       setLoading(false);
@@ -156,6 +156,17 @@ export default function ReminderModal({ isOpen, onClose }: ReminderModalProps) {
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 tabular-nums focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                 />
               </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-xs font-semibold text-slate-700">Due Date Reference</label>
+              <input
+                type="text"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                placeholder="e.g. 5th of next month"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
+              />
             </div>
 
             <div className="pt-2">

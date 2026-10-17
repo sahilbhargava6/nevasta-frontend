@@ -5,15 +5,10 @@ import Navbar from '@/components/Navbar';
 import {
   Sparkles,
   Calculator,
-  ArrowRight,
   CheckCircle2,
-  TrendingDown,
   FileText,
   Clock,
   RefreshCw,
-  Building2,
-  ShieldCheck,
-  ChevronRight,
   Sliders,
 } from 'lucide-react';
 import { api } from '@/lib/api';

@@ -5,16 +5,12 @@ import Navbar from '@/components/Navbar';
 import AuthModal from '@/components/AuthModal';
 import {
   CreditCard,
-  Landmark,
   Layers,
   ShieldCheck,
-  TrendingDown,
   ArrowRight,
   CheckCircle2,
   Lock,
   ChevronDown,
-  Percent,
-  Calendar,
   Building2,
   FileCheck2,
   Sparkles,

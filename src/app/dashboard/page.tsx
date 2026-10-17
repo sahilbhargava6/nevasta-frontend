@@ -5,7 +5,6 @@ import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 import {
   TrendingDown,
-  CreditCard,
   Landmark,
   Sparkles,
   ArrowRight,
@@ -17,7 +16,6 @@ import {
   Lightbulb,
   Gauge,
   Layers,
-  ArrowUpRight,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import ReminderModal from '@/components/ReminderModal';
@@ -29,7 +27,6 @@ export default function DashboardPage() {
   const [eligibility, setEligibility] = useState<any>(null);
   const [cibilTips, setCibilTips] = useState<any>(null);
   const [strategy, setStrategy] = useState<'avalanche' | 'snowball'>('avalanche');
-  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [isReminderOpen, setIsReminderOpen] = useState(false);
 
@@ -175,8 +172,6 @@ export default function DashboardPage() {
       setSnowballPlan(DEFAULT_SNOWBALL);
       setEligibility(DEFAULT_ELIGIBILITY);
       setCibilTips(DEFAULT_CIBIL_TIPS);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -185,7 +180,9 @@ export default function DashboardPage() {
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
-      } catch (e) {}
+      } catch {
+        // invalid stored json
+      }
     }
     loadData();
   }, []);
