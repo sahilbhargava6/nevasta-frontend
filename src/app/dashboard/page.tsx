@@ -16,6 +16,7 @@ import {
   Lightbulb,
   Gauge,
   Layers,
+  FileText,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import ReminderModal from '@/components/ReminderModal';
@@ -155,24 +156,38 @@ export default function DashboardPage() {
 
   const loadData = async () => {
     try {
-      const [sumRes, avRes, sbRes, elRes, cibilRes]: [any, any, any, any, any] = await Promise.all([
-        api.get('/dashboard/summary'),
-        api.get('/solutions/avalanche'),
-        api.get('/solutions/snowball'),
-        api.get('/solutions/eligibility'),
-        api.get('/solutions/cibil-tips'),
-      ]);
-      setSummary(sumRes.data);
-      setAvalanchePlan(avRes.data);
-      setSnowballPlan(sbRes.data);
-      setEligibility(elRes.data);
-      setCibilTips(cibilRes.data);
-    } catch (err: any) {
-      console.warn('Using fallback data for dashboard:', err);
-      setAvalanchePlan(DEFAULT_AVALANCHE);
-      setSnowballPlan(DEFAULT_SNOWBALL);
-      setEligibility(DEFAULT_ELIGIBILITY);
-      setCibilTips(DEFAULT_CIBIL_TIPS);
+      // High-performance single round-trip: delivers summary and solutions in 1 network call
+      const fullRes: any = await api.get('/dashboard/full');
+      if (fullRes.data?.summary) {
+        setSummary(fullRes.data.summary);
+        setAvalanchePlan(fullRes.data.avalanche || DEFAULT_AVALANCHE);
+        setSnowballPlan(fullRes.data.snowball || DEFAULT_SNOWBALL);
+        setEligibility(fullRes.data.eligibility || DEFAULT_ELIGIBILITY);
+        setCibilTips(fullRes.data.cibilTips || DEFAULT_CIBIL_TIPS);
+        return;
+      }
+    } catch {
+      // Fallback to legacy parallel endpoints if /dashboard/full is unavailable
+      try {
+        const [sumRes, avRes, sbRes, elRes, cibilRes]: [any, any, any, any, any] = await Promise.all([
+          api.get('/dashboard/summary'),
+          api.get('/solutions/avalanche'),
+          api.get('/solutions/snowball'),
+          api.get('/solutions/eligibility'),
+          api.get('/solutions/cibil-tips'),
+        ]);
+        setSummary(sumRes.data);
+        setAvalanchePlan(avRes.data);
+        setSnowballPlan(sbRes.data);
+        setEligibility(elRes.data);
+        setCibilTips(cibilRes.data);
+      } catch (err: any) {
+        console.warn('Using fallback data for dashboard:', err);
+        setAvalanchePlan(DEFAULT_AVALANCHE);
+        setSnowballPlan(DEFAULT_SNOWBALL);
+        setEligibility(DEFAULT_ELIGIBILITY);
+        setCibilTips(DEFAULT_CIBIL_TIPS);
+      }
     }
   };
 
@@ -250,6 +265,10 @@ export default function DashboardPage() {
             <Link href="/loans/add" className="btn-secondary text-xs !py-2 !px-3 flex items-center gap-1.5">
               <Plus className="w-3.5 h-3.5 text-emerald-600" />
               <span>Add Loan</span>
+            </Link>
+            <Link href="/statements" className="btn-secondary text-xs !py-2 !px-3 flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Vault</span>
             </Link>
             <button
               onClick={() => setIsReminderOpen(true)}

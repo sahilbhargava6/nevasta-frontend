@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Sparkles, ArrowRight, TrendingDown } from 'lucide-react';
+import { X, Sparkles, ArrowRight, TrendingDown, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { api } from '@/lib/api';
 import Link from 'next/link';
 
@@ -14,25 +14,51 @@ export default function LoanAnalysisModal({ loanId, onClose }: LoanAnalysisModal
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMasked, setIsMasked] = useState(false);
 
   useEffect(() => {
-    if (!loanId) return;
+    if (!loanId) {
+      setData(null);
+      return;
+    }
+
+    let active = true;
+
     const fetchAnalysis = async () => {
       try {
         setLoading(true);
         setError(null);
         const res: any = await api.get(`/loans/${loanId}/analysis`);
-        setData(res.data);
+        if (active) {
+          setData(res.data);
+        }
       } catch (err: any) {
-        setError(err.message || 'Failed to load loan analysis');
+        if (active) {
+          setError(err.message || 'Failed to load loan analysis');
+        }
       } finally {
-        setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     };
+
     fetchAnalysis();
+
+    // Memory sanitization: wipe sensitive analysis data on unmount/loan change
+    return () => {
+      active = false;
+      setData(null);
+    };
   }, [loanId]);
 
   if (!loanId) return null;
+
+  const formatCurrency = (val: number | undefined) => {
+    if (val === undefined || val === null) return '—';
+    if (isMasked) return '₹ ••••••';
+    return `₹${val.toLocaleString('en-IN')}`;
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
@@ -48,17 +74,35 @@ export default function LoanAnalysisModal({ loanId, onClose }: LoanAnalysisModal
               {data ? `${data.lenderName} Refinancing Model` : 'Loan Prepayment & Takeover'}
             </h2>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center flex-shrink-0"
-            aria-label="Close dialog"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsMasked((prev) => !prev)}
+              className={`p-2 rounded-lg transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center flex-shrink-0 ${
+                isMasked
+                  ? 'text-amber-400 bg-amber-950/60 border border-amber-600/40 hover:bg-amber-900/60'
+                  : 'text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700'
+              }`}
+              title={isMasked ? 'Sensitive figures masked. Click to reveal.' : 'Privacy Mode: Click to mask sensitive figures'}
+              aria-label={isMasked ? 'Sensitive figures masked. Click to reveal.' : 'Privacy Mode: Click to mask sensitive figures'}
+            >
+              {isMasked ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={() => {
+                setData(null);
+                onClose();
+              }}
+              className="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center flex-shrink-0"
+              aria-label="Close dialog"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-5 overflow-y-auto max-h-[80vh]">
+        <div className="p-4 sm:p-6 space-y-5 overflow-y-auto max-h-[75vh]">
           {loading ? (
             <div className="text-center py-16 text-xs text-slate-500">
               Querying institutional benchmark rates and calculating amortization...
@@ -67,6 +111,14 @@ export default function LoanAnalysisModal({ loanId, onClose }: LoanAnalysisModal
             <div className="text-center py-12 text-xs text-rose-600 font-semibold">{error}</div>
           ) : data ? (
             <>
+              {/* Privacy Shield Active Banner */}
+              {isMasked && (
+                <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center gap-2 text-xs text-amber-800">
+                  <ShieldCheck className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <span>Privacy Mode Active: Sensitive monetary balances are masked from screen view.</span>
+                </div>
+              )}
+
               {/* Highlight Net Savings Banner */}
               <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
@@ -74,7 +126,7 @@ export default function LoanAnalysisModal({ loanId, onClose }: LoanAnalysisModal
                     Net Projected Savings
                   </div>
                   <div className="text-2xl font-extrabold text-emerald-700 mt-0.5 tabular-nums">
-                    ₹{data.totalBtSavingsEstimateRupees.toLocaleString('en-IN')}
+                    {formatCurrency(data.totalBtSavingsEstimateRupees)}
                   </div>
                   <p className="text-[11px] text-emerald-700 mt-0.5">
                     Net interest saved over {data.tenureRemainingMonths} remaining months (net of processing fees).
@@ -82,7 +134,7 @@ export default function LoanAnalysisModal({ loanId, onClose }: LoanAnalysisModal
                 </div>
                 <div className="badge-emerald font-bold self-start sm:self-auto flex items-center gap-1">
                   <TrendingDown className="w-3.5 h-3.5" />
-                  <span>-₹{data.monthlySavingsRupees.toLocaleString('en-IN')}/mo EMI</span>
+                  <span>{isMasked ? '-₹ ••••••/mo EMI' : `-₹${data.monthlySavingsRupees.toLocaleString('en-IN')}/mo EMI`}</span>
                 </div>
               </div>
 
@@ -99,13 +151,13 @@ export default function LoanAnalysisModal({ loanId, onClose }: LoanAnalysisModal
                     <div className="flex justify-between">
                       <span className="text-slate-500">Outstanding:</span>
                       <span className="font-semibold text-slate-900 tabular-nums">
-                        ₹{data.outstandingRupees.toLocaleString('en-IN')}
+                        {formatCurrency(data.outstandingRupees)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500">Remaining Interest:</span>
                       <span className="font-semibold text-rose-600 tabular-nums">
-                        ₹{data.totalRemainingInterestRupees.toLocaleString('en-IN')}
+                        {formatCurrency(data.totalRemainingInterestRupees)}
                       </span>
                     </div>
                   </div>
@@ -127,13 +179,13 @@ export default function LoanAnalysisModal({ loanId, onClose }: LoanAnalysisModal
                     <div className="flex justify-between">
                       <span className="text-slate-500">New Monthly EMI:</span>
                       <span className="font-semibold text-blue-800 tabular-nums">
-                        ₹{data.newEmiRupees.toLocaleString('en-IN')}
+                        {formatCurrency(data.newEmiRupees)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500">Est. Processing Fee:</span>
                       <span className="font-medium text-slate-700 tabular-nums">
-                        ₹{data.processingFeeRupees.toLocaleString('en-IN')}
+                        {formatCurrency(data.processingFeeRupees)}
                       </span>
                     </div>
                   </div>

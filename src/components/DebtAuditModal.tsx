@@ -271,12 +271,12 @@ export default function DebtAuditModal({ isOpen, onClose }: DebtAuditModalProps)
               </div>
 
               {/* Comparison Metric Cards */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="bg-emerald-50/80 border-2 border-emerald-200/80 rounded-2xl p-4 text-center">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
                     Monthly Cash Saved
                   </span>
-                  <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-1 tabular-nums">
+                  <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-emerald-700 mt-1 tabular-nums">
                     +₹{monthlySavings.toLocaleString('en-IN')}
                   </div>
                   <span className="text-[11px] text-emerald-800 font-medium mt-0.5 block">
@@ -288,7 +288,7 @@ export default function DebtAuditModal({ isOpen, onClose }: DebtAuditModalProps)
                   <span className="text-[10px] font-bold uppercase tracking-wider text-blue-800">
                     New 10.25% EMI
                   </span>
-                  <div className="text-2xl sm:text-3xl font-extrabold text-blue-700 mt-1 tabular-nums">
+                  <div className="text-xl sm:text-2xl md:text-3xl font-extrabold text-blue-700 mt-1 tabular-nums">
                     ₹{newEmi.toLocaleString('en-IN')}
                   </div>
                   <span className="text-[11px] text-blue-800 font-medium mt-0.5 block">
@@ -298,7 +298,7 @@ export default function DebtAuditModal({ isOpen, onClose }: DebtAuditModalProps)
               </div>
 
               {/* Freedom Calendar Date Card */}
-              <div className="bg-gradient-to-r from-slate-900 to-blue-950 text-white rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-card">
+              <div className="bg-gradient-to-r from-slate-900 to-blue-950 text-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-card">
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300 flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />
@@ -311,7 +311,7 @@ export default function DebtAuditModal({ isOpen, onClose }: DebtAuditModalProps)
                     Vs. 2038+ on revolving minimum card payments
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right">
                   <span className="text-[10px] uppercase font-bold text-amber-300 block">
                     Interest Avoided
                   </span>

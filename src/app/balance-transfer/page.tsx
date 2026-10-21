@@ -369,7 +369,7 @@ export default function BalanceTransferPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-5 self-end sm:self-auto text-right">
+                    <div className="w-full sm:w-auto flex flex-row justify-between sm:justify-end items-center gap-3 sm:gap-5 pt-3 sm:pt-0 border-t border-slate-100 sm:border-0 text-left sm:text-right">
                       <div>
                         <div className="font-bold text-base text-emerald-700 tabular-nums">
                           {offer.offeredRatePercent}% p.a.

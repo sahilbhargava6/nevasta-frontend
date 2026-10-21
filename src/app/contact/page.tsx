@@ -15,9 +15,13 @@ import {
   Send,
 } from 'lucide-react';
 
+import { api } from '@/lib/api';
+
 export default function ContactPage() {
   const [authOpen, setAuthOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -26,9 +30,18 @@ export default function ContactPage() {
     message: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setLoading(true);
+    setError(null);
+    try {
+      await api.post('/inquiries', formData);
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err.response?.data?.error || err.message || 'Failed to submit inquiry. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -168,12 +181,19 @@ export default function ContactPage() {
                     />
                   </div>
 
+                  {error && (
+                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium">
+                      {error}
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    className="w-full btn-accent !py-3 flex items-center justify-center gap-2 text-sm font-bold shadow-sm"
+                    disabled={loading}
+                    className="w-full btn-accent !py-3 flex items-center justify-center gap-2 text-sm font-bold shadow-sm disabled:opacity-50 cursor-pointer"
                   >
                     <Send className="w-4 h-4" />
-                    <span>Submit Inquiry</span>
+                    <span>{loading ? 'Submitting Inquiry...' : 'Submit Inquiry'}</span>
                   </button>
                 </form>
               )}

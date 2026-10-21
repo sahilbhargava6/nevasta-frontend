@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.104.5",
     "axios": "^1.7.9",
     "clsx": "^2.1.1",
     "framer-motion": "^12.4.7",
@@ -27,6 +28,7 @@
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
     "autoprefixer": "^10.6.1",
+    "docx": "^9.13.0",
     "eslint": "^9.20.1",
     "eslint-config-next": "^15.5.28",
     "postcss": "^8.5.28",

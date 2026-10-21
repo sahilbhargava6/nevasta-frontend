@@ -14,6 +14,9 @@ import {
   ShieldCheck,
   ChevronRight,
   Sparkles,
+  FileText,
+  Settings,
+  BookOpen,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 
@@ -54,6 +57,7 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
     { href: '/loans', label: 'Loans & EMIs', icon: Landmark },
     { href: '/credit-cards', label: 'Credit Cards', icon: CreditCard },
     { href: '/balance-transfer', label: 'Balance Transfer', icon: ArrowLeftRight },
+    { href: '/statements', label: 'Vault', icon: FileText },
   ];
 
   return (
@@ -107,6 +111,9 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
             <Link href="/calculator" className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
               Takeover Calculator
             </Link>
+            <Link href="/blog" className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
+              Knowledge Hub
+            </Link>
             <Link href="/contact" className="text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors">
               Contact Us
             </Link>
@@ -117,12 +124,24 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
         <div className="flex items-center gap-2 sm:gap-3">
           {isLoggedIn ? (
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800">
+              <Link
+                href="/settings"
+                className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-medium text-slate-800 transition-colors"
+                title="Account Settings & Privacy"
+              >
                 <div className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-[11px]">
                   {user?.name ? user.name.substring(0, 2).toUpperCase() : 'U'}
                 </div>
                 <span className="hidden sm:inline max-w-[120px] truncate">{user?.name || 'User'}</span>
-              </div>
+              </Link>
+              <Link
+                href="/settings"
+                className="p-2 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-500 hover:text-blue-600 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
+                title="Settings & Privacy"
+                aria-label="Settings & Privacy"
+              >
+                <Settings className="w-4 h-4" />
+              </Link>
               <button
                 onClick={handleLogout}
                 className="p-2 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-500 hover:text-rose-600 transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
@@ -205,12 +224,25 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
                   </Link>
                 );
               })}
+              <Link
+                href="/settings"
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium min-h-[44px] transition-colors ${
+                  pathname === '/settings' ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Settings className="w-4 h-4 text-slate-500" />
+                  <span>Account &amp; Privacy Settings</span>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              </Link>
               <button
                 onClick={() => {
                   setMobileOpen(false);
                   handleLogout();
                 }}
-                className="w-full text-left px-3.5 py-3 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 mt-2 min-h-[44px]"
+                className="w-full text-left px-3.5 py-3 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 mt-2 min-h-[44px] cursor-pointer"
               >
                 <LogOut className="w-4 h-4" /> Sign Out
               </button>
@@ -245,6 +277,16 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
                 }`}
               >
                 <span>Takeover Calculator</span>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </Link>
+              <Link
+                href="/blog"
+                onClick={() => setMobileOpen(false)}
+                className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold min-h-[44px] transition-colors ${
+                  pathname === '/blog' ? 'bg-blue-50 text-blue-900' : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <span>Knowledge Hub</span>
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
               <Link

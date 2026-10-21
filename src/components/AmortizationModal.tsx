@@ -68,7 +68,7 @@ export default function AmortizationModal({ loanId, onClose }: AmortizationModal
         </div>
 
         {/* Content Body */}
-        <div className="p-6 flex-1 overflow-y-auto space-y-5">
+        <div className="p-3.5 sm:p-6 flex-1 overflow-y-auto space-y-4 sm:space-y-5">
           {loading ? (
             <div className="text-center py-16 text-xs text-slate-500">
               Generating month-by-month principal and interest breakdown...
