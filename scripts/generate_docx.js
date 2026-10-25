@@ -470,8 +470,32 @@ async function buildDocx() {
 
           new Paragraph({ spacing: { before: 200 } }),
 
-          // 7. Verification & Delivery Metrics
-          createHeading1('7. Verification & Test Metrics'),
+          // 7. Enterprise Capabilities & Security Specifications
+          createHeading1('7. Enterprise Capabilities & Security Specifications'),
+          p('Detailed architectural specifications for institutional audit across perimeter security, multi-cloud storage, encryption key custody, automated ingestion, and compliance controls:'),
+
+          createTable(
+            ['Pillar / Capability', 'Architecture Specification', 'Implementation Details & Compliance Impact'],
+            [
+              ['Perimeter Firewall & WAF', 'Edge WAF (Cloudflare/AWS/OCI) + In-App Security Middleware', 'OWASP Top 10 mitigation, DDoS absorption, bot challenges, strict HSTS, CSP, X-Frame-Options, and anti-sniffing headers on all routes.'],
+              ['Cryptographic Architecture', 'Multi-Tier Encryption (Transit, At Rest, Envelope)', 'TLS 1.3 with forward secrecy; column-level AES-256-CBC field encryption for PII (phone, PAN, bank accounts); encrypted statement payloads.'],
+              ['Passwordless SMS Login', 'Direct Phone OTP Authentication via Twilio/Gateway', 'Instant 6-digit OTP verification (/api/v1/auth/phone/send-otp and /verify-otp), eliminating credential reuse and brute force risks.'],
+              ['Multi-Channel Ingestion', 'Account Aggregator (AA) + SMS/Email Parsing', 'RBI-regulated NBFC-AA consent framework (Setu, Finvu) + client-side SMS transaction pattern matching + OAuth2 e-statement ingestion.'],
+              ['Multi-Cloud Statement Vault', 'Abstracted Cloud Storage (AWS S3, GCP, OCI Object Storage)', 'Flysystem multi-cloud drivers in ap-south-1 (Mumbai); presigned direct upload bypass; ClamAV virus scanning; automated PDF table parsing.'],
+              ['Knowledge Hub & Content', 'Headless Blog CMS & Edge Distribution', 'Structured database schema (posts table) with Markdown editor, automated slugs, cover image S3 storage, and edge CDN cache revalidation.'],
+              ['Customer Digital Footprint', 'Non-Repudiation Audit Trails (user_footprints table)', 'Captures IP address, full user-agent, device type, OS, canvas device fingerprint hash, session ID, and cookie consent logs per RBI directives.'],
+              ['Postal PIN Code Verification', 'India Post API Integration with Redis Caching', '6-digit PIN code lookup (/api/v1/utilities/pincode/{code}) resolving district, state, city, and post offices with 30-day Redis cache.'],
+              ['DPDP Lifecycle & Soft Deletes', 'SoftDeletes trait across core entities (deleted_at)', 'Reconciles DPDP Section 12 Right to Erasure with PMLA/RBI 5-year statutory audit retention; revokes active tokens while keeping audit trail.'],
+              ['KMS Decryption Key Custody', 'Hardware Security Module (HSM) Envelope Encryption', 'Master keys kept in Cloud KMS (AWS KMS, GCP Cloud KMS, OCI Vault); runtime RAM secret mounts (/run/secrets/app_key); zero hardcoded keys.'],
+              ['Admin Panel Data Export', 'Streaming CSV & Audit Exports in Filament 3', 'Risk officers can stream-export customer portfolios, takeover applications, and security audit logs without server memory exhaustion.'],
+            ],
+            [22, 28, 50]
+          ),
+
+          new Paragraph({ spacing: { before: 200 } }),
+
+          // 8. Verification & Delivery Metrics
+          createHeading1('8. Verification & Test Metrics'),
           bullet('118 tests passed (482 assertions) validating math, security, rate limiting, and data privacy.', 'Automated PHPUnit Test Suite:'),
           bullet('npx tsc --noEmit executed with 0 errors across all pages, components, and API client interfaces.', 'TypeScript Static Type Checking:'),
           bullet('k6 test script (loadtest/api.js) benchmarked for 200 concurrent virtual users with a p95 latency threshold < 500ms.', 'Load Testing Specification:'),
