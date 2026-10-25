@@ -27,16 +27,26 @@ export default function Navbar({ onOpenAuth }: { onOpenAuth?: () => void }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const u = localStorage.getItem('navesta_user');
-    if (u) {
-      try {
-        setUser(JSON.parse(u));
-      } catch {
+    const syncUser = () => {
+      const u = localStorage.getItem('navesta_user');
+      if (u) {
+        try {
+          setUser(JSON.parse(u));
+        } catch {
+          setUser(null);
+        }
+      } else {
         setUser(null);
       }
-    } else {
-      setUser(null);
-    }
+    };
+
+    syncUser();
+    window.addEventListener('navesta:user-changed', syncUser);
+    window.addEventListener('storage', syncUser);
+    return () => {
+      window.removeEventListener('navesta:user-changed', syncUser);
+      window.removeEventListener('storage', syncUser);
+    };
   }, [pathname]);
 
   const handleLogout = async () => {

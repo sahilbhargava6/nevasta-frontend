@@ -31,9 +31,9 @@ export default function Home() {
   const [authOpen, setAuthOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
-  const openAudit = () => {
+  const openAudit = (type: 'card' | 'loan' | 'both' = 'card') => {
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('navesta:open-audit'));
+      window.dispatchEvent(new CustomEvent('navesta:open-audit', { detail: { debtType: type } }));
     }
   };
 
@@ -234,7 +234,7 @@ export default function Home() {
 
               <div className="pt-5 sm:pt-6 mt-4 border-t border-amber-100/80">
                 <button
-                  onClick={openAudit}
+                  onClick={() => openAudit('card')}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-sm transition-all min-h-[44px]"
                 >
                   <span>Show Me the Way Out</span>
@@ -271,7 +271,7 @@ export default function Home() {
 
               <div className="pt-5 sm:pt-6 mt-4 border-t border-blue-100/80">
                 <button
-                  onClick={openAudit}
+                  onClick={() => openAudit('loan')}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 shadow-sm transition-all min-h-[44px]"
                 >
                   <span>Show Me My Freedom Date</span>
@@ -308,7 +308,7 @@ export default function Home() {
 
               <div className="pt-5 sm:pt-6 mt-4 border-t border-emerald-100/80">
                 <button
-                  onClick={openAudit}
+                  onClick={() => openAudit('both')}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-sm transition-all min-h-[44px]"
                 >
                   <span>Find My Consolidation Rate</span>

@@ -7,9 +7,15 @@ import WhatsAppButton from './WhatsAppButton';
 
 export default function GlobalInteractiveWidgets() {
   const [auditOpen, setAuditOpen] = useState(false);
+  const [initialDebtType, setInitialDebtType] = useState<'card' | 'loan' | 'both'>('card');
 
   useEffect(() => {
-    const handleOpenAudit = () => setAuditOpen(true);
+    const handleOpenAudit = (e: any) => {
+      if (e.detail?.debtType) {
+        setInitialDebtType(e.detail.debtType);
+      }
+      setAuditOpen(true);
+    };
     window.addEventListener('navesta:open-audit', handleOpenAudit);
     return () => {
       window.removeEventListener('navesta:open-audit', handleOpenAudit);
@@ -19,7 +25,11 @@ export default function GlobalInteractiveWidgets() {
   return (
     <>
       {/* 30-Second Interactive Debt Audit Modal */}
-      <DebtAuditModal isOpen={auditOpen} onClose={() => setAuditOpen(false)} />
+      <DebtAuditModal
+        isOpen={auditOpen}
+        initialDebtType={initialDebtType}
+        onClose={() => setAuditOpen(false)}
+      />
 
       {/* Floating Interactive Nava AI Advisor */}
       <NavaChatWidget onOpenAudit={() => setAuditOpen(true)} />

@@ -31,6 +31,7 @@ export default function AuthModal({ isOpen = true, onClose }: { isOpen?: boolean
 
   const finishSignIn = (user: any) => {
     localStorage.setItem('navesta_user', JSON.stringify(user));
+    window.dispatchEvent(new Event('navesta:user-changed'));
     onClose();
     router.push('/dashboard');
   };
