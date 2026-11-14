@@ -40,7 +40,7 @@ export default function SettingsPage() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [propertyStatus, setPropertyStatus] = useState('rented');
-  const [employmentSector, setEmploymentSector] = useState('salaried_private');
+  const [employmentSector, setEmploymentSector] = useState('pvt');
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
@@ -73,7 +73,7 @@ export default function SettingsPage() {
       setName(data.name || '');
       setPhone(data.phone || '');
       setPropertyStatus(data.propertyStatus || 'rented');
-      setEmploymentSector(data.employmentSector || 'salaried_private');
+      setEmploymentSector(data.employmentSector || 'pvt');
       setRemindersEnabled(!!data.remindersEnabled);
       setTwoFactorEnabled(!!data.twoFactorEnabled);
     } catch (err: any) {
@@ -325,11 +325,10 @@ export default function SettingsPage() {
                     onChange={(e) => setEmploymentSector(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50"
                   >
-                    <option value="salaried_private">Salaried (Private Sector / IT)</option>
-                    <option value="salaried_govt">Salaried (Government / PSU)</option>
-                    <option value="self_employed">Self Employed / Freelance</option>
-                    <option value="professional">Doctor / CA / Lawyer / Architect</option>
-                    <option value="business">Business Owner / Enterprise</option>
+                    {/* Values must match the API (govt | pvt | self) */}
+                    <option value="pvt">Salaried (Private Sector / IT)</option>
+                    <option value="govt">Salaried (Government / PSU)</option>
+                    <option value="self">Self Employed / Business / Professional</option>
                   </select>
                 </div>
 
@@ -340,10 +339,9 @@ export default function SettingsPage() {
                     onChange={(e) => setPropertyStatus(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50"
                   >
-                    <option value="rented">Rented Accommodation</option>
-                    <option value="owned_with_mortgage">Owned with Active Home Loan Mortgage</option>
-                    <option value="owned_outright">Owned Outright (Debt-Free Property)</option>
-                    <option value="living_with_family">Living with Parents / Family</option>
+                    {/* Values must match the API (owned | rented) */}
+                    <option value="rented">Rented / Living with Family</option>
+                    <option value="owned">Owned (with or without a home loan)</option>
                   </select>
                   <span className="text-[10px] text-slate-400 mt-1 block">Used by partner banks to determine collateral and takeover rate tiers.</span>
                 </div>
