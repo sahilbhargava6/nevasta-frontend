@@ -32,6 +32,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [isReminderOpen, setIsReminderOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [activeApplication, setActiveApplication] = useState<any>(null);
 
   const DEFAULT_AVALANCHE = {
     strategy: 'avalanche',
@@ -192,15 +193,37 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('navesta_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        // invalid stored json
+    const syncDashboard = () => {
+      const storedUser = localStorage.getItem('navesta_user');
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch {
+          // invalid stored json
+        }
       }
-    }
-    loadData();
+
+      const rawApp = localStorage.getItem('navesta_active_application');
+      if (rawApp) {
+        try {
+          setActiveApplication(JSON.parse(rawApp));
+        } catch {
+          setActiveApplication(null);
+        }
+      } else {
+        setActiveApplication(null);
+      }
+
+      loadData();
+    };
+
+    syncDashboard();
+    window.addEventListener('navesta:application-submitted', syncDashboard);
+    window.addEventListener('navesta:user-changed', syncDashboard);
+    return () => {
+      window.removeEventListener('navesta:application-submitted', syncDashboard);
+      window.removeEventListener('navesta:user-changed', syncDashboard);
+    };
   }, []);
 
   const activePlan = strategy === 'avalanche' ? avalanchePlan : snowballPlan;
@@ -210,6 +233,49 @@ export default function DashboardPage() {
       <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Active Balance Transfer Application Registered Banner */}
+        {activeApplication && (
+          <div className="bg-gradient-to-r from-emerald-900 via-teal-950 to-slate-900 border-2 border-emerald-500/50 text-white rounded-2xl p-5 shadow-elevated flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in duration-300">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
+                <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-300">
+                    Application Registered #{activeApplication.id}
+                  </span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-400 text-slate-950">
+                    ACTIVE UNDER REVIEW
+                  </span>
+                </div>
+                <p className="text-xs text-slate-200 mt-1 leading-relaxed">
+                  Your consolidation takeover application for <strong>₹{activeApplication.balance?.toLocaleString('en-IN')}</strong> at <strong>10.25% p.a.</strong> has been registered.
+                  Target EMI: <strong>₹{activeApplication.newEmi?.toLocaleString('en-IN')}/mo</strong> (Projected savings: <strong className="text-emerald-300">+₹{activeApplication.monthlySavings?.toLocaleString('en-IN')}/mo</strong>).
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+              <button
+                onClick={() => {
+                  localStorage.removeItem('navesta_active_application');
+                  setActiveApplication(null);
+                }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-white/10 hover:bg-white/20 transition-all cursor-pointer"
+              >
+                Dismiss
+              </button>
+              <Link
+                href="/balance-transfer"
+                className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 transition-all shadow-sm"
+              >
+                View Status →
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Interactive Demo Mode Banner for Visitors */}
         {!user && (
           <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-4 sm:p-5 rounded-2xl shadow-md border border-blue-700/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

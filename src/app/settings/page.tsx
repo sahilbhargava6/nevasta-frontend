@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import AuthModal from '@/components/AuthModal';
 import { api } from '@/lib/api';
+import { clearJourneys } from '@/lib/journey';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import {
   User,
   ShieldCheck,
@@ -53,6 +55,11 @@ export default function SettingsPage() {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  // Accounts created with a mobile number have no password: they confirm with an SMS code
+  const [deleteCode, setDeleteCode] = useState('');
+  const [deleteCodeHint, setDeleteCodeHint] = useState<string | null>(null);
+  const [deleteCodeSending, setDeleteCodeSending] = useState(false);
+  const confirmByCode = profile?.hasPassword === false;
 
   // Export State
   const [exporting, setExporting] = useState(false);
@@ -186,16 +193,32 @@ export default function SettingsPage() {
     setDeleteError(null);
     try {
       await api.delete('/users/me', {
-        data: { password: deletePassword },
+        data: confirmByCode ? { code: deleteCode } : { password: deletePassword },
       });
 
       localStorage.removeItem('navesta_user');
-      alert('Your account and all associated debts, statements, and snapshots have been erased.');
+      localStorage.removeItem('navesta_active_application');
+      clearJourneys();
+      window.dispatchEvent(new Event('navesta:user-changed'));
+      toast.success('Your account and all its data have been permanently erased.');
       router.push('/');
     } catch (err: any) {
-      setDeleteError(err.response?.data?.error || err.message || 'Failed to delete account. Please verify your password.');
+      setDeleteError(err.response?.data?.error || err.message || (confirmByCode ? 'Failed to delete account. Check the code.' : 'Failed to delete account. Please verify your password.'));
     } finally {
       setDeleteLoading(false);
+    }
+  };
+
+  const sendDeleteCode = async () => {
+    setDeleteCodeSending(true);
+    setDeleteError(null);
+    try {
+      const res: any = await api.post('/users/me/delete-code');
+      setDeleteCodeHint(res.data?.phoneHint ?? 'your phone');
+    } catch (err: any) {
+      setDeleteError(err.response?.data?.error || err.message || 'Could not send the code. Try again.');
+    } finally {
+      setDeleteCodeSending(false);
     }
   };
 
@@ -486,7 +509,9 @@ export default function SettingsPage() {
                 <span>Confirm Account Erasure</span>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">
-                To confirm permanent deletion of your borrower account and all encrypted financial assets, enter your account password below:
+                {confirmByCode
+                  ? 'To confirm permanent deletion of your account and all your financial data, we will text a code to your registered mobile number.'
+                  : 'To confirm permanent deletion of your borrower account and all encrypted financial assets, enter your account password below:'}
               </p>
 
               {deleteError && (
@@ -496,14 +521,49 @@ export default function SettingsPage() {
               )}
 
               <form onSubmit={handleDeleteAccount} className="space-y-3">
-                <input
-                  type="password"
-                  required
-                  placeholder="Enter your current password"
-                  value={deletePassword}
-                  onChange={(e) => setDeletePassword(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-rose-600 focus:outline-none"
-                />
+                {confirmByCode ? (
+                  deleteCodeHint ? (
+                    <>
+                      <p className="text-xs text-slate-600">
+                        Code sent to {deleteCodeHint}.{' '}
+                        <button type="button" onClick={sendDeleteCode} disabled={deleteCodeSending} className="text-rose-700 font-bold underline cursor-pointer disabled:opacity-50">
+                          Resend
+                        </button>
+                      </p>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        required
+                        maxLength={6}
+                        aria-label="Confirmation code"
+                        placeholder="Enter the 6-digit code"
+                        value={deleteCode}
+                        onChange={(e) => setDeleteCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm tracking-widest focus:border-rose-600 focus:outline-none"
+                      />
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={sendDeleteCode}
+                      disabled={deleteCodeSending}
+                      className="w-full px-4 py-2.5 rounded-xl text-xs font-bold text-rose-700 border border-rose-300 bg-rose-50 hover:bg-rose-100 cursor-pointer disabled:opacity-50"
+                    >
+                      {deleteCodeSending ? 'Sending code…' : 'Send code to my phone'}
+                    </button>
+                  )
+                ) : (
+                  <input
+                    type="password"
+                    required
+                    aria-label="Current password"
+                    placeholder="Enter your current password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:border-rose-600 focus:outline-none"
+                  />
+                )}
 
                 <div className="flex items-center justify-end gap-2 pt-2">
                   <button
@@ -511,6 +571,8 @@ export default function SettingsPage() {
                     onClick={() => {
                       setDeleteModalOpen(false);
                       setDeletePassword('');
+                      setDeleteCode('');
+                      setDeleteCodeHint(null);
                       setDeleteError(null);
                     }}
                     className="btn-secondary text-xs !py-2 cursor-pointer"
@@ -519,7 +581,7 @@ export default function SettingsPage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={deleteLoading}
+                    disabled={deleteLoading || (confirmByCode && deleteCode.length !== 6)}
                     className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 transition-colors cursor-pointer disabled:opacity-50"
                   >
                     {deleteLoading ? 'Erasing Account...' : 'Yes, Permanently Delete'}

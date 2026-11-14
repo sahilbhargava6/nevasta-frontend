@@ -50,6 +50,12 @@ api.interceptors.response.use(
       localStorage.removeItem('navesta_user');
     }
     const message = error.response?.data?.error || error.message || 'An error occurred';
-    return Promise.reject(new Error(message));
+    // Keep the HTTP status (e.g. 404 vs 503) for callers that need to tell them apart
+    return Promise.reject(
+      Object.assign(new Error(message), {
+        status: error.response?.status as number | undefined,
+        code: error.response?.data?.code as string | undefined, // machine-readable reason, where the API gives one
+      }),
+    );
   }
 );

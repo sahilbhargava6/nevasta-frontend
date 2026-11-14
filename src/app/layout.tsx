@@ -1,13 +1,24 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Playfair_Display } from 'next/font/google';
 import { Toaster } from 'sonner';
 import './globals.css';
+import '@/styles/navesta-design.css';
 import GlobalInteractiveWidgets from '@/components/GlobalInteractiveWidgets';
 import QueryProvider from '@/components/QueryProvider';
+import SessionProvider from '@/components/session/SessionProvider';
 
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
+  display: 'swap',
+});
+
+// Headline face of the design prototype (Navesta_Website_22Sep26.html)
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  style: ['normal', 'italic'],
+  variable: '--font-serif',
   display: 'swap',
 });
 
@@ -29,12 +40,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 font-sans selection:bg-blue-600 selection:text-white">
+    <html lang="en" className={`${inter.variable} ${playfair.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-[#FEFAF3] text-[#2D1606] font-sans selection:bg-[#F09020] selection:text-white">
         <QueryProvider>
-          <Toaster richColors position="top-right" closeButton />
-          {children}
-          <GlobalInteractiveWidgets />
+          <SessionProvider>
+            <Toaster richColors position="top-right" closeButton />
+            {children}
+            <GlobalInteractiveWidgets />
+          </SessionProvider>
         </QueryProvider>
       </body>
     </html>

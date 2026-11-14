@@ -1,170 +1,126 @@
 'use client';
 
-import { useState } from 'react';
 import Navbar from '@/components/Navbar';
-import AuthModal from '@/components/AuthModal';
-import Link from 'next/link';
-import {
-  ShieldCheck,
-  Building2,
-  Users,
-  Target,
-  Sparkles,
-  ArrowRight,
-  CheckCircle2,
-  Lock,
-  HeartHandshake,
-  TrendingUp,
-} from 'lucide-react';
+
+/** Who We Are (design #about-page). */
+
+const divider: React.CSSProperties = { height: 1, background: 'linear-gradient(90deg,rgba(201,96,16,0.3),transparent)', marginBottom: 40 };
+const eyebrow: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(201,96,16,0.1)', border: '1px solid rgba(201,96,16,0.2)', borderRadius: 20, padding: '6px 16px' };
+const eyebrowText: React.CSSProperties = { fontSize: 11, fontWeight: 800, letterSpacing: '1.5px', color: '#7C3200', textTransform: 'uppercase' };
+const storyCard: React.CSSProperties = { background: 'rgba(255,255,255,0.7)', border: '1px solid rgba(196,168,130,0.3)', borderRadius: 20, padding: 'clamp(22px,5vw,32px)', backdropFilter: 'blur(8px)' };
+const iconTile = (bg: string): React.CSSProperties => ({ width: 44, height: 44, borderRadius: 14, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 });
+const bodyText: React.CSSProperties = { fontSize: 15, lineHeight: 1.8, color: 'rgba(42,22,6,0.75)', margin: 0 };
+const strong: React.CSSProperties = { color: '#2A1606' };
+
+const DIFFERENTIATORS = [
+  { icon: '🤖', title: 'AI-Powered', desc: 'Recommendations that learn from your financial behaviour and evolve with your goals.' },
+  { icon: '🇮🇳', title: 'Built for India', desc: 'Designed around the unique financial realities and aspirations of Indian consumers.' },
+  { icon: '👤', title: 'Truly Personal', desc: 'No generic advice. Every plan is built around your income, goals, debts, and life stage.' },
+];
 
 export default function AboutPage() {
-  const [authOpen, setAuthOpen] = useState(false);
-
-  const values = [
-    {
-      title: 'Borrower-First Transparency',
-      desc: 'We never charge borrowers advisory fees, subscription charges, or hidden platform fees. Our advice is 100% fiduciary and unbiased.',
-      icon: HeartHandshake,
-    },
-    {
-      title: 'Mathematical Rigor',
-      desc: 'No vague financial tips or generic budgeting apps. Nava AI builds verified reduction schedules using deterministic amortization math.',
-      icon: TrendingUp,
-    },
-    {
-      title: 'Institutional Grade Privacy',
-      desc: 'We treat your financial records like medical data. 256-bit AES encryption at rest, TLS 1.3 in transit, and strictly zero data sales to third parties.',
-      icon: Lock,
-    },
-    {
-      title: 'Only RBI-Regulated Lenders',
-      desc: 'We exclusively partner with Scheduled Commercial Banks and Tier-1 Systemically Important NBFCs under direct RBI supervision.',
-      icon: Building2,
-    },
-  ];
-
-  const milestones = [
-    { num: '₹480 Cr+', label: 'Debt Analyzed to Date' },
-    { num: '2.4 Lakh+', label: 'Borrowers Guided' },
-    { num: '₹90 Cr+', label: 'Cumulative Interest Saved' },
-    { num: '10.25%', label: 'Lowest Takeover Benchmark' },
-  ];
-
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
-      <Navbar onOpenAuth={() => setAuthOpen(true)} />
-      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
+    <div className="nv" style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#FFF8F2 0%,#FFF0E3 50%,#FDE8D0 100%)', fontFamily: 'var(--sans)', overflowX: 'hidden' }}>
+      <Navbar />
 
-      {/* Hero Header */}
-      <section className="relative overflow-hidden pt-12 pb-16 lg:pt-16 lg:pb-24 bg-white border-b border-slate-200">
-        <div className="absolute inset-0 bg-grid-slate pointer-events-none opacity-50" />
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 shadow-subtle">
-            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-            <span>WHO WE ARE • OUR STORY &amp; MISSION</span>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 5% 100px' }}>
+        <div style={{ ...eyebrow, marginBottom: 28 }}>
+          <span style={{ fontSize: 13 }} aria-hidden>🏢</span>
+          <span style={eyebrowText}>Who We Are</span>
+        </div>
+
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(30px,6vw,46px)', fontWeight: 900, lineHeight: 1.15, color: '#2A1606', margin: '0 0 20px' }}>
+          Your <span style={{ color: '#C96010' }}>Companion</span>
+          <br />
+          for Smarter Money
+        </h1>
+
+        <p style={{ fontSize: 'clamp(16px,2.5vw,19px)', lineHeight: 1.8, color: 'rgba(42,22,6,0.75)', margin: '0 0 40px' }}>
+          Navesta is a <strong style={strong}>Personal Finance &amp; Wealth Management platform</strong> built to solve the finance and wealth management challenges of everyday consumers. We are working to close a gap that millions of Indians experience daily — the absence of a trusted, intelligent, personalised guide for their financial life.
+        </p>
+
+        <div style={divider} />
+
+        {/* Origin story */}
+        <section style={{ ...storyCard, marginBottom: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+            <div style={iconTile('linear-gradient(135deg,#FDE8D0,#F5C89A)')} aria-hidden>💡</div>
+            <div>
+              <h2 style={{ fontSize: 17, fontWeight: 800, color: '#2A1606', margin: 0 }}>How the Idea Was Born</h2>
+              <div style={{ fontSize: 13, color: 'rgba(42,22,6,0.5)' }}>A real problem. A real conversation.</div>
+            </div>
           </div>
-
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-950 leading-[1.15]">
-            We Exist to End the{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700">
-              Minimum Payment Trap
-            </span>
-          </h1>
-
-          <p className="text-base sm:text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed">
-            In India today, over 80 million credit cards revolve balances at devastating interest rates of 36% to 42% APR. Millions of salaried professionals watch their hard-earned paychecks get wiped out by the 15th of every month. Navesta was founded in Bengaluru to give everyday Indians an institutional, mathematical way out.
+          <p style={bodyText}>
+            This idea emerged from a conversation with friends — a moment of realisation that <strong style={strong}>financial confusion is a known, widespread problem for Indian consumers</strong>. Whether it is choosing the right credit card, managing debt, planning for a life event, or simply knowing where to put savings — most people navigate these decisions alone, without expert guidance or a personalised plan.
           </p>
-        </div>
-      </section>
+        </section>
 
-      {/* Impact Numbers */}
-      <section className="py-12 bg-slate-900 text-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {milestones.map((m) => (
-              <div key={m.label} className="p-4">
-                <div className="text-3xl sm:text-4xl font-extrabold text-amber-400 tabular-nums">
-                  {m.num}
-                </div>
-                <div className="text-xs font-medium text-slate-400 uppercase tracking-wider mt-1.5">
-                  {m.label}
-                </div>
-              </div>
-            ))}
+        {/* Problem */}
+        <section style={{ ...storyCard, marginBottom: 40 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+            <div style={iconTile('linear-gradient(135deg,#E8F5FF,#B3D9F5)')} aria-hidden>🎯</div>
+            <div>
+              <h2 style={{ fontSize: 17, fontWeight: 800, color: '#2A1606', margin: 0 }}>The Problem We Are Solving</h2>
+              <div style={{ fontSize: 13, color: 'rgba(42,22,6,0.5)' }}>A known gap. No platform has filled it — yet.</div>
+            </div>
           </div>
-        </div>
-      </section>
-
-      {/* The Origin Story */}
-      <section className="py-16 bg-white border-b border-slate-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-600">The Problem</span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
-              Why Traditional Banks Won&apos;t Help You Get Out of Debt
-            </h2>
-          </div>
-
-          <div className="space-y-5 text-sm sm:text-base text-slate-700 leading-relaxed">
-            <p>
-              Banks earn the majority of their retail consumer profits from revolvers — customers who pay only the &quot;Minimum Amount Due&quot; each billing cycle. When a customer owes ₹5,00,000 on cards, paying the minimum due keeps the bank happy, but mathematically stretches the payoff to 12+ years and over ₹7,50,000 in pure interest.
-            </p>
-            <p>
-              We asked a simple question: <strong className="text-slate-950 font-bold">What if technology could flip this model?</strong> What if an AI could analyze a borrower&apos;s messy statements, find institutional debt facilities starting at 10.25% p.a., and force high-cost lenders to get paid off directly?
-            </p>
-            <p>
-              That is what Navesta does. We are not a bank. We are your algorithmic debt advocate. We structure institutional takeovers with top scheduled banks (HDFC, ICICI, SBI, Axis, Tata Capital, Bajaj Finserv) to extinguish predatory interest and set an exact, unshakeable freedom date on your calendar.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Our 4 Core Principles */}
-      <section className="py-16 bg-slate-50 border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">How We Operate</span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">
-              Our Core Principles
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {values.map((val) => {
-              const Icon = val.icon;
-              return (
-                <div
-                  key={val.title}
-                  className="bg-white border border-slate-200 rounded-2xl p-6 shadow-card hover:shadow-card-hover transition-all space-y-3"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center font-bold">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900">{val.title}</h3>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{val.desc}</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Final Call to Action */}
-      <section className="py-16 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white text-center">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
-          <h2 className="text-2xl sm:text-3xl font-extrabold">Ready to Discover Your Freedom Date?</h2>
-          <p className="text-sm sm:text-base text-amber-100">
-            Join 2.4 Lakh+ Indians who have simplified their debt journey with Navesta.
+          <p style={bodyText}>
+            There is no common platform or trusted source available to Indian consumers that delivers <strong style={strong}>personalised, AI-powered, data-driven financial recommendations</strong> based on individual needs. Generic advice, one-size-fits-all products, and fragmented tools leave people underserved. Navesta exists to change that.
           </p>
-          <button
-            onClick={() => setAuthOpen(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-amber-950 bg-white hover:bg-amber-50 shadow-elevated transition-all"
-          >
-            <span>Start Free Analysis</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+        </section>
+
+        <div style={divider} />
+
+        {/* Mission & Vision */}
+        <div style={{ ...eyebrow, marginBottom: 24 }}>
+          <span style={{ fontSize: 13 }} aria-hidden>🧭</span>
+          <span style={eyebrowText}>Purpose &amp; Direction</span>
         </div>
-      </section>
+
+        <h2 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(22px,4vw,30px)', fontWeight: 800, color: '#2A1606', margin: '0 0 24px' }}>Our Mission &amp; Vision</h2>
+
+        <section style={{ background: 'linear-gradient(135deg,rgba(255,255,255,0.85),rgba(255,240,224,0.7))', border: '1.5px solid rgba(201,96,16,0.25)', borderRadius: 20, padding: 'clamp(22px,5vw,32px)', marginBottom: 20, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(201,96,16,0.07)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, position: 'relative' }}>
+            <div style={{ ...iconTile('linear-gradient(135deg,#C96010,#EA8820)'), fontSize: 20, boxShadow: '0 4px 14px rgba(201,96,16,0.35)' }} aria-hidden>🎯</div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '1.4px', color: '#C96010', textTransform: 'uppercase', marginBottom: 2 }}>Our Mission</div>
+              <h3 style={{ fontSize: 17, fontWeight: 800, color: '#2A1606', margin: 0 }}>What We Set Out to Do</h3>
+            </div>
+          </div>
+          <p style={{ fontSize: 16, lineHeight: 1.85, color: 'rgba(42,22,6,0.8)', margin: 0, fontStyle: 'italic', position: 'relative' }}>
+            &quot;To give every Indian the clarity, tools, and personalised guidance to take control of their financial life — <strong style={{ color: '#C96010', fontStyle: 'normal' }}>one decision at a time.</strong>&quot;
+          </p>
+        </section>
+
+        <section style={{ background: 'linear-gradient(135deg,rgba(255,255,255,0.85),rgba(224,245,235,0.7))', border: '1.5px solid rgba(5,150,105,0.25)', borderRadius: 20, padding: 'clamp(22px,5vw,32px)', marginBottom: 40, position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(5,150,105,0.07)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, position: 'relative' }}>
+            <div style={{ ...iconTile('linear-gradient(135deg,#059669,#10B981)'), fontSize: 20, boxShadow: '0 4px 14px rgba(5,150,105,0.3)' }} aria-hidden>🌅</div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '1.4px', color: '#047857', textTransform: 'uppercase', marginBottom: 2 }}>Our Vision</div>
+              <h3 style={{ fontSize: 17, fontWeight: 800, color: '#2A1606', margin: 0 }}>Where We Are Headed</h3>
+            </div>
+          </div>
+          <p style={{ fontSize: 16, lineHeight: 1.85, color: 'rgba(42,22,6,0.8)', margin: 0, fontStyle: 'italic', position: 'relative' }}>
+            &quot;A future where no Indian faces a financial crossroads alone — where every person has access to the kind of intelligent, empathetic financial guidance that was once available only to the privileged few.&quot;
+          </p>
+        </section>
+
+        <div style={divider} />
+
+        {/* Differentiators */}
+        <h2 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(20px,4vw,26px)', fontWeight: 800, color: '#2A1606', margin: '0 0 20px' }}>What Makes Navesta Different</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))', gap: 16 }}>
+          {DIFFERENTIATORS.map((d) => (
+            <div key={d.title} style={{ background: 'rgba(255,255,255,0.65)', border: '1px solid rgba(196,168,130,0.25)', borderRadius: 16, padding: 22 }}>
+              <div style={{ fontSize: 28, marginBottom: 10 }} aria-hidden>{d.icon}</div>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#2A1606', margin: '0 0 6px' }}>{d.title}</h3>
+              <div style={{ fontSize: 13, color: 'rgba(42,22,6,0.6)', lineHeight: 1.6 }}>{d.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

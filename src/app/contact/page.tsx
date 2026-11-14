@@ -1,34 +1,46 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
-import AuthModal from '@/components/AuthModal';
-import {
-  Mail,
-  MapPin,
-  Phone,
-  ShieldCheck,
-  Building2,
-  Clock,
-  ArrowRight,
-  CheckCircle2,
-  Send,
-} from 'lucide-react';
-
+import { useSession } from '@/components/session/SessionProvider';
 import { api } from '@/lib/api';
 
+/** Contact Us (design #contact-page) plus a message form that posts to /inquiries. */
+
+const INQUIRY_TYPES = [
+  'General Inquiry',
+  'Credit Card Takeover',
+  'Multi-Loan Consolidation',
+  'Life Event Planning',
+  'Nava AI Payoff Plan Inquiry',
+  'Bank / Institutional Partnership',
+  'Grievance / Privacy Redressal',
+];
+
+const EMPTY_FORM = { name: '', email: '', phone: '', inquiryType: INQUIRY_TYPES[0], message: '' };
+
+const card: React.CSSProperties = { background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(196,168,130,0.3)', borderRadius: 20, padding: 28, backdropFilter: 'blur(8px)', display: 'block', textDecoration: 'none' };
+const cardIcon = (bg: string): React.CSSProperties => ({ width: 48, height: 48, borderRadius: 14, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 16 });
+const cardLabel: React.CSSProperties = { fontSize: 13, fontWeight: 700, color: 'rgba(42,22,6,0.45)', letterSpacing: '.8px', textTransform: 'uppercase', marginBottom: 6 };
+const cardSub: React.CSSProperties = { fontSize: 13, color: 'rgba(42,22,6,0.5)', marginTop: 4 };
+const fieldLabel: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 800, letterSpacing: '.6px', color: '#8A6A3A', textTransform: 'uppercase', marginBottom: 6 };
+const field: React.CSSProperties = { width: '100%', border: '1.5px solid rgba(196,168,130,0.4)', borderRadius: 12, padding: '12px 14px', fontSize: 15, fontFamily: 'var(--sans)', color: '#2A1606', background: '#FFFCF8', outline: 'none', minHeight: 46, boxSizing: 'border-box' };
+
 export default function ContactPage() {
-  const [authOpen, setAuthOpen] = useState(false);
+  const { user } = useSession();
+  const [formData, setFormData] = useState(EMPTY_FORM);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    inquiryType: 'Takeover / Refinancing',
-    message: '',
-  });
+
+  // Signed-in customers: start from their own name and email
+  useEffect(() => {
+    if (!user) return;
+    setFormData((f) => ({ ...f, name: f.name || user.name || '', email: f.email || user.email || '', phone: f.phone || user.phone || '' }));
+  }, [user]);
+
+  const set = (key: keyof typeof EMPTY_FORM) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    setFormData((f) => ({ ...f, [key]: e.target.value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,228 +50,142 @@ export default function ContactPage() {
       await api.post('/inquiries', formData);
       setSubmitted(true);
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'Failed to submit inquiry. Please try again.');
+      setError(err?.message || 'Failed to submit your message. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
-      <Navbar onOpenAuth={() => setAuthOpen(true)} />
-      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
+    <div className="nv" style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#FFF8F2 0%,#FFF0E3 50%,#FDE8D0 100%)', fontFamily: 'var(--sans)', overflowX: 'hidden' }}>
+      <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-12 pb-16 lg:pt-16 lg:pb-20 bg-white border-b border-slate-200">
-        <div className="absolute inset-0 bg-grid-slate pointer-events-none opacity-50" />
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
-          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200">
-            <Mail className="w-3.5 h-3.5 text-amber-600" />
-            <span>WE ARE HERE TO HELP • BENGALURU, INDIA</span>
-          </span>
-
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-950 leading-[1.15]">
-            Contact the{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700">
-              Navesta Team
-            </span>
-          </h1>
-
-          <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Have a question about your debt takeover, institutional lending partners, or borrower data protection? Our advisory and grievance team responds within 24 business hours.
-          </p>
+      <div style={{ maxWidth: 680, margin: '0 auto', padding: '48px 5% 100px' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(201,96,16,0.1)', border: '1px solid rgba(201,96,16,0.2)', borderRadius: 20, padding: '6px 16px', marginBottom: 28 }}>
+          <span style={{ fontSize: 13 }} aria-hidden>📞</span>
+          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '1.5px', color: '#7C3200', textTransform: 'uppercase' }}>Contact Us</span>
         </div>
-      </section>
 
-      {/* Contact Grid */}
-      <section className="py-16 bg-slate-50 border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            {/* Left: Contact Form */}
-            <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-card">
-              {submitted ? (
-                <div className="text-center py-12 space-y-4">
-                  <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
-                    <CheckCircle2 className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900">Message Received!</h3>
-                  <p className="text-sm text-slate-600 max-w-md mx-auto">
-                    Thank you for reaching out, {formData.name || 'there'}. A member of our debt advisory team will review your inquiry and respond within 24 business hours.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setSubmitted(false);
-                      setFormData({
-                        name: '',
-                        email: '',
-                        phone: '',
-                        inquiryType: 'Takeover / Refinancing',
-                        message: '',
-                      });
-                    }}
-                    className="btn-secondary text-xs font-semibold mt-4"
-                  >
-                    Send Another Message
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">
-                    Send Us an Inquiry
-                  </h3>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(28px,6vw,42px)', fontWeight: 900, lineHeight: 1.15, color: '#2A1606', margin: '0 0 12px' }}>
+          We&apos;d love to <span style={{ color: '#C96010' }}>hear from you</span>
+        </h1>
+        <p style={{ fontSize: 16, color: 'rgba(42,22,6,0.6)', lineHeight: 1.7, margin: '0 0 40px' }}>
+          Whether you have a question, feedback, or just want to say hello — our team is here.
+        </p>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Full Name *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="e.g. Rahul Sharma"
-                        className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-base sm:text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50 min-h-[44px]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        Phone Number *
-                      </label>
-                      <input
-                        type="tel"
-                        required
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="+91 98765 43210"
-                        className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-base sm:text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50 min-h-[44px]"
-                      />
-                    </div>
-                  </div>
+        {/* Contact cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 16, marginBottom: 36 }}>
+          <a href="mailto:support@navesta.in" style={card}>
+            <div style={cardIcon('linear-gradient(135deg,#FDE8D0,#F5C89A)')} aria-hidden>✉</div>
+            <div style={cardLabel}>Email</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#2A1606' }}>support@navesta.in</div>
+            <div style={cardSub}>We reply within 24 hours</div>
+          </a>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Email Address *
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="rahul@example.com"
-                      className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-base sm:text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50 min-h-[44px]"
-                    />
-                  </div>
+          <a href="tel:18001233328" style={card}>
+            <div style={cardIcon('linear-gradient(135deg,#E8F5FF,#B3D9F5)')} aria-hidden>📞</div>
+            <div style={cardLabel}>Helpline</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#2A1606' }}>1800-123-3328</div>
+            <div style={cardSub}>Mon – Sat, 9 AM – 6 PM IST</div>
+          </a>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Inquiry Category
-                    </label>
-                    <select
-                      value={formData.inquiryType}
-                      onChange={(e) => setFormData({ ...formData, inquiryType: e.target.value })}
-                      className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-base sm:text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50 min-h-[44px]"
-                    >
-                      <option>Credit Card Takeover</option>
-                      <option>Multi-Loan Consolidation</option>
-                      <option>Nava AI Payoff Plan Inquiry</option>
-                      <option>Bank / Institutional Partnership</option>
-                      <option>Grievance / Privacy Redressal</option>
-                    </select>
-                  </div>
+          <div style={card}>
+            <div style={cardIcon('linear-gradient(135deg,#F0FBF0,#B3E6B3)')} aria-hidden>📍</div>
+            <div style={cardLabel}>Office</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#2A1606' }}>Mumbai, India</div>
+            <div style={cardSub}>Fintech Hub, BKC</div>
+          </div>
+        </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Your Message
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      placeholder="Tell us about your current loan balances or questions..."
-                      className="w-full px-3.5 py-3 rounded-xl border border-slate-200 text-base sm:text-sm focus:border-blue-600 focus:outline-none bg-slate-50/50"
-                    />
-                  </div>
-
-                  {error && (
-                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium">
-                      {error}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full btn-accent !py-3 flex items-center justify-center gap-2 text-sm font-bold shadow-sm disabled:opacity-50 cursor-pointer"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>{loading ? 'Submitting Inquiry...' : 'Submit Inquiry'}</span>
-                  </button>
-                </form>
-              )}
+        {/* Message form */}
+        <section aria-labelledby="contact-form-title" style={{ background: 'rgba(255,255,255,0.75)', border: '1px solid rgba(196,168,130,0.3)', borderRadius: 20, padding: 'clamp(20px,5vw,28px)', backdropFilter: 'blur(8px)', marginBottom: 36 }}>
+          {submitted ? (
+            <div style={{ textAlign: 'center', padding: '20px 0' }} role="status">
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,#059669,#10B981)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26, margin: '0 auto 16px' }} aria-hidden>✓</div>
+              <h2 id="contact-form-title" style={{ fontFamily: 'var(--serif)', fontSize: 24, fontWeight: 900, color: '#2A1606', margin: '0 0 8px' }}>Message received</h2>
+              <p style={{ fontSize: 14, color: 'rgba(42,22,6,0.65)', lineHeight: 1.7, margin: '0 auto 20px', maxWidth: 420 }}>
+                Thank you for reaching out, {formData.name || 'there'}. Our team will get back to you within 24 hours.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSubmitted(false);
+                  setFormData({ ...EMPTY_FORM, name: user?.name ?? '', email: user?.email ?? '', phone: user?.phone ?? '' });
+                }}
+                style={{ background: '#fff', color: '#C96010', border: '1.5px solid #C96010', borderRadius: 12, padding: '10px 20px', fontSize: 13, fontWeight: 700, fontFamily: 'var(--sans)', cursor: 'pointer' }}
+              >
+                Send another message
+              </button>
             </div>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <h2 id="contact-form-title" style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(20px,4vw,24px)', fontWeight: 800, color: '#2A1606', margin: '0 0 6px' }}>Send us a message</h2>
+              <p style={{ fontSize: 13, color: 'rgba(42,22,6,0.55)', lineHeight: 1.6, margin: '0 0 20px' }}>Tell us what you need help with and we&apos;ll get back to you shortly.</p>
 
-            {/* Right: Office Information & Channels */}
-            <div className="lg:col-span-5 space-y-6">
-              {/* Direct Channels */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-card space-y-4">
-                <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
-                  Direct Channels
-                </h3>
-
-                <div className="space-y-4 text-xs sm:text-sm">
-                  <div className="flex items-start gap-3">
-                    <Mail className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <div className="font-semibold text-slate-900">Borrower Support</div>
-                      <a href="mailto:support@navesta.in" className="text-blue-600 hover:underline">
-                        support@navesta.in
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <Building2 className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <div className="font-semibold text-slate-900">Bank &amp; NBFC Partnerships</div>
-                      <a href="mailto:partnerships@navesta.in" className="text-blue-600 hover:underline">
-                        partnerships@navesta.in
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <div className="font-semibold text-slate-900">Grievance &amp; DPDP Officer</div>
-                      <a href="mailto:grievance@navesta.in" className="text-blue-600 hover:underline">
-                        grievance@navesta.in
-                      </a>
-                    </div>
-                  </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 14, marginBottom: 14 }}>
+                <div>
+                  <label htmlFor="contact-name" style={fieldLabel}>Full name *</label>
+                  <input id="contact-name" type="text" required maxLength={120} autoComplete="name" value={formData.name} onChange={set('name')} placeholder="e.g. Rahul Sharma" style={field} />
+                </div>
+                <div>
+                  <label htmlFor="contact-phone" style={fieldLabel}>Phone number *</label>
+                  <input id="contact-phone" type="tel" required maxLength={30} autoComplete="tel" value={formData.phone} onChange={set('phone')} placeholder="+91 98765 43210" style={field} />
                 </div>
               </div>
 
-              {/* Office Location */}
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-card space-y-3">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-slate-700" />
-                  <h3 className="text-base font-bold text-slate-900">Registered Office</h3>
-                </div>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Navesta Technologies Private Limited<br />
-                  Level 4, Prestige Meridian, M.G. Road,<br />
-                  Bengaluru, Karnataka 560001, India
-                </p>
-                <div className="pt-2 text-xs text-slate-500 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>Monday – Friday: 9:30 AM to 6:30 PM IST</span>
-                </div>
+              <div style={{ marginBottom: 14 }}>
+                <label htmlFor="contact-email" style={fieldLabel}>Email address *</label>
+                <input id="contact-email" type="email" required maxLength={120} autoComplete="email" value={formData.email} onChange={set('email')} placeholder="rahul@example.com" style={field} />
               </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <label htmlFor="contact-type" style={fieldLabel}>Topic</label>
+                <select id="contact-type" value={formData.inquiryType} onChange={set('inquiryType')} style={field}>
+                  {INQUIRY_TYPES.map((t) => (
+                    <option key={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label htmlFor="contact-message" style={fieldLabel}>Your message *</label>
+                <textarea id="contact-message" required minLength={5} maxLength={5000} rows={5} value={formData.message} onChange={set('message')} placeholder="Tell us about your question, your loans or cards, or your plan…" style={{ ...field, resize: 'vertical', minHeight: 120 }} />
+              </div>
+
+              {error && (
+                <div role="alert" style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 12, padding: '10px 14px', fontSize: 13, color: '#B91C1C', marginBottom: 14 }}>
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                style={{ width: '100%', background: 'linear-gradient(135deg,#C96010,#EA8820)', color: '#fff', border: 'none', borderRadius: 14, padding: '14px 18px', fontSize: 15, fontWeight: 700, fontFamily: 'var(--sans)', cursor: loading ? 'default' : 'pointer', opacity: loading ? 0.6 : 1, boxShadow: '0 6px 20px rgba(201,96,16,0.3)' }}
+              >
+                {loading ? 'Sending…' : 'Send message →'}
+              </button>
+            </form>
+          )}
+        </section>
+
+        {/* Quick message note */}
+        <div style={{ background: 'rgba(201,96,16,0.06)', border: '1px solid rgba(201,96,16,0.18)', borderRadius: 16, padding: '22px 24px', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+          <span style={{ fontSize: 22, flexShrink: 0 }} aria-hidden>💡</span>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#2A1606', marginBottom: 4 }}>Got a finance question?</div>
+            <div style={{ fontSize: 13, color: 'rgba(42,22,6,0.65)', lineHeight: 1.6 }}>
+              Our AI assistant is available 24/7 in the app. For account or billing queries, reach out to us at <strong>support@navesta.in</strong> and we&apos;ll get back to you shortly.
             </div>
           </div>
         </div>
-      </section>
+
+        {/* Required by the DPDP Act: a published contact for privacy and grievance requests */}
+        <p style={{ marginTop: 18, fontSize: 13, color: 'rgba(42,22,6,0.6)', lineHeight: 1.6, textAlign: 'center' }}>
+          Privacy requests and grievances (access, correction, erasure, consent withdrawal):{' '}
+          <a href="mailto:grievance@navesta.in" style={{ color: '#D96010', fontWeight: 700 }}>grievance@navesta.in</a>
+        </p>
+      </div>
     </div>
   );
 }
