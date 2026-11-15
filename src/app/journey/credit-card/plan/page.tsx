@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { ArrowLeft, ArrowRight, Calculator, Sparkles } from 'lucide-react';
 import JourneyGate from '@/components/design/JourneyGate';
 import JourneyHeader from '@/components/design/JourneyHeader';
 import { DEFAULT_CC_JOURNEY, fmtCompact, fmtINR, useJourney } from '@/lib/journey';
@@ -20,8 +21,7 @@ import {
 
 /* "Pay More, Save More." — design #cc-plan-page (prototype lines ~6040–6186, JS ~7896–8248) */
 
-const NAVY = '#1A2E3F';
-const TEAL = '#0D9488';
+const BLUE = '#2563EB';
 
 export default function CCPlanPage() {
   return (
@@ -124,60 +124,62 @@ function PlanScreen() {
   if (!ready) return null;
 
   return (
-    <div className="nv" style={{ minHeight: '100vh', background: '#F5F0E8', fontFamily: 'var(--sans)', overflowX: 'hidden' }}>
+    <div className="min-h-screen bg-slate-50">
       <JourneyHeader backHref="/journey/credit-card/fixes" />
 
-      <div style={{ padding: '20px 20px 120px', maxWidth: 560, margin: '0 auto', boxSizing: 'border-box' }}>
-        {/* Intro card (dark navy) */}
-        <div style={{ background: 'linear-gradient(135deg,#1B2B3A 0%,#1A2E3F 100%)', borderRadius: 20, padding: '22px 20px', marginBottom: 20 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(245,166,35,0.18)', border: '1px solid rgba(245,166,35,0.35)', borderRadius: 20, padding: '5px 14px', marginBottom: 14 }}>
-            <span style={{ fontSize: 10 }}>⚡</span>
-            <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, color: '#F5A623', textTransform: 'uppercase' }}>AI-powered plan</span>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {/* Intro panel */}
+        <div className="rounded-2xl bg-slate-900 text-white p-5 sm:p-6">
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 uppercase tracking-wider mb-3">
+            <Sparkles className="w-4 h-4" aria-hidden /> AI-powered plan
           </div>
-          <h1 style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 900, color: '#fff', marginBottom: 10, lineHeight: 1.25 }}>
-            Pay More, <span style={{ color: '#F5A623' }}>Save More.</span>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">
+            Pay More, <span className="text-blue-400">Save More.</span>
           </h1>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
+          <p className="text-sm text-slate-300 leading-relaxed">
             Your {outstanding > 0 ? fmtCompact(outstanding) : '₹X'} debt at {annualRate.toFixed(0)}%/yr costs you money every single day. Paying even a little more than the minimum rewrites your future — dramatically.
-          </div>
+          </p>
         </div>
 
         {!plan ? (
-          <div style={{ background: '#fff', borderRadius: 20, padding: 22, marginBottom: 14, boxShadow: '0 4px 20px rgba(0,0,0,0.06)', textAlign: 'center' }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: NAVY, marginBottom: 8 }}>Add your card balance first</div>
-            <div style={{ fontSize: 13, color: 'rgba(26,46,63,0.6)', lineHeight: 1.6, marginBottom: 16 }}>We need your outstanding balance to build your plan.</div>
-            <Link href="/journey/credit-card" style={{ display: 'inline-block', background: TEAL, color: '#fff', borderRadius: 12, padding: '12px 20px', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-              Add my cards →
+          <div className="card-fintech p-5 sm:p-6 text-center">
+            <div className="text-sm font-semibold text-slate-900 mb-2">Add your card balance first</div>
+            <p className="text-sm text-slate-600 leading-relaxed mb-4">We need your outstanding balance to build your plan.</p>
+            <Link href="/journey/credit-card" className="btn-accent">
+              Add my cards <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
             </Link>
           </div>
         ) : (
           <>
             {/* Step 1: When debt-free? */}
-            <div style={{ background: '#fff', borderRadius: 20, padding: 20, marginBottom: 14, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+            <div className="card-fintech p-5 sm:p-6">
               <StepBadge n={1} title="When do you want to be debt-free?" />
 
-              <div role="tablist" aria-label="Plan by" style={{ display: 'flex', background: 'rgba(26,46,63,0.07)', borderRadius: 10, padding: 3, marginBottom: 18 }}>
+              <div role="tablist" aria-label="Plan by" className="inline-flex bg-slate-100 p-1 rounded-lg border border-slate-200 mb-5">
                 {(['deadline', 'amount'] as const).map((t) => (
                   <button
                     key={t}
+                    type="button"
                     role="tab"
                     aria-selected={tab === t}
                     onClick={() => setTab(t)}
-                    style={{ flex: 1, border: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 13, fontWeight: 700, cursor: 'pointer', background: tab === t ? TEAL : 'transparent', color: tab === t ? '#fff' : 'rgba(26,46,63,0.45)', fontFamily: 'var(--sans)', transition: 'all 0.2s' }}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium ${
+                      tab === t ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
+                    }`}
                   >
-                    {t === 'deadline' ? 'By deadline' : '🌱 By amount'}
+                    {t === 'deadline' ? 'By deadline' : 'By amount'}
                   </button>
                 ))}
               </div>
 
-              <div style={{ minHeight: 110, position: 'relative' }}>
+              <div className="min-h-[110px]">
                 {tab === 'deadline' ? (
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(26,46,63,0.5)' }}>Debt-free in</span>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 7 }}>
-                        <span style={{ fontFamily: 'var(--serif)', fontSize: 40, fontWeight: 900, color: TEAL, lineHeight: 1 }}>{months}</span>
-                        <span style={{ fontSize: 18, fontWeight: 800, color: TEAL }}>months</span>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-medium text-slate-500">Debt-free in</span>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-bold text-blue-600 tabular-nums leading-none">{months}</span>
+                        <span className="text-lg font-semibold text-blue-600">months</span>
                       </div>
                     </div>
                     <input
@@ -187,17 +189,17 @@ function PlanScreen() {
                       value={Math.min(36, months)}
                       aria-label="Debt-free in months"
                       onChange={(e) => onSlider(parseInt(e.target.value, 10))}
-                      style={{ width: '100%', accentColor: TEAL, height: 6, cursor: 'pointer', marginBottom: 6 }}
+                      className="w-full accent-blue-600"
                     />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                      <span style={{ fontSize: 11, color: 'rgba(26,46,63,0.4)' }}>1 mo</span>
-                      <span style={{ fontSize: 11, color: 'rgba(26,46,63,0.4)' }}>36 mo</span>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-xs text-slate-500">1 mo</span>
+                      <span className="text-xs text-slate-500">36 mo</span>
                     </div>
                   </div>
                 ) : (
                   <div>
-                    <div style={{ marginBottom: 12 }}>
-                      <label htmlFor="ccp-amount-input" style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(26,46,63,0.5)', marginBottom: 6 }}>
+                    <div className="mb-3">
+                      <label htmlFor="ccp-amount-input" className="block text-xs font-semibold text-slate-700 mb-1.5">
                         Monthly payment you can afford (₹)
                       </label>
                       <input
@@ -208,102 +210,88 @@ function PlanScreen() {
                         placeholder="e.g. 5000"
                         value={amountText}
                         onChange={(e) => onAmount(e.target.value)}
-                        style={{ width: '100%', border: '1.5px solid rgba(13,148,136,0.3)', borderRadius: 10, padding: '12px 14px', fontSize: 16, fontWeight: 700, color: NAVY, fontFamily: 'var(--sans)', outline: 'none', boxSizing: 'border-box' }}
-                        onFocus={(e) => (e.currentTarget.style.borderColor = TEAL)}
-                        onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(13,148,136,0.3)')}
+                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                       />
                     </div>
-                    <div aria-live="polite" style={{ fontSize: 13, color: 'rgba(26,46,63,0.55)', textAlign: 'center', padding: '8px 0' }}>
+                    <div aria-live="polite" className="text-sm text-slate-600 text-center py-2">
                       {amountMsg}
                     </div>
                   </div>
                 )}
               </div>
 
-              <div style={{ fontSize: 13, color: 'rgba(26,46,63,0.6)', marginTop: 14, marginBottom: 14, lineHeight: 1.55, minHeight: 36 }}>
-                Clears all <strong style={{ color: NAVY }}>{fmtCompact(outstanding)}</strong> of card debt in <strong style={{ color: NAVY }}>{months} months</strong>. Minimum-only would take{' '}
-                <strong style={{ color: '#DC2626' }}>{plan.minResult.neverClears ? '50+ years' : `${plan.minResult.months} months`}</strong>.
-              </div>
+              <p className="text-sm text-slate-600 mt-4 mb-4 leading-relaxed min-h-[36px]">
+                Clears all <strong className="text-slate-900">{fmtCompact(outstanding)}</strong> of card debt in <strong className="text-slate-900">{months} months</strong>. Minimum-only would take{' '}
+                <strong className="text-rose-600">{plan.minResult.neverClears ? '50+ years' : `${plan.minResult.months} months`}</strong>.
+              </p>
 
-              <div style={{ background: 'linear-gradient(135deg,#0D9488,#0891B2)', borderRadius: 16, padding: '16px 18px' }}>
-                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', marginBottom: 4 }}>YOU&apos;D NEED TO PAY</div>
-                <div style={{ fontFamily: 'var(--serif)', fontSize: 32, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{fmtINR(plan.pmt)}</div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 4 }}>
+              <div className="rounded-2xl bg-slate-900 text-white p-5">
+                <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">YOU&apos;D NEED TO PAY</div>
+                <div className="text-3xl font-bold tabular-nums leading-none">{fmtINR(plan.pmt)}</div>
+                <div className="text-xs text-slate-400 mt-1.5">
                   {plan.belowMin ? `/month · your bank requires min ${fmtINR(minDue)}` : '/month to clear this in time'}
                 </div>
               </div>
             </div>
 
             {/* Step 2: Monthly plan breakdown */}
-            <div style={{ background: '#fff', borderRadius: 20, padding: 20, marginBottom: 14, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                <Badge n={2} />
-                <div style={{ fontSize: 16, fontWeight: 800, color: NAVY }}>Your monthly plan</div>
-              </div>
-              <div style={{ fontSize: 12, color: 'rgba(26,46,63,0.45)', marginBottom: 14, paddingLeft: 40 }}>How your monthly payment breaks down:</div>
-              <div style={{ marginBottom: 14 }}>
+            <div className="card-fintech p-5 sm:p-6">
+              <StepBadge n={2} title="Your monthly plan" />
+              <p className="text-xs text-slate-500 -mt-2 mb-3">How your monthly payment breaks down:</p>
+              <div className="mb-3">
                 {plan.rows.map((row) => (
-                  <div key={row.key} style={{ padding: '12px 0', borderBottom: '1px solid rgba(26,46,63,0.06)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10, gap: 10 }}>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: NAVY, overflowWrap: 'anywhere' }}>{row.name}</div>
-                        <div style={{ fontSize: 11, color: 'rgba(26,46,63,0.45)', marginTop: 2 }}>
+                  <div key={row.key} className="py-3 border-b border-slate-100 last:border-b-0">
+                    <div className="flex justify-between items-start mb-2.5 gap-3">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-slate-900 break-words">{row.name}</div>
+                        <div className="text-xs text-slate-500 mt-0.5">
                           {fmtCompact(row.outstanding)} · {row.rate.toFixed(0)}% yearly
                         </div>
                       </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontSize: 16, fontWeight: 900, color: TEAL }}>{fmtINR(row.pay)}</div>
-                        <div style={{ fontSize: 10, color: 'rgba(26,46,63,0.4)' }}>/mo</div>
+                      <div className="text-right shrink-0">
+                        <div className="text-base font-bold text-blue-600 tabular-nums">{fmtINR(row.pay)}</div>
+                        <div className="text-[11px] text-slate-500">/mo</div>
                       </div>
                     </div>
-                    <div style={{ width: '100%', height: 8, background: 'rgba(26,46,63,0.08)', borderRadius: 6, overflow: 'hidden', marginBottom: 10, display: 'flex', gap: 2 }}>
-                      <div style={{ height: '100%', width: `${row.minPct}%`, background: '#64748B', borderRadius: '6px 0 0 6px', flexShrink: 0 }} />
-                      {row.extra > 0 && <div style={{ height: '100%', width: `${100 - row.minPct}%`, background: TEAL, borderRadius: '0 6px 6px 0', flexShrink: 0 }} />}
+                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2.5 flex gap-0.5">
+                      <div className="h-full bg-slate-400 shrink-0" style={{ width: `${row.minPct}%` }} />
+                      {row.extra > 0 && <div className="h-full bg-blue-600 shrink-0" style={{ width: `${100 - row.minPct}%` }} />}
                     </div>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 11, background: 'rgba(26,46,63,0.07)', color: NAVY, fontWeight: 700, padding: '3px 8px', borderRadius: 6 }}>Min {fmtINR(row.min)}</span>
-                      {row.extra > 0 && (
-                        <span style={{ fontSize: 11, background: '#CCFBF1', color: TEAL, fontWeight: 700, padding: '3px 8px', borderRadius: 6 }}>+ {fmtINR(row.extra)} extra</span>
-                      )}
+                    <div className="flex gap-2 flex-wrap">
+                      <span className="badge-slate">Min {fmtINR(row.min)}</span>
+                      {row.extra > 0 && <span className="badge-blue">+ {fmtINR(row.extra)} extra</span>}
                     </div>
                   </div>
                 ))}
               </div>
-              <div style={{ borderTop: '1.5px solid rgba(26,46,63,0.08)', paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(26,46,63,0.6)' }}>Total per month</span>
-                <span style={{ fontSize: 18, fontWeight: 900, color: TEAL }}>{fmtINR(plan.pmt)}</span>
+              <div className="border-t border-slate-200 pt-3 flex justify-between items-center">
+                <span className="text-sm font-semibold text-slate-600">Total per month</span>
+                <span className="text-lg font-bold text-blue-600 tabular-nums">{fmtINR(plan.pmt)}</span>
               </div>
             </div>
 
             {/* Step 3: Plan vs minimum chart */}
-            <div style={{ background: '#fff', borderRadius: 20, padding: 20, marginBottom: 14, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 14 }}>
-                <div style={{ marginTop: 1 }}>
-                  <Badge n={3} />
-                </div>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: NAVY }}>Your debt — plan vs minimum</div>
-                  <div style={{ fontSize: 12, color: 'rgba(26,46,63,0.5)', marginTop: 2 }}>What happens to your balance on each path</div>
-                </div>
-              </div>
+            <div className="card-fintech p-5 sm:p-6">
+              <StepBadge n={3} title="Your debt — plan vs minimum" />
+              <p className="text-xs text-slate-500 -mt-2 mb-4">What happens to your balance on each path</p>
               <PlanChart planBals={plan.planBals} minBals={plan.minBals} planM={months} />
-              <div style={{ display: 'flex', gap: 20, marginTop: 10, marginBottom: 16, justifyContent: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 20, height: 3, background: TEAL, borderRadius: 2 }} />
-                  <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(26,46,63,0.6)' }}>Your plan</span>
+              <div className="flex gap-5 mt-3 mb-4 justify-center">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-5 h-[3px] bg-blue-600 rounded-sm" />
+                  <span className="text-xs font-medium text-slate-600">Your plan</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 18, height: 0, borderTop: '2px dashed #DC2626' }} />
-                  <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(26,46,63,0.6)' }}>Minimum only</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-5 border-t-2 border-dashed border-rose-500" />
+                  <span className="text-xs font-medium text-slate-600">Minimum only</span>
                 </div>
               </div>
-              <div style={{ background: '#E6FAF8', borderRadius: 14, padding: '16px 18px' }}>
-                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: TEAL, textTransform: 'uppercase', marginBottom: 6 }}>YOU SAVE ON INTEREST</div>
-                <div style={{ fontFamily: 'var(--serif)', fontSize: 34, fontWeight: 900, color: NAVY, lineHeight: 1, marginBottom: 6 }}>{fmtCompact(plan.interestSaved)}</div>
-                <div style={{ fontSize: 13, color: 'rgba(26,46,63,0.6)', lineHeight: 1.4 }}>
+              <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4">
+                <div className="text-xs font-semibold text-emerald-700 uppercase tracking-wider mb-1.5">YOU SAVE ON INTEREST</div>
+                <div className="text-3xl font-bold text-slate-900 tabular-nums leading-none mb-1.5">{fmtCompact(plan.interestSaved)}</div>
+                <div className="text-sm text-slate-600 leading-snug">
                   {plan.monthsSaved > 0 ? (
                     <>
-                      Debt-free <strong style={{ color: NAVY }}>{plan.minResult.neverClears ? 'years' : `${plan.monthsSaved} months`} sooner</strong> than paying the minimum
+                      Debt-free <strong className="text-slate-900">{plan.minResult.neverClears ? 'years' : `${plan.monthsSaved} months`} sooner</strong> than paying the minimum
                     </>
                   ) : (
                     'vs. paying the minimum every month'
@@ -313,64 +301,50 @@ function PlanScreen() {
             </div>
 
             {/* Navesta AI card */}
-            <div style={{ background: 'linear-gradient(135deg,#1B2B3A 0%,#1A2E3F 100%)', borderRadius: 20, padding: '22px 20px', marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#F5A623,#E07C10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0, color: '#fff', fontWeight: 900 }}>N</div>
-                <span style={{ fontSize: 12, fontWeight: 800, color: '#F5A623', letterSpacing: 0.5 }}>Navesta AI</span>
+            <div className="rounded-2xl bg-slate-900 text-white p-5 sm:p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-sm font-bold shrink-0">N</div>
+                <span className="text-xs font-semibold text-blue-400">Navesta AI</span>
               </div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.65 }}>
-                Paying <strong style={{ color: '#F5A623' }}>{fmtINR(plan.pmt)}/month</strong> clears your {fmtCompact(outstanding)} debt in{' '}
-                <strong style={{ color: '#F5A623' }}>{months} months</strong>, saving you <strong style={{ color: '#4ADE80' }}>{fmtCompact(plan.interestSaved)}</strong> in interest vs minimum payments.
+              <p className="text-sm text-slate-300 leading-relaxed">
+                Paying <strong className="text-blue-400">{fmtINR(plan.pmt)}/month</strong> clears your {fmtCompact(outstanding)} debt in{' '}
+                <strong className="text-blue-400">{months} months</strong>, saving you <strong className="text-emerald-400">{fmtCompact(plan.interestSaved)}</strong> in interest vs minimum payments.
                 {plan.monthsSaved > 0 && !plan.minResult.neverClears && (
                   <>
-                    {' '}That&apos;s <strong style={{ color: '#4ADE80' }}>{plan.monthsSaved} months sooner</strong> than paying the minimum.
+                    {' '}That&apos;s <strong className="text-emerald-400">{plan.monthsSaved} months sooner</strong> than paying the minimum.
                   </>
                 )}
-              </div>
+              </p>
             </div>
 
-            {/* Pay-More Simulator (design #cc-pms-page, unreachable in the prototype) */}
-            <Link
-              href="/journey/credit-card/simulator"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: '#fff', border: '1.5px solid rgba(13,148,136,0.3)', borderRadius: 16, padding: '16px 18px', marginBottom: 24, textDecoration: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 20 }} aria-hidden>
-                  💡
+            {/* Pay-More Simulator */}
+            <Link href="/journey/credit-card/simulator" className="card-fintech-interactive flex items-center justify-between gap-3 p-4 sm:p-5">
+              <span className="flex items-center gap-3">
+                <span className="w-9 h-9 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center shrink-0">
+                  <Calculator className="w-4 h-4 text-blue-600" aria-hidden />
                 </span>
                 <span>
-                  <span style={{ display: 'block', fontSize: 14, fontWeight: 800, color: NAVY }}>Try the Pay-More Simulator →</span>
-                  <span style={{ display: 'block', fontSize: 12, color: 'rgba(26,46,63,0.5)', marginTop: 2 }}>Small change, big freedom</span>
+                  <span className="block text-sm font-semibold text-slate-900">Try the Pay-More Simulator →</span>
+                  <span className="block text-xs text-slate-500 mt-0.5">Small change, big freedom</span>
                 </span>
               </span>
             </Link>
           </>
         )}
 
-        <button
-          onClick={() => router.push('/journey/credit-card/fixes')}
-          style={{ width: '100%', background: 'rgba(26,46,63,0.08)', border: 'none', borderRadius: 14, padding: 16, fontSize: 14, fontWeight: 700, color: NAVY, cursor: 'pointer', fontFamily: 'var(--sans)' }}
-          onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(26,46,63,0.14)')}
-          onMouseOut={(e) => (e.currentTarget.style.background = 'rgba(26,46,63,0.08)')}
-        >
-          ← Back to fixes
+        <button type="button" onClick={() => router.push('/journey/credit-card/fixes')} className="btn-secondary w-full">
+          <ArrowLeft className="w-4 h-4 mr-1.5" aria-hidden /> Back to fixes
         </button>
-      </div>
+      </main>
     </div>
-  );
-}
-
-function Badge({ n }: { n: number }) {
-  return (
-    <div style={{ width: 30, height: 30, borderRadius: '50%', background: TEAL, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 900, color: '#fff', flexShrink: 0 }}>{n}</div>
   );
 }
 
 function StepBadge({ n, title }: { n: number; title: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-      <Badge n={n} />
-      <div style={{ fontSize: 16, fontWeight: 800, color: NAVY }}>{title}</div>
+    <div className="flex items-center gap-2.5 mb-3.5">
+      <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold shrink-0">{n}</div>
+      <h2 className="text-sm font-semibold text-slate-900">{title}</h2>
     </div>
   );
 }
@@ -415,17 +389,17 @@ function PlanChart({ planBals, minBals, planM }: { planBals: number[]; minBals: 
   const font = { fontFamily: 'Inter,sans-serif' };
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={label} style={{ display: 'block', maxWidth: '100%', overflow: 'visible' }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={label} className="block max-w-full overflow-visible">
       <title>{label}</title>
       <g shapeRendering="geometricPrecision" textRendering="optimizeLegibility">
         <defs>
           <linearGradient id="planGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={TEAL} stopOpacity="0.18" />
-            <stop offset="100%" stopColor={TEAL} stopOpacity="0.02" />
+            <stop offset="0%" stopColor={BLUE} stopOpacity="0.18" />
+            <stop offset="100%" stopColor={BLUE} stopOpacity="0.02" />
           </linearGradient>
           <linearGradient id="minGrad2" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#DC2626" stopOpacity="0.10" />
-            <stop offset="100%" stopColor="#DC2626" stopOpacity="0.01" />
+            <stop offset="0%" stopColor="#F43F5E" stopOpacity="0.10" />
+            <stop offset="100%" stopColor="#F43F5E" stopOpacity="0.01" />
           </linearGradient>
         </defs>
 
@@ -434,54 +408,54 @@ function PlanChart({ planBals, minBals, planM }: { planBals: number[]; minBals: 
           const yPos = yAt(val);
           return (
             <g key={t}>
-              <line x1={padL} y1={yPos} x2={W - padR} y2={yPos} stroke="rgba(0,0,0,0.06)" strokeWidth="1" />
-              <text x={padL - 5} y={Math.round(yPos + 3.5)} textAnchor="end" fontSize="9" fill="rgba(42,22,6,0.45)" fontWeight="600" {...font}>
+              <line x1={padL} y1={yPos} x2={W - padR} y2={yPos} stroke="#E2E8F0" strokeWidth="1" />
+              <text x={padL - 5} y={Math.round(yPos + 3.5)} textAnchor="end" fontSize="11" fill="#64748B" fontWeight="600" {...font}>
                 {fmtAxis(val)}
               </text>
             </g>
           );
         })}
 
-        <line x1={padL} y1={base} x2={W - padR} y2={base} stroke="rgba(0,0,0,0.10)" strokeWidth="1.2" />
+        <line x1={padL} y1={base} x2={W - padR} y2={base} stroke="#E2E8F0" strokeWidth="1.2" />
 
         {planPath && <path d={`${planPath} L${planEndX.toFixed(1)},${base} L${xAt(0).toFixed(1)},${base} Z`} fill="url(#planGrad)" />}
         {minPath && <path d={`${minPath} L${minEndX.toFixed(1)},${base} L${xAt(0).toFixed(1)},${base} Z`} fill="url(#minGrad2)" />}
 
-        {minPath && <path d={minPath} fill="none" stroke="#DC2626" strokeWidth="2" strokeDasharray="5,3" strokeLinejoin="round" strokeLinecap="round" />}
-        {planPath && <path d={planPath} fill="none" stroke={TEAL} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />}
+        {minPath && <path d={minPath} fill="none" stroke="#F43F5E" strokeWidth="2" strokeDasharray="5,3" strokeLinejoin="round" strokeLinecap="round" />}
+        {planPath && <path d={planPath} fill="none" stroke={BLUE} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />}
 
         {planBals[planEndIdx] < 100 && (
           <g>
-            <circle cx={planEndX} cy={planEndY} r="5" fill={TEAL} />
+            <circle cx={planEndX} cy={planEndY} r="5" fill={BLUE} />
             <circle cx={planEndX} cy={planEndY} r="2.5" fill="#fff" />
-            <text x={planEndX} y={Math.round(planEndY - 9)} textAnchor={planEndX > W * 0.7 ? 'end' : 'middle'} fontSize="9" fill={TEAL} fontWeight="800" {...font}>
-              Debt-free! 🎉
+            <text x={planEndX} y={Math.round(planEndY - 9)} textAnchor={planEndX > W * 0.7 ? 'end' : 'middle'} fontSize="11" fill={BLUE} fontWeight="800" {...font}>
+              Debt-free!
             </text>
           </g>
         )}
 
         {minBals[minEndIdx] > 500 && (
           <g>
-            <circle cx={minEndX} cy={minEndY} r="4.5" fill="#DC2626" />
+            <circle cx={minEndX} cy={minEndY} r="4.5" fill="#F43F5E" />
             <circle cx={minEndX} cy={minEndY} r="2" fill="#fff" />
-            <text x={minEndX} y={Math.round(minEndY - 8)} textAnchor="end" fontSize="9" fill="#DC2626" fontWeight="800" {...font}>
+            <text x={minEndX} y={Math.round(minEndY - 8)} textAnchor="end" fontSize="11" fill="#F43F5E" fontWeight="800" {...font}>
               Still {fmtCompact(minBals[minEndIdx])}
             </text>
           </g>
         )}
 
-        <text x={xAt(0)} y={base + 16} textAnchor="start" fontSize="9" fill="rgba(42,22,6,0.45)" fontWeight="600" {...font}>
+        <text x={xAt(0)} y={base + 16} textAnchor="start" fontSize="11" fill="#64748B" fontWeight="600" {...font}>
           Now
         </text>
         {planEndIdx > 1 && planEndIdx < xMax && (
           <g>
-            <line x1={planEndX} y1={base} x2={planEndX} y2={base + 4} stroke={TEAL} strokeWidth="1.5" />
-            <text x={planEndX} y={base + 16} textAnchor="middle" fontSize="9" fill={TEAL} fontWeight="800" {...font}>
+            <line x1={planEndX} y1={base} x2={planEndX} y2={base + 4} stroke={BLUE} strokeWidth="1.5" />
+            <text x={planEndX} y={base + 16} textAnchor="middle" fontSize="11" fill={BLUE} fontWeight="800" {...font}>
               {planEndIdx}m ✓
             </text>
           </g>
         )}
-        <text x={xAt(xMax)} y={base + 16} textAnchor="end" fontSize="9" fill="rgba(42,22,6,0.45)" {...font}>
+        <text x={xAt(xMax)} y={base + 16} textAnchor="end" fontSize="11" fill="#64748B" {...font}>
           {xMax}m
         </text>
       </g>

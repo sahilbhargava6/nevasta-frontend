@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
+import { ArrowLeft, ArrowRight, Calculator, Lightbulb } from 'lucide-react';
 import JourneyGate from '@/components/design/JourneyGate';
 import JourneyHeader from '@/components/design/JourneyHeader';
 import { DEFAULT_CC_JOURNEY, fmtCompact, fmtINR, useJourney } from '@/lib/journey';
@@ -10,7 +11,6 @@ import { cardMonthlyRate, combineCards, fixedMinPayment, payoffWith, pmtMonthly 
 
 /* Pay-More Simulator — design #cc-pms-page (prototype lines ~6187–6271, JS ~9700–9796) */
 
-const NAVY = '#1A2E3F';
 
 export default function CCSimulatorPage() {
   return (
@@ -50,43 +50,41 @@ function SimulatorScreen() {
   const barPct = range && res && range.minOnly.months > 0 ? Math.round((res.months / range.minOnly.months) * 100) : 50;
 
   return (
-    <div className="nv" style={{ minHeight: '100vh', background: '#F5F0E8', fontFamily: 'var(--sans)', overflowX: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div className="min-h-screen bg-slate-50">
       <JourneyHeader backHref="/journey/credit-card/plan" />
 
-      {/* Dark gradient header */}
-      <div style={{ background: 'linear-gradient(160deg,#1A2E3F 0%,#0D2233 100%)', padding: '24px 20px 28px' }}>
-        <div style={{ maxWidth: 560, margin: '0 auto' }}>
-          <h1 style={{ fontFamily: 'var(--serif)', fontSize: 24, fontWeight: 900, color: '#fff', marginBottom: 4 }}>Pay-More Simulator</h1>
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Small change, big freedom</div>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">
+            <Calculator className="w-4 h-4" aria-hidden /> Simulator
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Pay-More Simulator</h1>
+          <p className="text-sm text-slate-600 leading-relaxed mt-1">Small change, big freedom</p>
         </div>
-      </div>
 
-      <div style={{ padding: '20px 20px 40px', maxWidth: 560, width: '100%', margin: '0 auto', boxSizing: 'border-box', flex: 1 }}>
         {!range || !res ? (
-          <div style={{ background: '#fff', borderRadius: 20, padding: 22, boxShadow: '0 4px 20px rgba(0,0,0,0.06)', textAlign: 'center' }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: NAVY, marginBottom: 8 }}>Add your card balance first</div>
-            <div style={{ fontSize: 13, color: 'rgba(26,46,63,0.6)', lineHeight: 1.6, marginBottom: 16 }}>We need your outstanding balance to run the simulator.</div>
-            <Link href="/journey/credit-card" style={{ display: 'inline-block', background: '#0D9488', color: '#fff', borderRadius: 12, padding: '12px 20px', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-              Add my cards →
+          <div className="card-fintech p-5 sm:p-6 text-center">
+            <div className="text-sm font-semibold text-slate-900 mb-2">Add your card balance first</div>
+            <p className="text-sm text-slate-600 leading-relaxed mb-4">We need your outstanding balance to run the simulator.</p>
+            <Link href="/journey/credit-card" className="btn-accent">
+              Add my cards <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
             </Link>
           </div>
         ) : (
           <>
             {/* Slider card */}
-            <div style={{ background: '#fff', borderRadius: 20, padding: 20, marginBottom: 14, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                <span style={{ fontSize: 20 }} aria-hidden>
-                  💡
-                </span>
-                <span style={{ fontSize: 15, fontWeight: 800, color: NAVY }}>Pay-more simulator</span>
+            <div className="card-fintech p-5 sm:p-6">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Lightbulb className="w-4 h-4 text-blue-600" aria-hidden />
+                <h2 className="text-sm font-semibold text-slate-900">Pay-more simulator</h2>
               </div>
-              <div style={{ fontSize: 13, color: 'rgba(26,46,63,0.5)', marginBottom: 20, lineHeight: 1.5 }}>Drag to see how a bigger monthly payment changes your payoff.</div>
+              <p className="text-sm text-slate-600 leading-relaxed mb-5">Drag to see how a bigger monthly payment changes your payoff.</p>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <label htmlFor="cpms-slider" style={{ fontSize: 14, color: 'rgba(26,46,63,0.55)', fontWeight: 500 }}>
+              <div className="flex justify-between items-center mb-3.5 gap-3">
+                <label htmlFor="cpms-slider" className="text-sm font-medium text-slate-600">
                   Monthly payment
                 </label>
-                <span style={{ fontFamily: 'var(--serif)', fontSize: 28, fontWeight: 900, color: NAVY }}>{fmtINR(pay)}</span>
+                <span className="text-2xl font-bold text-slate-900 tabular-nums">{fmtINR(pay)}</span>
               </div>
 
               <input
@@ -96,64 +94,54 @@ function SimulatorScreen() {
                 max={range.max}
                 value={pay}
                 onChange={(e) => setPayment(parseInt(e.target.value, 10))}
-                style={{ width: '100%', accentColor: '#0D9488', height: 6, cursor: 'pointer', marginBottom: 8 }}
+                className="w-full accent-blue-600"
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 11, color: 'rgba(26,46,63,0.4)' }}>Min {fmtINR(range.min)}</span>
-                <span style={{ fontSize: 11, color: 'rgba(26,46,63,0.4)' }}>{fmtINR(range.max)}</span>
+              <div className="flex justify-between mt-1">
+                <span className="text-xs text-slate-500">Min {fmtINR(range.min)}</span>
+                <span className="text-xs text-slate-500">{fmtINR(range.max)}</span>
               </div>
             </div>
 
             {/* Stats card */}
-            <div style={{ background: '#fff', borderRadius: 20, padding: 20, marginBottom: 14, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+            <div className="card-fintech p-5 sm:p-6">
               <StatRow label="Debt-free in" value={`${res.months} month${res.months !== 1 ? 's' : ''}`} />
               <StatRow label="Total interest paid" value={fmtINR(res.totalInterest)} />
-              <StatRow label="vs minimum-due path" value={`save ${fmtCompact(saving)}`} color="#059669" />
-              <div style={{ paddingTop: 16 }}>
-                <div style={{ width: '100%', height: 8, background: 'rgba(26,46,63,0.08)', borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
-                  <div style={{ height: '100%', width: `${Math.max(4, Math.min(100, barPct))}%`, borderRadius: 4, background: 'linear-gradient(90deg,#059669,#0D9488)', transition: 'width .4s ease' }} />
+              <StatRow label="vs minimum-due path" value={`save ${fmtCompact(saving)}`} valueClass="text-emerald-600" />
+              <div className="pt-4">
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
+                  <div className="h-full rounded-full bg-emerald-500 transition-all duration-300" style={{ width: `${Math.max(4, Math.min(100, barPct))}%` }} />
                 </div>
-                <div style={{ fontSize: 11, color: 'rgba(26,46,63,0.4)', textAlign: 'center' }}>Shorter bar = faster freedom.</div>
+                <div className="text-xs text-slate-500 text-center">Shorter bar = faster freedom.</div>
               </div>
             </div>
 
             {/* Navesta AI */}
-            <div style={{ background: 'linear-gradient(135deg,#1B2B3A 0%,#1A2E3F 100%)', borderRadius: 20, padding: '22px 20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg,#F5A623,#E07C10)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 900, color: '#fff', flexShrink: 0 }}>N</div>
-                <span style={{ fontSize: 12, fontWeight: 800, color: '#F5A623', letterSpacing: 0.5 }}>Navesta AI</span>
+            <div className="rounded-2xl bg-slate-900 text-white p-5 sm:p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-sm font-bold shrink-0">N</div>
+                <span className="text-xs font-semibold text-blue-400">Navesta AI</span>
               </div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.65 }}>
-                Paying <strong style={{ color: '#F5A623' }}>{fmtINR(pay)}/mo</strong> clears everything in <strong style={{ color: '#F5A623' }}>{res.months} months</strong> and saves{' '}
-                <strong style={{ color: '#F5A623' }}>{fmtCompact(saving)}</strong> vs the minimum.
-              </div>
+              <p className="text-sm text-slate-300 leading-relaxed">
+                Paying <strong className="text-blue-400">{fmtINR(pay)}/mo</strong> clears everything in <strong className="text-blue-400">{res.months} months</strong> and saves{' '}
+                <strong className="text-emerald-400">{fmtCompact(saving)}</strong> vs the minimum.
+              </p>
             </div>
           </>
         )}
-      </div>
 
-      {/* Back button bar */}
-      <div style={{ position: 'sticky', bottom: 0, background: '#fff', borderTop: '1px solid rgba(196,168,130,0.2)', padding: '14px 20px', boxShadow: '0 -4px 20px rgba(58,35,16,0.06)' }}>
-        <button
-          onClick={() => router.push('/journey/credit-card/plan')}
-          style={{ width: '100%', background: 'transparent', border: 'none', fontSize: 16, fontWeight: 700, color: NAVY, cursor: 'pointer', fontFamily: 'var(--sans)', padding: '4px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={NAVY} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M19 12H5" />
-            <path d="M12 19l-7-7 7-7" />
-          </svg>
-          Back
+        <button type="button" onClick={() => router.push('/journey/credit-card/plan')} className="btn-secondary w-full">
+          <ArrowLeft className="w-4 h-4 mr-1.5" aria-hidden /> Back
         </button>
-      </div>
+      </main>
     </div>
   );
 }
 
-function StatRow({ label, value, color = NAVY }: { label: string; value: string; color?: string }) {
+function StatRow({ label, value, valueClass = 'text-slate-900' }: { label: string; value: string; valueClass?: string }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(26,46,63,0.07)', gap: 12 }}>
-      <span style={{ fontSize: 14, color: 'rgba(26,46,63,0.55)' }}>{label}</span>
-      <span style={{ fontSize: 14, fontWeight: 800, color }}>{value}</span>
+    <div className="flex justify-between items-center py-2.5 border-b border-slate-100 gap-3">
+      <span className="text-sm text-slate-600">{label}</span>
+      <span className={`text-sm font-semibold tabular-nums ${valueClass}`}>{value}</span>
     </div>
   );
 }

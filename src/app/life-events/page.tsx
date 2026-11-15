@@ -1,54 +1,50 @@
 'use client';
 
 import Link from 'next/link';
+import { ChevronRight, PartyPopper, Zap } from 'lucide-react';
 import JourneyHeader from '@/components/design/JourneyHeader';
 import { LIFE_EVENTS, LIFE_EVENT_KEYS } from './events';
 
 /** Life-Event Planning (design #life-event-page): pick an occasion. */
 export default function LifeEventsPage() {
   return (
-    <div className="nv" style={{ minHeight: '100vh', background: '#F5EFE8', fontFamily: 'var(--sans)', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
+    <div className="min-h-screen bg-slate-50">
       <JourneyHeader backHref="/" />
 
-      <div style={{ padding: '28px 20px 100px', maxWidth: 560, margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-          <span style={{ fontSize: 36 }} aria-hidden>🎊</span>
-          <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(22px,5vw,28px)', fontWeight: 900, color: '#2A1606', lineHeight: 1.15 }}>Life-Event Planning</h1>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider">
+            <PartyPopper className="w-4 h-4" aria-hidden /> Life events
+          </div>
+          <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Life-Event Planning</h1>
+          <p className="mt-1 text-sm text-slate-600 leading-relaxed">
+            Big moments deserve smart funding. Pick your occasion — Navesta builds a personal loan plan around your income and savings in seconds.
+          </p>
         </div>
-        <p style={{ fontSize: 14, color: 'rgba(42,22,6,0.62)', lineHeight: 1.7, marginBottom: 28 }}>
-          Big moments deserve smart funding. Pick your occasion — Navesta builds a personal loan plan around your income and savings in seconds.
-        </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           {LIFE_EVENT_KEYS.map((key) => {
             const ev = LIFE_EVENTS[key];
             return (
-              <Link
-                key={key}
-                href={`/life-events/${key}`}
-                style={{ display: 'block', textDecoration: 'none', background: '#fff', borderRadius: 20, padding: '22px 16px 18px', cursor: 'pointer', position: 'relative', border: '1.5px solid rgba(196,168,130,0.25)', boxShadow: '0 2px 12px rgba(42,22,6,0.06)', transition: 'transform .18s,box-shadow .18s', textAlign: 'center' }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-3px)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(42,22,6,0.1)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = '';
-                  e.currentTarget.style.boxShadow = '0 2px 12px rgba(42,22,6,0.06)';
-                }}
-              >
-                <div style={{ position: 'absolute', top: 12, right: 12, fontSize: 12, color: 'rgba(42,22,6,0.3)' }} aria-hidden>›</div>
-                <div style={{ fontSize: 38, marginBottom: 10 }} aria-hidden>{ev.emoji}</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1035', marginBottom: 8 }}>{ev.title}</div>
-                <div style={{ display: 'inline-block', background: 'rgba(109,40,217,0.1)', color: '#5B21B6', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>{ev.range}</div>
+              <Link key={key} href={`/life-events/${key}`} className="card-fintech-interactive relative block p-4 sm:p-5 text-center">
+                <ChevronRight className="w-4 h-4 text-slate-300 absolute top-3 right-3" aria-hidden />
+                <div className="text-4xl mb-2" aria-hidden>
+                  {ev.emoji}
+                </div>
+                <div className="text-sm font-semibold text-slate-900 mb-2">{ev.title}</div>
+                <span className="badge-blue">{ev.range}</span>
               </Link>
             );
           })}
         </div>
 
-        <div style={{ marginTop: 28, textAlign: 'center', fontSize: 12, color: 'rgba(42,22,6,0.4)', lineHeight: 1.6 }}>
-          ⚡ Navesta builds your plan in seconds using RBI-approved loan benchmarks.<br />No impact on your credit score.
+        <div className="flex items-start justify-center gap-2 text-xs text-slate-500 leading-relaxed text-center">
+          <Zap className="w-4 h-4 shrink-0 text-blue-600" aria-hidden />
+          <span>
+            Navesta builds your plan in seconds using RBI-approved loan benchmarks. No impact on your credit score.
+          </span>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

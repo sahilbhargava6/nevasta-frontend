@@ -195,6 +195,17 @@ export function estimateCreditScore(profile: EligibilityProfile, scoreOnFile: nu
   return { score: Math.min(820, Math.max(580, score)), estimated: true };
 }
 
+/**
+ * How to label a score on file: a bureau name only when the score really came
+ * from that bureau (`/users/me` → `creditScores[0].source`); a number the
+ * customer typed in is shown as self-reported, never as a bureau score.
+ */
+export function scoreSourceLabel(source: string | null | undefined): { title: string; badge: string; bureau: 'CRIF' | 'CIBIL' | null } {
+  if (source === 'crif_api') return { title: 'Your CRIF Credit Score', badge: 'CRIF SCORE', bureau: 'CRIF' };
+  if (source === 'cibil_api') return { title: 'Your CIBIL Credit Score', badge: 'CIBIL SCORE', bureau: 'CIBIL' };
+  return { title: 'Your Credit Score', badge: 'SELF-REPORTED', bureau: null };
+}
+
 export function scoreBand(score: number): 'Excellent' | 'Good' | 'Fair' | 'Poor' {
   if (score >= 740) return 'Excellent';
   if (score >= 670) return 'Good';

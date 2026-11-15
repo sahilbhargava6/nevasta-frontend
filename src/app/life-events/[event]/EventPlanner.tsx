@@ -2,17 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { AlertTriangle, ArrowRight, CheckCircle2, Gift, Info, Lightbulb, Loader2, PartyPopper, Wallet, Zap } from 'lucide-react';
 import JourneyHeader from '@/components/design/JourneyHeader';
 import { useSession } from '@/components/session/SessionProvider';
 import { fetchOffers, type Offer } from '@/lib/applyOffer';
 import { fmtINR, pmt } from '@/lib/journey';
+import { trackStep } from '@/lib/track';
 import { INDICATIVE_BEST_RATE, LIFE_EVENTS, elpFmtINR, type LifeEventKey } from '../events';
 
-const label: React.CSSProperties = { fontSize: 11, fontWeight: 800, color: '#8A6A3A', letterSpacing: '.6px', marginBottom: 4, display: 'block' };
-const inputWrap: React.CSSProperties = { display: 'flex', alignItems: 'center', border: '1.5px solid rgba(109,40,217,0.25)', borderRadius: 12, overflow: 'hidden', background: '#FAF7FF' };
-const rupeeBox: React.CSSProperties = { background: '#EDE9FE', padding: '14px 14px', borderRight: '1.5px solid rgba(109,40,217,0.2)', flexShrink: 0 };
-const inputStyle: React.CSSProperties = { flex: 1, border: 'none', outline: 'none', padding: '14px 14px', fontSize: 16, fontWeight: 600, fontFamily: 'var(--sans)', background: 'transparent', color: '#1A1035', minWidth: 0 };
 const TICKS = ['6 mo', '12', '24', '36', '48', '60 mo'];
+const labelCls = 'block text-xs font-semibold text-slate-700 mb-1.5';
+const inputCls =
+  'w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600';
 
 /** Event loan plan (design #elp-page + elpCalc), with live lender offers. */
 export default function EventPlanner({ eventKey }: { eventKey: LifeEventKey }) {
@@ -75,50 +76,70 @@ export default function EventPlanner({ eventKey }: { eventKey: LifeEventKey }) {
     amount >= 100000 ? `₹${(amount / 100000).toFixed(2)}L loan` : amount > 0 ? `₹${Math.round(amount).toLocaleString('en-IN')} loan` : '—';
 
   return (
-    <div className="nv" style={{ minHeight: '100vh', background: '#F5EFE8', fontFamily: 'var(--sans)', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
+    <div className="min-h-screen bg-slate-50">
       <JourneyHeader backHref="/life-events" />
 
-      <div style={{ padding: '20px 16px 100px', maxWidth: 560, margin: '0 auto' }}>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {/* Hero card */}
-        <div style={{ borderRadius: 20, padding: '22px 20px 18px', marginBottom: 16, position: 'relative', overflow: 'hidden', background: ev.bg }}>
-          <div style={{ fontSize: 44, marginBottom: 10, lineHeight: 1, display: 'block' }} aria-hidden>{ev.emoji}</div>
-          <h1 style={{ fontFamily: 'var(--serif)', fontSize: 26, fontWeight: 900, color: '#1A1035', lineHeight: 1.15, marginBottom: 8 }}>{ev.title}</h1>
-          <div style={{ fontSize: 14, color: 'rgba(26,16,53,0.65)', lineHeight: 1.55, marginBottom: 16 }}>{ev.tagline}</div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(109,40,217,0.13)', color: '#5B21B6', fontSize: 12, fontWeight: 600, padding: '8px 14px', borderRadius: 24, lineHeight: 1.3 }}>{ev.proof}</div>
+        <div className="card-fintech p-5 sm:p-6">
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider">
+            <PartyPopper className="w-4 h-4" aria-hidden /> Life-Event Planning
+          </div>
+          <div className="mt-3 flex items-start gap-4">
+            <div className="text-4xl leading-none" aria-hidden>
+              {ev.emoji}
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">{ev.title}</h1>
+              <p className="mt-1 text-sm text-slate-600 leading-relaxed">{ev.tagline}</p>
+            </div>
+          </div>
+          <div className="mt-4 flex items-start gap-2 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 text-xs p-3">
+            <Info className="w-4 h-4 shrink-0" aria-hidden />
+            <span>{ev.proof}</span>
+          </div>
         </div>
 
         {/* Input card */}
-        <div style={{ background: '#fff', borderRadius: 20, padding: '22px 18px', marginBottom: 16, border: '1.5px solid rgba(196,168,130,0.2)', boxShadow: '0 2px 12px rgba(42,22,6,0.04)' }}>
+        <div className="card-fintech p-5 sm:p-6 space-y-6">
           {/* Monthly income */}
-          <div style={{ marginBottom: 22 }}>
-            <label htmlFor="elp-income" style={label}>MONTHLY INCOME</label>
-            <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.45)', marginBottom: 10, lineHeight: 1.45 }}>We&apos;ll check EMI stays within 40% of this — the lender&apos;s affordability rule</div>
-            <div style={inputWrap}>
-              <div style={rupeeBox}><span style={{ fontSize: 17, fontWeight: 700, color: '#6D28D9' }}>₹</span></div>
-              <input id="elp-income" type="number" inputMode="numeric" min={0} placeholder="e.g. 85000" value={incomeText} onChange={(e) => setIncomeText(e.target.value)} style={inputStyle} />
+          <div>
+            <label htmlFor="elp-income" className={labelCls}>
+              MONTHLY INCOME
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium pointer-events-none">₹</span>
+              <input id="elp-income" type="number" inputMode="numeric" min={0} placeholder="e.g. 85000" value={incomeText} onChange={(e) => setIncomeText(e.target.value)} className={`${inputCls} pl-7`} />
             </div>
-            <div style={{ textAlign: 'right', fontSize: 11, color: 'rgba(42,22,6,0.45)', marginTop: 6 }}>
-              Max EMI at 40% → <strong style={{ color: '#5B21B6' }}>{income > 0 ? `${elpFmtINR(maxEMI)}/mo` : '—'}</strong>
+            <div className="text-xs text-slate-500 mt-1">We&apos;ll check EMI stays within 40% of this — the lender&apos;s affordability rule</div>
+            <div className="text-right text-xs text-slate-500 mt-1">
+              Max EMI at 40% → <strong className="text-slate-900">{income > 0 ? `${elpFmtINR(maxEMI)}/mo` : '—'}</strong>
             </div>
           </div>
 
           {/* Loan amount */}
-          <div style={{ marginBottom: 22 }}>
-            <label htmlFor="elp-amount" style={label}>LOAN AMOUNT NEEDED</label>
-            <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.45)', marginBottom: 10 }}>{ev.typicalRange}</div>
-            <div style={inputWrap}>
-              <div style={rupeeBox}><span style={{ fontSize: 17, fontWeight: 700, color: '#6D28D9' }}>₹</span></div>
-              <input id="elp-amount" type="number" inputMode="numeric" min={0} placeholder="e.g. 800000" value={amountText} onChange={(e) => setAmountText(e.target.value)} style={inputStyle} />
+          <div>
+            <label htmlFor="elp-amount" className={labelCls}>
+              LOAN AMOUNT NEEDED
+            </label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium pointer-events-none">₹</span>
+              <input id="elp-amount" type="number" inputMode="numeric" min={0} placeholder="e.g. 800000" value={amountText} onChange={(e) => setAmountText(e.target.value)} className={`${inputCls} pl-7`} />
             </div>
-            <div style={{ textAlign: 'right', fontSize: 11, color: 'rgba(42,22,6,0.45)', marginTop: 6 }}>{amountLabel}</div>
+            <div className="flex items-center justify-between gap-3 text-xs text-slate-500 mt-1">
+              <span>{ev.typicalRange}</span>
+              <span>{amountLabel}</span>
+            </div>
           </div>
 
           {/* Repayment tenure */}
           <div>
-            <label htmlFor="elp-tenure" style={{ ...label, marginBottom: 10 }}>REPAYMENT TENURE</label>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-              <div style={{ fontSize: 'clamp(26px,6vw,32px)', fontWeight: 900, color: '#6D28D9', lineHeight: 1 }}>{tenure} months</div>
-              <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.4)', fontStyle: 'italic' }}>Drag to adjust</div>
+            <label htmlFor="elp-tenure" className={labelCls}>
+              REPAYMENT TENURE
+            </label>
+            <div className="flex items-baseline justify-between mb-2">
+              <div className="text-2xl font-bold text-slate-900 tabular-nums">{tenure} months</div>
+              <div className="text-xs text-slate-500">Drag to adjust</div>
             </div>
             <input
               id="elp-tenure"
@@ -128,11 +149,13 @@ export default function EventPlanner({ eventKey }: { eventKey: LifeEventKey }) {
               step={6}
               value={tenure}
               onChange={(e) => setTenure(parseInt(e.target.value, 10) || 24)}
-              style={{ width: '100%', accentColor: '#6D28D9', height: 6, cursor: 'pointer', borderRadius: 4 }}
+              className="w-full accent-blue-600"
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 2px', marginTop: 7 }}>
+            <div className="flex justify-between mt-1">
               {TICKS.map((t) => (
-                <span key={t} style={{ fontSize: 10, color: 'rgba(42,22,6,0.35)' }}>{t}</span>
+                <span key={t} className="text-xs text-slate-500">
+                  {t}
+                </span>
               ))}
             </div>
           </div>
@@ -141,123 +164,122 @@ export default function EventPlanner({ eventKey }: { eventKey: LifeEventKey }) {
         {showResults && (
           <>
             {/* Result card */}
-            <div style={{ background: 'linear-gradient(155deg,#3B0764 0%,#4C1D95 35%,#5B21B6 65%,#7C3AED 100%)', borderRadius: 22, padding: '24px 20px 20px', marginBottom: 16, boxShadow: '0 10px 36px rgba(76,29,149,0.38)', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
-              <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.55)', letterSpacing: '1.2px', marginBottom: 14 }}>
-                {best ? 'BEST AVAILABLE RATE' : 'INDICATIVE RATE'}
+            <div className="rounded-2xl bg-slate-900 text-white p-5 sm:p-6">
+              <div className="text-center text-xs text-slate-400 uppercase tracking-wider mb-3">{best ? 'BEST AVAILABLE RATE' : 'INDICATIVE RATE'}</div>
+              <div className="text-center mb-4">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-800 px-3.5 py-1.5 text-xs font-semibold text-blue-400">
+                  <Zap className="w-3.5 h-3.5" aria-hidden /> {bestRate}% p.a. · {best ? best.name : 'Indicative'}
+                </span>
               </div>
-              <div style={{ textAlign: 'center', marginBottom: 16 }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.35)', borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 700, color: '#fff' }}>
-                  ⚡ {bestRate}% p.a. · {best ? best.name : 'Indicative'}
-                </div>
+              <div className="text-center mb-1">
+                <span className="text-4xl sm:text-5xl font-bold tabular-nums">{elpFmtINR(Math.round(bestEMI))}</span>
+                <span className="text-base text-slate-400 font-medium">/mo</span>
               </div>
-              <div style={{ textAlign: 'center', marginBottom: 4 }}>
-                <span style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(36px,9vw,52px)', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{elpFmtINR(Math.round(bestEMI))}</span>
-                <span style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>/mo</span>
-              </div>
-              <div style={{ textAlign: 'center', fontSize: 13, color: 'rgba(255,255,255,0.6)', marginBottom: 16, lineHeight: 1.5 }}>
+              <div className="text-center text-sm text-slate-400 mb-4 leading-relaxed">
                 {tenure} months · {elpFmtINR(amount)} loan · {elpFmtINR(Math.round(bestInterest))} interest
               </div>
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.15)', marginBottom: overLimit ? 14 : 0 }} />
               {overLimit && (
-                <div role="alert" style={{ background: 'rgba(234,179,8,0.18)', border: '1px solid rgba(234,179,8,0.35)', borderRadius: 12, padding: '11px 14px', fontSize: 13, color: '#FDE68A', lineHeight: 1.5 }}>
-                  ⚠️&nbsp; EMI is {Math.round((bestEMI / income) * 100)}% of your income (limit 40%) — try a longer tenure
+                <div role="alert" className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs p-3">
+                  <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden />
+                  EMI is {Math.round((bestEMI / income) * 100)}% of your income (limit 40%) — try a longer tenure
                 </div>
               )}
             </div>
 
             {/* Lender offers */}
-            <h2 style={{ fontSize: 15, fontWeight: 800, color: '#2A1606', marginBottom: 12 }}>
-              Lender offers for {elpFmtINR(amount)} over {tenure} months
-            </h2>
+            <div className="space-y-3">
+              <h2 className="text-sm font-semibold text-slate-900">
+                Lender offers for {elpFmtINR(amount)} over {tenure} months
+              </h2>
 
-            <div style={{ marginBottom: 16 }}>
               {!ready || (user && loadingOffers && !offers) ? (
-                <div style={noteCard}>Finding lender offers…</div>
+                <div className={`${noteCard} flex items-center gap-2`}>
+                  <Loader2 className="w-4 h-4 animate-spin text-blue-600" aria-hidden /> Finding lender offers…
+                </div>
               ) : !user ? (
-                <div style={noteCard}>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#1A1035', marginBottom: 6 }}>See live offers from our lending partners</div>
-                  <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.55)', lineHeight: 1.5, marginBottom: 12 }}>
-                    Create a free account to compare real rates and EMIs for this plan. No impact on your credit score.
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openAuth({ mode: 'signup' })}
-                    style={{ background: '#6D28D9', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 18px', fontSize: 13, fontWeight: 700, fontFamily: 'var(--sans)', cursor: 'pointer' }}
-                  >
+                <div className={noteCard}>
+                  <div className="text-sm font-semibold text-slate-900 mb-1">See live offers from our lending partners</div>
+                  <div className="text-xs text-slate-500 leading-relaxed mb-3">Create a free account to compare real rates and EMIs for this plan. No impact on your credit score.</div>
+                  <button type="button" onClick={() => openAuth({ mode: 'signup' })} className="btn-accent w-full sm:w-auto">
                     Sign up to see offers
                   </button>
                 </div>
               ) : offersError ? (
-                <div style={{ ...noteCard, color: '#B91C1C' }} role="alert">{offersError}</div>
+                <div className="flex items-start gap-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs p-3" role="alert">
+                  <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden />
+                  {offersError}
+                </div>
               ) : topOffers.length === 0 ? (
-                <div style={noteCard}>No lender offers match this amount and tenure right now. Try a different amount, or talk to an advisor below.</div>
+                <div className={noteCard}>No lender offers match this amount and tenure right now. Try a different amount, or talk to an advisor below.</div>
               ) : (
                 topOffers.map((offer, idx) => <OfferCard key={offer.lenderId} offer={offer} isBest={idx === 0} amount={amount} tenure={tenure} income={income} />)
               )}
             </div>
 
-            <Link
-              href="/contact"
-              style={{ display: 'block', textAlign: 'center', background: '#fff', color: '#6D28D9', border: '1.5px solid #6D28D9', borderRadius: 14, padding: '13px 16px', fontSize: 14, fontWeight: 700, textDecoration: 'none', marginBottom: 16 }}
-            >
-              Talk to an advisor about this plan →
+            <Link href="/contact" className="btn-secondary w-full" onClick={() => trackStep('life_events', 'advisor', eventKey)}>
+              Talk to an advisor about this plan <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
             </Link>
 
-            <div style={{ fontSize: 11, color: 'rgba(42,22,6,0.4)', lineHeight: 1.6, marginBottom: 20 }}>
-              Rates are indicative for 2026. Final rate depends on your income, employment type and lender policy.
-            </div>
+            <div className="text-xs text-slate-500 leading-relaxed">Rates are indicative for 2026. Final rate depends on your income, employment type and lender policy.</div>
 
             {/* Navesta perks */}
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 16, fontWeight: 800, color: '#2A1606' }}>🎁 Navesta Perks</span>
-                <span style={{ fontSize: 12, color: 'rgba(42,22,6,0.45)' }}>Exclusive benefits on loan disbursal</span>
+            <div className="space-y-3">
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <h2 className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+                  <Gift className="w-4 h-4 text-blue-600" aria-hidden /> Navesta Perks
+                </h2>
+                <span className="text-xs text-slate-500">Exclusive benefits on loan disbursal</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 10 }}>
-                <div style={{ background: '#fff', border: '2px solid #6D28D9', borderRadius: 16, padding: '16px 14px', position: 'relative' }}>
-                  <div style={{ position: 'absolute', top: -1, left: '50%', transform: 'translateX(-50%)', background: '#6D28D9', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: '0 0 8px 8px', letterSpacing: '.3px', whiteSpace: 'nowrap' }}>✦ Exclusive</div>
-                  <div style={{ marginTop: 10, fontSize: 28, marginBottom: 10 }} aria-hidden>{ev.perk1Emoji}</div>
-                  <div style={{ fontSize: 17, fontWeight: 900, color: '#1A1035', marginBottom: 6, lineHeight: 1.2 }}>{ev.perk1Val} {ev.perk1Label}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(42,22,6,0.5)', lineHeight: 1.45, marginBottom: 10 }}>{ev.perk1Desc}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: ev.perk1DotColor, flexShrink: 0 }} />
-                    <span style={{ fontSize: 11, fontWeight: 700, color: ev.perk1DotColor }}>{ev.perk1Partner}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="card-fintech border-blue-600 p-4">
+                  <span className="badge-blue mb-3">Exclusive</span>
+                  <div className="text-2xl mb-2" aria-hidden>
+                    {ev.perk1Emoji}
+                  </div>
+                  <div className="text-base font-bold text-slate-900 mb-1">
+                    {ev.perk1Val} {ev.perk1Label}
+                  </div>
+                  <div className="text-xs text-slate-500 leading-relaxed mb-3">{ev.perk1Desc}</div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ background: ev.perk1DotColor }} />
+                    <span className="text-xs font-semibold text-slate-700">{ev.perk1Partner}</span>
                   </div>
                 </div>
-                <div style={{ background: '#fff', border: '1.5px solid rgba(196,168,130,0.25)', borderRadius: 16, padding: '16px 14px' }}>
-                  <div style={{ fontSize: 28, marginBottom: 10 }} aria-hidden>💸</div>
-                  <div style={{ fontSize: 17, fontWeight: 900, color: '#1A1035', marginBottom: 6, lineHeight: 1.2 }}>1% EMI Cashback</div>
-                  <div style={{ fontSize: 11, color: 'rgba(42,22,6,0.5)', lineHeight: 1.45, marginBottom: 10 }}>On your first 3 EMIs, credited to Navesta wallet</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#2563EB', flexShrink: 0 }} />
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#2563EB' }}>Navesta</span>
+                <div className="card-fintech p-4">
+                  <Wallet className="w-6 h-6 text-blue-600 mb-2" aria-hidden />
+                  <div className="text-base font-bold text-slate-900 mb-1">1% EMI Cashback</div>
+                  <div className="text-xs text-slate-500 leading-relaxed mb-3">On your first 3 EMIs, credited to Navesta wallet</div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full shrink-0 bg-blue-600" />
+                    <span className="text-xs font-semibold text-slate-700">Navesta</span>
                   </div>
                 </div>
               </div>
-              <div style={{ fontSize: 10, color: 'rgba(42,22,6,0.35)', lineHeight: 1.55 }}>Perks are auto-credited within 48 hrs of loan disbursal. Subject to partner T&amp;Cs.</div>
+              <div className="text-xs text-slate-500 leading-relaxed">Perks are auto-credited within 48 hrs of loan disbursal. Subject to partner T&amp;Cs.</div>
             </div>
 
             {/* Smart tips */}
-            <div>
-              <h2 style={{ fontSize: 16, fontWeight: 800, color: '#2A1606', marginBottom: 14 }}>💡 Smart tips for your {ev.title.toLowerCase()}</h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="card-fintech p-5 sm:p-6">
+              <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900 mb-3">
+                <Lightbulb className="w-4 h-4 text-blue-600" aria-hidden /> Smart tips for your {ev.title.toLowerCase()}
+              </h2>
+              <ul className="space-y-3">
                 {ev.tips.map((tip) => (
-                  <div key={tip} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                    <span style={{ color: '#6D28D9', fontSize: 13, flexShrink: 0, marginTop: 2 }} aria-hidden>◆</span>
-                    <span style={{ fontSize: 13, color: 'rgba(42,22,6,0.7)', lineHeight: 1.6 }}>{tip}</span>
-                  </div>
+                  <li key={tip} className="flex gap-2.5 items-start">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" aria-hidden />
+                    <span className="text-sm text-slate-600 leading-relaxed">{tip}</span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }
 
-const noteCard: React.CSSProperties = { background: '#fff', borderRadius: 18, padding: 18, border: '1.5px solid rgba(196,168,130,0.25)', boxShadow: '0 2px 10px rgba(42,22,6,0.05)', fontSize: 13, color: 'rgba(42,22,6,0.6)', lineHeight: 1.5 };
+const noteCard = 'card-fintech p-5 text-sm text-slate-600 leading-relaxed';
 
 function OfferCard({ offer, isBest, amount, tenure, income }: { offer: Offer; isBest: boolean; amount: number; tenure: number; income: number }) {
   const emi = pmt(amount, offer.offeredRatePercent, tenure);
@@ -267,35 +289,31 @@ function OfferCard({ offer, isBest, amount, tenure, income }: { offer: Offer; is
   const tagline = `Disbursal in ${days} day${days === '1' ? '' : 's'} · ${offer.processingFeeRupees > 0 ? `${fmtINR(offer.processingFeeRupees)} processing` : 'No processing fee'}`;
 
   return (
-    <div style={{ background: '#fff', borderRadius: 18, padding: 18, marginBottom: 12, border: isBest ? '2px solid #6D28D9' : '1.5px solid rgba(196,168,130,0.25)', boxShadow: '0 2px 10px rgba(42,22,6,0.05)' }}>
-      {isBest && (
-        <div style={{ marginBottom: 10 }}>
-          <span style={{ background: 'rgba(109,40,217,0.1)', color: '#5B21B6', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 8 }}>⭐ Best rate</span>
-        </div>
-      )}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: exceeds || offer.meetsMinimumScore === false ? 10 : 0 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9, minWidth: 0 }}>
-          <div style={{ width: 10, height: 10, borderRadius: '50%', background: offer.brandColor || '#2563EB', flexShrink: 0, marginTop: 4 }} />
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: '#1A1035', marginBottom: 2 }}>{offer.name}</div>
-            <div style={{ fontSize: 11, color: 'rgba(42,22,6,0.4)' }}>{tagline}</div>
+    <div className={`card-fintech p-5 space-y-3 ${isBest ? 'border-blue-600' : ''}`}>
+      {isBest && <span className="badge-emerald">Best rate</span>}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-2.5 min-w-0">
+          <div className="w-2.5 h-2.5 rounded-full shrink-0 mt-1.5" style={{ background: offer.brandColor || '#2563EB' }} />
+          <div className="min-w-0">
+            <div className="font-semibold text-slate-900">{offer.name}</div>
+            <div className="text-xs text-slate-500">{tagline}</div>
           </div>
         </div>
-        <div style={{ textAlign: 'right', flexShrink: 0, paddingLeft: 10 }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: '#5B21B6' }}>{offer.offeredRatePercent}% p.a.</div>
-          <div style={{ fontSize: 20, fontWeight: 900, color: '#1A1035', lineHeight: 1.1 }}>
+        <div className="text-right shrink-0">
+          <div className="text-sm font-semibold text-blue-600">{offer.offeredRatePercent}% p.a.</div>
+          <div className="text-xl font-bold text-slate-900 tabular-nums leading-tight">
             {elpFmtINR(Math.round(emi))}
-            <span style={{ fontSize: 11, fontWeight: 500, color: 'rgba(42,22,6,0.5)' }}>/mo</span>
+            <span className="text-xs font-medium text-slate-500">/mo</span>
           </div>
-          <div style={{ fontSize: 11, color: 'rgba(42,22,6,0.45)' }}>+{elpFmtINR(Math.round(totInt))} interest</div>
+          <div className="text-xs text-slate-500">+{elpFmtINR(Math.round(totInt))} interest</div>
         </div>
       </div>
       {exceeds && (
-        <div style={{ background: '#FEF3C7', borderRadius: 10, padding: '8px 12px', fontSize: 11, color: '#92400E', display: 'flex', alignItems: 'center', gap: 6 }}>⚠️ EMI exceeds 40% of your income</div>
+        <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs p-3">
+          <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden /> EMI exceeds 40% of your income
+        </div>
       )}
-      {offer.meetsMinimumScore === false && (
-        <div style={{ marginTop: exceeds ? 8 : 0, fontSize: 11, color: 'rgba(42,22,6,0.5)' }}>Usually needs a credit score of {offer.minCreditScore}+</div>
-      )}
+      {offer.meetsMinimumScore === false && <div className="text-xs text-slate-500">Usually needs a credit score of {offer.minCreditScore}+</div>}
     </div>
   );
 }

@@ -1,1053 +1,915 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { useState } from 'react';
 import Navbar from '@/components/Navbar';
-import { useSession } from '@/components/session/SessionProvider';
-import { api } from '@/lib/api';
-
-/**
- * Landing page — design prototype `#land` (Navesta_Website_22Sep26.html,
- * lines ~1096–1995) plus the post-login greeting `#land-post-home`.
- */
-
-type HoverEl = React.MouseEvent<HTMLElement>;
-function hover(on: React.CSSProperties, off: React.CSSProperties) {
-  return {
-    onMouseOver: (e: HoverEl) => Object.assign(e.currentTarget.style, on),
-    onMouseOut: (e: HoverEl) => Object.assign(e.currentTarget.style, off),
-  };
-}
-
-const ArrowSmall = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
-    <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const Chevron = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden>
-    <path d="M6 9l6 6 6-6" />
-  </svg>
-);
-
-const StepConnector = ({ style }: { style: React.CSSProperties }) => (
-  <div className="step-connector" style={style} aria-hidden>
-    <svg width="100%" height="24" viewBox="0 0 80 24">
-      <line x1="4" y1="12" x2="68" y2="12" stroke="#D4760C" strokeWidth="1.5" strokeDasharray="4 3" />
-      <polygon points="68,7 78,12 68,17" fill="#D4760C" />
-    </svg>
-  </div>
-);
-
-const TESTIMONIALS = [
-  { text: '"I had 4 loans and felt completely lost. Navesta showed me the avalanche method and I\'m saving ₹8,400/month in interest. Cleared my personal loan 14 months early!"', initials: 'RS', bg: 'linear-gradient(135deg,#C86010,#7A3200)', name: 'Rahul Sharma', role: '✓ Saved ₹8,400/mo · Pune' },
-  { text: '"Planning our wedding while managing a home loan seemed impossible. Navesta helped us set aside ₹15,000 monthly without touching our EMIs. Got married debt-free!"', initials: 'PM', bg: 'linear-gradient(135deg,#8B5CF6,#6D28D9)', name: 'Priya Menon', role: '✓ Debt-free wedding · Kochi' },
-  { text: '"The CIBIL advisor told me exactly what was hurting my score. Fixed my credit card usage, score went from 680 to 762 in 5 months. Refinanced my home loan at 8.4%!"', initials: 'AP', bg: 'linear-gradient(135deg,#0D9488,#065F46)', name: 'Arjun Patel', role: '✓ CIBIL 680→762 · Ahmedabad' },
-  { text: '"Navesta\'s AI suggested a balance transfer that saved me ₹1.2 lakh over 3 years. The whole process took 10 minutes. This app is genuinely life-changing."', initials: 'SI', bg: 'linear-gradient(135deg,#1099CF,#075985)', name: 'Sneha Iyer', role: '✓ Saved ₹1.2L · Bengaluru' },
-  { text: '"My son\'s engineering admission was coming up and I had no savings plan. Navesta\'s Education Planner showed me exactly how to build ₹8 lakhs in 18 months. We managed it without a single loan."', initials: 'VS', bg: 'linear-gradient(135deg,#F09020,#C96010)', name: 'Venkat Subramaniam', role: '✓ Built ₹8L fund · Chennai' },
-  { text: '"I was paying ₹42,000/month in EMIs across 6 loans. In 8 months with Navesta, I consolidated to 3 loans and cut my monthly outflow by ₹11,000. Life-changing!"', initials: 'MK', bg: 'linear-gradient(135deg,#0D9488,#065F46)', name: 'Meena Krishnan', role: '✓ EMI cut ₹11K/mo · Hyderabad' },
-  { text: '"We used Navesta to plan our Europe trip while still paying our car EMI. The AI budget split was spot-on — 12 days abroad and we didn\'t miss a single EMI payment. Incredible!"', initials: 'KR', bg: 'linear-gradient(135deg,#8B5CF6,#5B21B6)', name: 'Karan & Riya Shah', role: '✓ Europe trip, zero EMI miss · Mumbai' },
-  { text: '"After my startup failed I had ₹18 lakhs in debt across credit cards and personal loans. Navesta gave me a 26-month roadmap. I\'m on month 19 and already ₹11 lakhs cleared. Hope restored."', initials: 'DP', bg: 'linear-gradient(135deg,#DC2626,#991B1B)', name: 'Dev Anand Pillai', role: '✓ ₹11L cleared in 19mo · Kochi' },
-];
-
-const FAQS = [
-  { q: 'Is Navesta completely free to use?', a: 'Yes — 100% free, always. We never charge for the debt planner, EMI tracker, or life event calculator. Our model is referral-based: if you choose to transfer a loan through a partner bank, we earn a small fee from them, not from you. No hidden costs, no premium tier.' },
-  { q: 'Is my financial data safe? Who can see it?', a: 'Your data is encrypted end-to-end using 256-bit SSL and stored on ISO 27001 certified infrastructure in India. Only you can see your financial details. We never sell your data to third parties. When you upload a credit card or loan statement, it is processed locally in your browser — we see only the extracted numbers, not the PDF itself.' },
-  { q: 'Is Navesta RBI-compliant? Are you an NBFC?', a: "Yes. Navesta Financial Technologies Pvt. Ltd. is registered as an NBFC with the Reserve Bank of India. We operate under the RBI's Digital Lending Guidelines (2022) and the Account Aggregator framework for any data sharing you opt into. You are always in control of what you share and when." },
-  { q: 'Will using Navesta affect my CIBIL score?', a: 'No. Signing up, planning your debt, or getting a payoff estimate does not trigger any credit enquiry. A hard credit pull happens only if you choose to apply for a balance transfer or a new loan through one of our partner banks — and we always tell you before that happens.' },
-  { q: 'What types of loans and cards does Navesta support?', a: 'We support all major Indian debt instruments: credit cards (all banks), personal loans, home loans, car loans, education loans, business loans, and buy-now-pay-later balances. You can add them manually or upload your statement PDF for automatic extraction — supported for all major Indian bank statement formats.' },
-  { q: 'How does the Avalanche planner actually save me money?', a: 'The debt avalanche method directs any extra money you have each month to the loan charging the highest interest rate first, while paying minimums on everything else. Once that loan is paid off, the freed EMI rolls into the next-highest-rate debt. Navesta automates this calculation across all your debts and shows you the exact month-by-month roadmap — typically saving users ₹1–3 lakhs in interest over their payoff journey.' },
-];
-
-const SOCIAL = [
-  { title: 'LinkedIn', size: 18, d: 'M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z' },
-  { title: 'Instagram', size: 18, d: 'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z' },
-  { title: 'Facebook', size: 18, d: 'M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z' },
-  { title: 'YouTube', size: 18, d: 'M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z' },
-  { title: 'Twitter / X', size: 17, d: 'M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.261 5.631 5.903-5.631zm-1.161 17.52h1.833L7.084 4.126H5.117z' },
-];
-
-const FOOTER_SOLUTIONS: { label: string; href?: string }[] = [
-  { label: 'EMI Tracker', href: '/calculator' },
-  { label: 'Avalanche Planner', href: '/calculator' },
-  { label: 'Balance Transfer', href: '/balance-transfer' },
-  { label: 'Top-up Loan' },
-  { label: 'CIBIL Advisor' },
-  { label: 'Autopay Manager' },
-];
-const FOOTER_LIFE = ['Wedding', 'Travel / Holiday', 'Home Renovation', 'Home Shifting', 'Anniversary / Party', 'Education', 'Tax Payment', 'Medical'];
-const FOOTER_COMPANY: { label: string; href?: string }[] = [
-  { label: 'About Us', href: '/about' },
-  { label: 'Careers' },
-  { label: 'Blog', href: '/blog' },
-  { label: 'Press' },
-  { label: 'Privacy Policy' },
-  { label: 'Terms of Service' },
-];
-
-const plainFooterItem: React.CSSProperties = { fontSize: 13.5, color: 'rgba(255,255,255,0.6)' };
-
-/* ── EMI savings calculator (design calcInterest / calcFmt / calcUpdate) ── */
-function calcInterest(bal: number, rateAnnual: number, months: number) {
-  const r = rateAnnual / (12 * 100);
-  if (r === 0) return 0;
-  const emi = (bal * r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
-  return emi * months - bal;
-}
-function calcFmt(n: number) {
-  if (n >= 10000000) return '₹' + (n / 10000000).toFixed(1) + ' Cr';
-  if (n >= 100000) return '₹' + (n / 100000).toFixed(1) + ' L';
-  return '₹' + Math.round(n).toLocaleString('en-IN');
-}
-const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
-const pct = (v: number, min: number, max: number) => ({ '--pct': (((clamp(v, min, max) - min) / (max - min)) * 100).toFixed(1) + '%' }) as React.CSSProperties;
-
-/* ── Animated counter (design "STAT COUNTER ANIMATION") ── */
-function CountUp({ target, prefix = '', suffix = '', comma = false, initial, run }: { target: number; prefix?: string; suffix?: string; comma?: boolean; initial: string; run: boolean }) {
-  const [text, setText] = useState(initial);
-  useEffect(() => {
-    if (!run) return;
-    let raf = 0;
-    let start: number | null = null;
-    const duration = 1600;
-    const step = (ts: number) => {
-      if (start === null) start = ts;
-      const progress = Math.min((ts - start) / duration, 1);
-      const current = target * (1 - Math.pow(1 - progress, 3));
-      const display = comma ? Math.round(current).toLocaleString('en-IN') : target % 1 !== 0 ? current.toFixed(1) : Math.round(current).toString();
-      setText(prefix + display + suffix);
-      if (progress < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [run, target, prefix, suffix, comma]);
-  return <>{text}</>;
-}
+import AuthModal from '@/components/AuthModal';
+import BeforeAfterSlider from '@/components/BeforeAfterSlider';
+import PartnerShowcase from '@/components/PartnerShowcase';
+import { LifeEventsStrip, QuickLoanApply, WelcomeBack } from '@/components/home/HomeExtras';
+import {
+  CreditCard,
+  Layers,
+  ShieldCheck,
+  ArrowRight,
+  CheckCircle2,
+  Lock,
+  ChevronDown,
+  Building2,
+  FileCheck2,
+  Sparkles,
+  TrendingDown,
+  Calendar,
+  Landmark,
+  Zap,
+  BarChart3,
+  Check,
+  X as CloseIcon,
+  Star,
+  Quote,
+} from 'lucide-react';
 
 export default function Home() {
-  const router = useRouter();
-  const { user, openAuth, requireAuth } = useSession();
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  /* Scroll reveal (design IntersectionObserver adds .visible) */
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-    const els = Array.from(root.querySelectorAll<HTMLElement>('.reveal:not(.visible)'));
-    if (typeof IntersectionObserver === 'undefined') {
-      els.forEach((el) => el.classList.add('visible'));
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-            io.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' },
-    );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, [user]);
-
-  /* Trusted counters start once the section is on screen */
-  const trustedRef = useRef<HTMLElement>(null);
-  const [countersRun, setCountersRun] = useState(false);
-  useEffect(() => {
-    const el = trustedRef.current;
-    if (!el || typeof IntersectionObserver === 'undefined') return;
-    const io = new IntersectionObserver((entries) => {
-      if (entries.some((e) => e.isIntersecting)) {
-        setCountersRun(true);
-        io.disconnect();
-      }
-    });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
-  /* Video placeholder */
-  const [videoClicked, setVideoClicked] = useState(false);
-
-  /* Testimonials carousel */
-  const testiRef = useRef<HTMLDivElement>(null);
-  const [testiIdx, setTestiIdx] = useState(0);
-  const CARD_W = 340;
-  const onTestiScroll = () => {
-    const el = testiRef.current;
-    if (el) setTestiIdx(Math.min(Math.round(el.scrollLeft / CARD_W), TESTIMONIALS.length - 1));
-  };
-  const scrollTesti = (dir: number) => testiRef.current?.scrollBy({ left: dir * CARD_W, behavior: 'smooth' });
-
-  /* FAQ */
+  const [authOpen, setAuthOpen] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
-  /* Personal loan quick apply */
-  const [loanPhone, setLoanPhone] = useState('');
-  const [loanConsent, setLoanConsent] = useState(false);
-  const [loanMsg, setLoanMsg] = useState<{ text: string; color: string } | null>(null);
-  const [loanBusy, setLoanBusy] = useState(false);
-  const handleLoanApply = async () => {
-    const phone = loanPhone.trim();
-    if (!phone || phone.length < 10) {
-      setLoanMsg({ color: '#F87171', text: '⚠ Please enter a valid 10-digit mobile number.' });
-      return;
-    }
-    if (!loanConsent) {
-      setLoanMsg({ color: '#F87171', text: '⚠ Please agree to the Terms & Conditions to proceed.' });
-      return;
-    }
-    setLoanBusy(true);
-    setLoanMsg(null);
-    try {
-      // Callback lead: the phone number is enough. Signed-in visitors also send their own
-      // name and real email (phone-only accounts have a placeholder email, which is skipped).
-      const realEmail = user?.email && !user.email.endsWith('@phone.navesta.in') ? user.email : undefined;
-      await api.post('/inquiries', {
-        name: user?.name?.trim() || undefined,
-        email: realEmail,
-        phone: '+91' + phone,
-        inquiryType: 'Personal Loan Callback',
-        message: `Personal loan quick apply from the home page. Please call back on +91 ${phone}.`,
-      });
-      setLoanMsg({ color: '#34D399', text: '✓ Great! Our advisor will call you within 10 minutes.' });
-      setLoanPhone('');
-      setLoanConsent(false);
-    } catch (err) {
-      setLoanMsg({ color: '#F87171', text: '⚠ ' + (err instanceof Error ? err.message : 'Something went wrong. Please try again.') });
-    } finally {
-      setLoanBusy(false);
+  const openAudit = (type: 'card' | 'loan' | 'both' = 'card') => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('navesta:open-audit', { detail: { debtType: type } }));
     }
   };
 
-  /* EMI savings calculator */
-  const [calcBal, setCalcBal] = useState('500000');
-  const [calcRate, setCalcRate] = useState('14.5');
-  const [calcTenure, setCalcTenure] = useState('24');
-  const bal = clamp(parseFloat(calcBal) || 500000, 1, 5000000);
-  const rate = clamp(parseFloat(calcRate) || 14.5, 0, 36);
-  const months = clamp(parseInt(calcTenure, 10) || 24, 1, 120);
-  const currentInterest = calcInterest(bal, rate, months);
-  const newInterest = calcInterest(bal, Math.max(8.5, rate - 3.5), months);
-  const saved = currentInterest - newInterest;
+  // Takeover Simulator State
+  const [loanAmt, setLoanAmt] = useState(600000);
+  const [currentRate, setCurrentRate] = useState(38); // typical revolving CC APR
+  const [tenureMonths, setTenureMonths] = useState(36);
 
-  /* Sticky mobile download bar */
-  const [dlDismissed, setDlDismissed] = useState(false);
-  const appComingSoon = () => toast.info('The Navesta mobile app is coming soon. Everything works right here on the web in the meantime.');
+  // Mathematical Amortization for Current Debt
+  const currentMonthlyRate = currentRate / 100 / 12;
+  const currentEMI = Math.round(
+    (loanAmt * currentMonthlyRate * Math.pow(1 + currentMonthlyRate, tenureMonths)) /
+      (Math.pow(1 + currentMonthlyRate, tenureMonths) - 1)
+  );
+  const totalCurrentPayment = currentEMI * tenureMonths;
+  const totalCurrentInterest = totalCurrentPayment - loanAmt;
 
-  const signUpOr = (intent: 'ai-feat' | 'emi-calc' | null) => {
-    if (user) router.push('/debt-management');
-    else openAuth({ mode: 'signup', intent });
-  };
+  // Mathematical Amortization for Navesta Partner Takeover (10.25% benchmark)
+  const takeoverRate = 10.25;
+  const takeoverMonthlyRate = takeoverRate / 100 / 12;
+  const takeoverEMI = Math.round(
+    (loanAmt * takeoverMonthlyRate * Math.pow(1 + takeoverMonthlyRate, tenureMonths)) /
+      (Math.pow(1 + takeoverMonthlyRate, tenureMonths) - 1)
+  );
+  const totalTakeoverPayment = takeoverEMI * tenureMonths;
+  const totalTakeoverInterest = totalTakeoverPayment - loanAmt;
 
-  const firstName = user?.name?.trim().split(/\s+/)[0] || 'there';
-  const storeBtn: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 10, padding: '12px 20px', background: '#2A1606', borderRadius: 12, border: 'none', cursor: 'pointer', color: '#fff', transition: 'all .2s', fontFamily: 'var(--sans)', textAlign: 'left' };
-  const partnerCard: React.CSSProperties = { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, background: '#fff', border: '1px solid rgba(196,140,80,0.2)', borderRadius: 18, padding: '20px 28px', boxShadow: '0 2px 10px rgba(0,0,0,0.04)', transition: 'box-shadow .2s,transform .2s', cursor: 'default' };
-  const trustItem: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, fontWeight: 600, color: '#3A2310', fontFamily: 'var(--sans)' };
-  const calcRangeLbl: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#B09070', fontFamily: 'var(--sans)', marginTop: 4 };
+  const monthlySavings = Math.max(0, currentEMI - takeoverEMI);
+  const lifetimeInterestSavings = Math.max(0, totalCurrentInterest - totalTakeoverInterest);
+
+  const faqs = [
+    {
+      q: 'What exactly does Navesta do?',
+      a: 'Navesta is an AI-driven debt advisory and bank takeover platform. We help individuals trapped in high-interest debt (such as credit card balances at 24%–42% APR or multiple high-EMI personal loans) analyze their debt portfolio, calculate their exact calendar freedom date, and refinance through our RBI-regulated partner banks at institutional rates starting from 10.25% p.a.',
+    },
+    {
+      q: 'How does a Balance Transfer or Loan Takeover work?',
+      a: 'A Balance Transfer replaces toxic, high-cost obligations with an institutional debt facility. Our partner bank disburses funds directly to pay off your existing credit card issuers and personal loan lenders, consolidating your balances into a single, significantly lower monthly EMI.',
+    },
+    {
+      q: 'Will checking my options affect my CIBIL credit score?',
+      a: 'No, absolutely not. Navesta uses a soft credit inquiry to diagnostic your debt portfolio. Soft inquiries do not impact your CIBIL score. A formal hard inquiry is only initiated if and when you explicitly choose to apply for a bank takeover facility.',
+    },
+    {
+      q: 'Is Navesta really 100% free for borrowers?',
+      a: 'Yes, 100% free. Borrowers never pay advisory fees, subscription charges, or hidden platform fees. Our revenue comes directly from partner financial institutions as a standard origination fee when a takeover loan is disbursed.',
+    },
+    {
+      q: 'What is the difference between Avalanche and Snowball payoff strategies?',
+      a: 'The Debt Avalanche method prioritizes paying accounts with the highest annual interest rate first, mathematically minimizing total interest paid. The Debt Snowball method targets the smallest balance first to build early psychological momentum. Nava AI calculates both so you can choose the optimal fit for your cash flow.',
+    },
+    {
+      q: 'Are your lending partners RBI regulated?',
+      a: 'Yes. All refinancing offers originate exclusively from Reserve Bank of India (RBI) regulated Scheduled Commercial Banks and Systemically Important NBFCs including HDFC Bank, ICICI Bank, State Bank of India, Axis Bank, Tata Capital, and Bajaj Finserv.',
+    },
+    {
+      q: 'How is borrower personal data protected under the DPDP Act?',
+      a: 'Navesta complies with the Digital Personal Data Protection (DPDP) Act. We use 256-bit AES encryption at rest and TLS 1.3 in transit. We never sell customer records to telemarketers or third-party lead brokers.',
+    },
+  ];
+
+  const partners = [
+    { name: 'HDFC Bank', type: 'Scheduled Bank', rate: 'From 10.25%' },
+    { name: 'ICICI Bank', type: 'Scheduled Bank', rate: 'From 10.50%' },
+    { name: 'State Bank of India', type: 'Public Sector Bank', rate: 'From 9.95%' },
+    { name: 'Axis Bank', type: 'Scheduled Bank', rate: 'From 10.49%' },
+    { name: 'Tata Capital', type: 'Systemically Important NBFC', rate: 'From 11.25%' },
+    { name: 'Bajaj Finserv', type: 'NBFC', rate: 'From 11.50%' },
+  ];
+
+  const testimonials = [
+    {
+      name: 'Rahul Sharma',
+      city: 'Pune',
+      role: 'Software Engineer',
+      saved: 'Saved ₹8,400/mo',
+      stars: 5,
+      story:
+        'I had 4 separate personal loans and 2 credit cards. Navesta showed me the avalanche method and arranged a direct balance takeover. I saved ₹8,400 per month in interest and cleared my personal loan 14 months early!',
+    },
+    {
+      name: 'Sneha Iyer',
+      city: 'Bengaluru',
+      role: 'Product Manager',
+      saved: 'Saved ₹1.2 Lakhs',
+      stars: 5,
+      story:
+        'My credit card minimum due was eating ₹22,000 every month without touching the principal. Navesta’s takeover shifted the entire balance to a 10.5% bank facility. The process took 10 minutes and saved me ₹1.2L.',
+    },
+    {
+      name: 'Arjun Patel',
+      city: 'Ahmedabad',
+      role: 'Business Owner',
+      saved: 'CIBIL 680 → 762',
+      stars: 5,
+      story:
+        'The CIBIL Optimizer pinpointed the exact credit utilization ratios hurting my rating. Fixed them in 5 months, saw my score jump by 82 points, and refinanced my commercial loan at an 8.4% benchmark rate.',
+    },
+    {
+      name: 'Meena Krishnan',
+      city: 'Hyderabad',
+      role: 'Marketing Lead',
+      saved: 'EMI Cut by ₹11K/mo',
+      stars: 5,
+      story:
+        'I was juggling ₹42,000/month in EMIs across 6 different lenders. Navesta consolidated them into a single, lower EMI and cut my monthly outflow by ₹11,000. It gave my family breathing room.',
+    },
+    {
+      name: 'Priya Menon',
+      city: 'Kochi',
+      role: 'Healthcare Professional',
+      saved: 'Debt-free Wedding',
+      stars: 5,
+      story:
+        'Planning our wedding while carrying an existing car loan seemed impossible. Navesta helped us set aside ₹15,000 monthly without missing an EMI. We got married completely debt-free!',
+    },
+    {
+      name: 'Dev Anand Pillai',
+      city: 'Kochi',
+      role: 'Entrepreneur',
+      saved: '₹11L Cleared in 19 Mo',
+      stars: 5,
+      story:
+        'Carrying ₹18 Lakhs across cards and loans felt overwhelming. Navesta gave me a structured 26-month roadmap. I am on month 19 and already cleared ₹11 Lakhs. Hope restored.',
+    },
+  ];
+
+  const pressLogos = [
+    { name: 'Economic Times', tag: 'ET' },
+    { name: 'Mint', tag: 'MINT' },
+    { name: 'Inc42', tag: 'INC42' },
+    { name: 'YourStory', tag: 'YS' },
+    { name: 'Business Standard', tag: 'BS' },
+    { name: 'CNBC-TV18', tag: 'CNBC' },
+  ];
 
   return (
-    <>
-      <Navbar />
-      {/* The design nav is fixed and overlays the first section; pull content up under it */}
-      <div className="nv" id="land" ref={rootRef} style={{ marginTop: -84 }}>
-        {/* ═══ POST-LOGIN HOME (#land-post-home) ═══ */}
-        {user && (
-          <section id="land-post-home" className="active" style={{ minHeight: 'auto', paddingBottom: 40 }}>
-            <div className="lph-greeting">
-              <div className="lph-name">Hello, {firstName}!</div>
-              <div style={{ marginTop: 16, display: 'flex', justifyContent: 'center' }}>
-                <div className="l-ai-badge" style={{ marginBottom: 0 }}>
-                  <span>⚡</span> Powered by AI
-                </div>
-              </div>
-            </div>
-            <div className="lph-cards">
-              <div className="lph-card debt-card" onClick={() => router.push('/debt-management')}>
-                <div className="lph-card-glow" />
-                <div className="lph-card-accent" />
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-                  <span style={{ fontSize: 48, lineHeight: 1 }} aria-hidden>💸</span>
-                  <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, background: '#22C55E', color: '#fff', padding: '4px 10px', borderRadius: 20, fontFamily: 'var(--sans)' }}>LIVE</span>
-                </div>
-                <div className="lph-card-label">Debt Management</div>
-                <div className="lph-card-title">Escape the debt trap</div>
-                <div className="lph-card-desc">See the real cost of paying only the minimum. Get AI-ranked fixes and a clear, step-by-step path to financial freedom — faster than you ever imagined.</div>
-                <button
-                  className="lph-card-cta"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push('/debt-management');
-                  }}
-                >
-                  Start Debt Journey →
-                </button>
-              </div>
-              <div className="lph-card life-card" onClick={() => router.push('/life-events')}>
-                <div className="lph-card-glow" />
-                <div className="lph-card-accent" />
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-                  <span style={{ fontSize: 48, lineHeight: 1 }} aria-hidden>🌟</span>
-                  <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, background: '#22C55E', color: '#fff', padding: '4px 10px', borderRadius: 20, fontFamily: 'var(--sans)' }}>LIVE</span>
-                </div>
-                <div className="lph-card-label">Life Events Planner</div>
-                <div className="lph-card-title">Big moments, planned early</div>
-                <div className="lph-card-desc">Wedding, travel, education and many more — plan and save for every milestone before it arrives, so you never have to compromise on what matters most.</div>
-                <button
-                  className="lph-card-cta"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push('/life-events');
-                  }}
-                >
-                  Plan Life Events →
-                </button>
-              </div>
-            </div>
-          </section>
-        )}
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
+      <Navbar onOpenAuth={() => setAuthOpen(true)} />
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
 
-        {/* ═══ HERO ═══ */}
-        <section className="l-hero">
-          <div className="hero-bg-deco" aria-hidden>
-            <div className="hero-bg-deco-ring" style={{ width: 600, height: 600, top: -200, right: -100 }} />
-            <div className="hero-bg-deco-ring" style={{ width: 400, height: 400, bottom: -150, left: -80, borderColor: 'rgba(201,96,16,0.05)' }} />
-          </div>
+      {/* ═══════════════════════════════════════════════════════════════
+          HERO SECTION — THE EMOTIONAL & PRACTICAL HOOK
+          (Blending previous site's clear 3-path selector with modern fintech styling)
+      ═══════════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden pt-10 pb-16 lg:pt-14 lg:pb-24 bg-white border-b border-slate-200/90">
+        {/* Subtle high-trust background pattern */}
+        <div className="absolute inset-0 bg-grid-slate pointer-events-none opacity-50" />
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-amber-50/50 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="hero-left">
-            <div className="hero-badge">
-              <span className="hero-badge-dot" />
-              Debt Management
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Hero Header */}
+          <div className="text-center max-w-3xl mx-auto space-y-4 px-1">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200/80 shadow-subtle max-w-full truncate">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+              <span className="truncate">AI DEBT ADVISORY &amp; INSTITUTIONAL BANK TAKEOVERS</span>
             </div>
 
-            <h1 className="hero-h1-tp">
-              Struggling With Debt?
-              <br />
-              <em>Here&apos;s Your Way Out.</em>
+            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-950 leading-[1.16]">
+              Struggling With Debt?{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 block sm:inline mt-1 sm:mt-0">
+                Here&apos;s Your Way Out.
+              </span>
             </h1>
 
-            <p className="hero-sub-tp">Being debt-free isn&apos;t a dream — it&apos;s a date on the calendar. Navesta finds yours in a few minutes. No card needed, no catch.</p>
-
-            <div className="hero-paths" id="journeys">
-              <div className="hero-path-card hero-path-cc">
-                <span className="hpc-stat">24–36% APR</span>
-                <div className="hpc-inner">
-                  <div className="hpc-icon-wrap"><span className="hpc-icon" aria-hidden>💳</span></div>
-                  <div className="hpc-label">Credit Card Debt</div>
-                  <div className="hpc-title">Can&apos;t Clear Your Card Balance?</div>
-                  <p className="hpc-pain">Minimum payments keep the bank happy — but you could pay 2–3× what you owe. We show you the exact steps to break free.</p>
-                  <button className="hpc-cta" onClick={() => requireAuth('debt-cc', () => router.push('/journey/credit-card'))}>
-                    Show Me the Way Out
-                    <ArrowSmall />
-                  </button>
-                </div>
-              </div>
-
-              <div className="hero-path-card hero-path-loan">
-                <span className="hpc-stat">Loan EMIs</span>
-                <div className="hpc-inner">
-                  <div className="hpc-icon-wrap"><span className="hpc-icon" aria-hidden>🏦</span></div>
-                  <div className="hpc-label">Loan &amp; EMI Debt</div>
-                  <div className="hpc-title">EMIs Draining Your Salary?</div>
-                  <p className="hpc-pain">Personal Loan EMIs leaving nothing by the 15th? We show you how to clear it with low burden of EMI — and the exact month you&apos;ll be debt-free.</p>
-                  <button className="hpc-cta" onClick={() => requireAuth('debt-loan', () => router.push('/journey/loan'))}>
-                    Show Me My Freedom Date
-                    <ArrowSmall />
-                  </button>
-                </div>
-              </div>
-
-              <div className="hero-path-card hero-path-consolidate">
-                <span className="hpc-stat">All Debts</span>
-                <div className="hpc-inner">
-                  <div className="hpc-icon-wrap"><span className="hpc-icon" aria-hidden>🔗</span></div>
-                  <div className="hpc-label">Debt Consolidation</div>
-                  <div className="hpc-title">Too Many EMIs? Roll Them Into One.</div>
-                  <p className="hpc-pain">Credit cards, personal loans — juggling multiple lenders is costly. One consolidation loan cuts your rate to a single, lower EMI.</p>
-                  <button className="hpc-cta" onClick={() => requireAuth('debt-consolidation', () => router.push('/journey/multiple'))}>
-                    Find My Consolidation Rate
-                    <ArrowSmall />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="hero-stats">
-              <div className="hero-stat">
-                <div className="hero-stat-n">₹480 Cr+</div>
-                <div className="hero-stat-l">Debt Managed</div>
-              </div>
-              <div className="hero-stat-sep" />
-              <div className="hero-stat">
-                <div className="hero-stat-n">2.4 L+</div>
-                <div className="hero-stat-l">Users</div>
-              </div>
-              <div className="hero-stat-sep" />
-              <div className="hero-stat">
-                <div className="hero-stat-n">₹12K</div>
-                <div className="hero-stat-l">Avg Saved/Mo</div>
-              </div>
-              <div className="hero-stat-sep" />
-              <div className="hero-stat">
-                <div className="hero-stat-n">4.8 ★</div>
-                <div className="hero-stat-l">App Rating</div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap', marginTop: 16 }}>
-              <div style={trustItem}><span style={{ fontSize: 15 }} aria-hidden>🔒</span> 256-bit SSL Encryption</div>
-              <div style={trustItem}><span style={{ fontSize: 15 }} aria-hidden>🛡️</span> ISO 27001 Certified</div>
-              <div style={trustItem}><span style={{ fontSize: 15 }} aria-hidden>✅</span> No Credit Score Impact</div>
-              <div style={trustItem}><span style={{ fontSize: 15 }} aria-hidden>🎁</span> Free · Always</div>
-            </div>
-          </div>
-
-          <div className="hero-phone-wrap">
-            <div className="hero-img-card">
-              <Image src="/design/hero.jpg" alt="Indian couple happily reviewing their debt-free plan on Navesta" className="hero-img" fill priority sizes="(max-width: 700px) 0px, 50vw" />
-              <div className="hero-img-caption">
-                <span className="hero-img-cap-text">₹1.38 L saved · Debt-free Aug 2027</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ═══ PRESS ═══ */}
-        <section className="l-press">
-          <div className="l-press-inner">
-            <div className="l-press-label">As Seen In</div>
-            <div className="l-press-logos">
-              <div className="press-logo">Economic Times <span>ET</span></div>
-              <div className="press-logo">Mint</div>
-              <div className="press-logo">Inc42</div>
-              <div className="press-logo">YourStory</div>
-              <div className="press-logo">Business Standard</div>
-              <div className="press-logo">CNBC-TV18</div>
-            </div>
-          </div>
-        </section>
-
-        {/* ═══ HOW IT WORKS ═══ */}
-        <section className="l-how reveal" id="how">
-          <div className="l-sec-label">Simple Process</div>
-          <h2 className="l-sec-h">Debt-Free in 4 Steps</h2>
-          <div className="steps-grid" style={{ position: 'relative' }}>
-            <StepConnector style={{ left: 'calc(12.5% + 0px)', width: 'calc(25% - 0px)', top: 26 }} />
-            <StepConnector style={{ left: 'calc(37.5%)', width: 'calc(25%)', top: 26 }} />
-            <StepConnector style={{ left: 'calc(62.5%)', width: 'calc(25%)', top: 26 }} />
-            <div className="step-card reveal reveal-delay-1">
-              <div className="step-num">1</div>
-              <div className="step-title">Add Your Loans</div>
-              <div className="step-desc">Import or manually add all your EMIs — home loan, car loan, personal loans, credit cards.</div>
-            </div>
-            <div className="step-card reveal reveal-delay-2">
-              <div className="step-num">2</div>
-              <div className="step-title">See Your Picture</div>
-              <div className="step-desc">Get a clear dashboard of total debt, monthly obligation, and your debt-free date.</div>
-            </div>
-            <div className="step-card reveal reveal-delay-3">
-              <div className="step-num">3</div>
-              <div className="step-title">Avalanche Attack</div>
-              <div className="step-desc">Our Avalanche planner redirects freed EMIs to high-interest debt, saving you lakhs.</div>
-            </div>
-            <div className="step-card reveal reveal-delay-4">
-              <div className="step-num">4</div>
-              <div className="step-title">Celebrate Freedom</div>
-              <div className="step-desc">Watch the debt melt away month by month. Hit zero and unlock life event planning.</div>
-            </div>
-          </div>
-        </section>
-
-        {/* ═══ NAVA AI FEATURES ═══ */}
-        <section className="l-ai-feat reveal">
-          <div style={{ textAlign: 'center', position: 'relative', zIndex: 1 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 3, textTransform: 'uppercase', color: 'rgba(240,144,32,0.6)', marginBottom: 14, fontFamily: 'var(--sans)' }}>Powered by Nava AI</div>
-            <h2 style={{ fontSize: 'clamp(28px,4.5vw,44px)', fontFamily: 'var(--serif)', color: '#fff', fontWeight: 700, margin: '0 0 14px', letterSpacing: -0.5 }}>Your 24/7 Financial Co-Pilot</h2>
-            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.55)', maxWidth: 520, margin: '0 auto', lineHeight: 1.7, fontFamily: 'var(--sans)' }}>
-              Nava learns your financial profile and acts as your personal CFO — planning, optimising, and monitoring so you don&apos;t have to.
+            <p className="text-sm sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+              Being debt-free isn&apos;t a dream — it&apos;s an exact date on the calendar. Navesta connects your loans, detects high-interest traps, and structures institutional bank takeovers from <strong className="text-slate-900 font-semibold">10.25% p.a.</strong> to slash your monthly EMIs.
             </p>
           </div>
-          <div className="ai-feat-grid">
-            <div className="ai-feat-card">
-              <div className="ai-feat-badge">Most Used</div>
-              <div className="ai-feat-icon" aria-hidden>🧠</div>
-              <div className="ai-feat-title">Debt Intelligence</div>
-              <div className="ai-feat-body">Nava analyses your full debt portfolio — rate, tenure, type — and builds a personalised payoff strategy using avalanche or snowball methods. It finds refinancing opportunities and alerts you when rates drop.</div>
-              <div className="ai-feat-chip">Saves avg. ₹1.4L interest</div>
-            </div>
-            <div className="ai-feat-card">
-              <div className="ai-feat-icon" aria-hidden>📅</div>
-              <div className="ai-feat-title">Life Event Planning</div>
-              <div className="ai-feat-body">Tell Nava your upcoming goal — wedding, travel, home renovation, education — and it builds a custom savings + borrowing plan that fits your monthly cash flow. Adjusts in real time as your situation changes.</div>
-              <div className="ai-feat-chip">Plans for 12+ life events</div>
-            </div>
-            <div className="ai-feat-card">
-              <div className="ai-feat-icon" aria-hidden>📊</div>
-              <div className="ai-feat-title">CIBIL Optimizer</div>
-              <div className="ai-feat-body">Nava identifies the exact factors dragging your CIBIL score — credit utilisation, inquiry history, mix — and gives you a week-by-week repair plan. Track progress live as you implement each step.</div>
-              <div className="ai-feat-chip">Avg. +82 points in 6 months</div>
-            </div>
-          </div>
-          <div style={{ textAlign: 'center', marginTop: 48, position: 'relative', zIndex: 1 }}>
-            <button
-              onClick={() => signUpOr('ai-feat')}
-              style={{ background: 'linear-gradient(135deg,#F09020,#C06010)', color: '#fff', border: 'none', borderRadius: 14, padding: '16px 36px', fontSize: 16, fontWeight: 700, fontFamily: 'var(--sans)', cursor: 'pointer', transition: 'all .2s' }}
-              {...hover({ transform: 'translateY(-2px)', boxShadow: '0 8px 28px rgba(192,96,16,0.45)' }, { transform: '', boxShadow: '' })}
-            >
-              Start With Nava AI — Free ➜
-            </button>
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', margin: '12px 0 0', fontFamily: 'var(--sans)' }}>No credit card · No credit score impact · Takes 3 minutes</p>
-          </div>
-        </section>
 
-        {/* ═══ ALWAYS-VISIBLE SECTIONS ═══ */}
-        {/* Video */}
-        <section className="l-video-sec reveal">
-          <div className="l-video-inner">
-            <div className="l-video-msg">
-              <div className="l-sec-label" style={{ marginBottom: 12 }}>See It In Action</div>
-              <h2 className="l-sec-h" style={{ textAlign: 'left', marginBottom: 18 }}>From Minimum Payments to Debt-Free — In 18 Months</h2>
-              <p className="l-video-body">
-                Most people spend years paying interest on debt they could clear in months — with the right plan. Watch how Navesta&apos;s AI mapped out a step-by-step payoff strategy for a real Indian family and saved them over ₹2.1L in interest.
-              </p>
-              <ul className="l-video-points">
-                <li><span className="l-vp-icon" aria-hidden>📊</span> Analysed 4 credit cards + 2 EMI loans in under 3 minutes</li>
-                <li><span className="l-vp-icon" aria-hidden>📅</span> Generated a personalised payoff calendar with exact dates</li>
-                <li><span className="l-vp-icon" aria-hidden>💰</span> Identified ₹2.1L in avoidable interest charges</li>
-                <li><span className="l-vp-icon" aria-hidden>🔒</span> Zero data shared — 100% private and secure</li>
-              </ul>
-            </div>
-            <div className="l-video-player">
-              <div className="l-video-thumb">
-                {videoClicked ? (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', background: '#111', borderRadius: 18, color: 'rgba(255,255,255,0.4)', fontSize: 15, fontFamily: 'var(--sans)' }}>Video coming soon</div>
-                ) : (
-                  <>
-                    <div className="l-video-overlay" />
-                    <button className="l-video-play" onClick={() => setVideoClicked(true)} aria-label="Play video" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
-                      <div className="l-video-play-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="#fff" aria-hidden>
-                          <polygon points="5,3 19,12 5,21" />
-                        </svg>
-                      </div>
-                    </button>
-                    <div className="l-video-duration">2:47</div>
-                    <div className="l-video-bars" aria-hidden>
-                      {Array.from({ length: 10 }, (_, i) => (
-                        <span key={i} />
-                      ))}
-                    </div>
-                  </>
-                )}
+          {/* ═══ 3 DIRECT INTERACTIVE PATHWAY CARDS (From Original Design) ═══ */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 mt-8 sm:mt-10 max-w-6xl mx-auto">
+            {/* Pathway 1: Credit Card Debt */}
+            <div className="bg-gradient-to-b from-white via-orange-50/30 to-amber-50/40 border-2 border-amber-200/80 rounded-2xl p-5 sm:p-7 flex flex-col justify-between shadow-card hover:shadow-card-hover hover:border-amber-300 transition-all duration-200 relative group">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-100/80 border border-amber-200 flex items-center justify-center text-amber-700 shadow-sm">
+                    <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200">
+                    24–42% APR Trap
+                  </span>
+                </div>
+
+                <div>
+                  <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-amber-800">
+                    Path 01 • Credit Card Debt
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 mt-1">
+                    Can&apos;t Clear Your Card Balance?
+                  </h3>
+                </div>
+
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Minimum payments keep the bank happy — but you could pay <strong>2–3× what you owe</strong> in compounding finance charges. We show you the exact steps to break free with a 10.25% takeover.
+                </p>
               </div>
-              <div className="l-video-caption">📽️ How Navesta helped a Bengaluru couple clear ₹8.2L in credit card debt</div>
+
+              <div className="pt-5 sm:pt-6 mt-4 border-t border-amber-100/80">
+                <button
+                  onClick={() => openAudit('card')}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-sm transition-all min-h-[44px]"
+                >
+                  <span>Show Me the Way Out</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Pathway 2: Loan & EMI Debt */}
+            <div className="bg-gradient-to-b from-white via-blue-50/30 to-indigo-50/40 border-2 border-blue-200/80 rounded-2xl p-5 sm:p-7 flex flex-col justify-between shadow-card hover:shadow-card-hover hover:border-blue-300 transition-all duration-200 relative group">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-blue-100/80 border border-blue-200 flex items-center justify-center text-blue-700 shadow-sm">
+                    <Landmark className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-blue-100 text-blue-900 border border-blue-200">
+                    Salary Drain
+                  </span>
+                </div>
+
+                <div>
+                  <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-blue-800">
+                    Path 02 • High Loan EMIs
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 mt-1">
+                    EMIs Draining Your Salary?
+                  </h3>
+                </div>
+
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Personal loan and vehicle EMIs leaving nothing in your bank account by the 15th? We show you how to lower your monthly outflow and calculate the <strong>exact month you&apos;ll be debt-free</strong>.
+                </p>
+              </div>
+
+              <div className="pt-5 sm:pt-6 mt-4 border-t border-blue-100/80">
+                <button
+                  onClick={() => openAudit('loan')}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 shadow-sm transition-all min-h-[44px]"
+                >
+                  <span>Show Me My Freedom Date</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Pathway 3: Debt Consolidation */}
+            <div className="bg-gradient-to-b from-white via-emerald-50/30 to-teal-50/40 border-2 border-emerald-200/80 rounded-2xl p-5 sm:p-7 flex flex-col justify-between shadow-card hover:shadow-card-hover hover:border-emerald-300 transition-all duration-200 relative group">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-emerald-100/80 border border-emerald-200 flex items-center justify-center text-emerald-700 shadow-sm">
+                    <Layers className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-900 border border-emerald-200">
+                    All Debts
+                  </span>
+                </div>
+
+                <div>
+                  <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-800">
+                    Path 03 • Debt Consolidation
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 mt-1">
+                    Too Many EMIs? Roll Into One.
+                  </h3>
+                </div>
+
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Credit cards, personal loans, BNPL — juggling multiple lenders is chaotic and costly. One consolidated institutional facility cuts your rate to a <strong>single, lower monthly EMI</strong>.
+                </p>
+              </div>
+
+              <div className="pt-5 sm:pt-6 mt-4 border-t border-emerald-100/80">
+                <button
+                  onClick={() => openAudit('both')}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-sm transition-all min-h-[44px]"
+                >
+                  <span>Find My Consolidation Rate</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
-        </section>
 
-        {/* Testimonials */}
-        <section className="l-testi reveal">
-          <div className="l-sec-label">Real Stories</div>
-          <h2 className="l-sec-h">Stories That Started With One Decision</h2>
-          <div style={{ position: 'relative', maxWidth: 1000, margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginBottom: 14 }}>
-              {[
-                { dir: -1, label: 'Previous', glyph: '‹' },
-                { dir: 1, label: 'Next', glyph: '›' },
-              ].map((b) => (
-                <button
-                  key={b.dir}
-                  onClick={() => scrollTesti(b.dir)}
-                  title={b.label}
-                  aria-label={b.label + ' testimonial'}
-                  style={{ width: 38, height: 38, borderRadius: '50%', background: '#fff', border: '1.5px solid #E8D5C0', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#8A7058', fontSize: 20, lineHeight: 1, transition: 'all .2s' }}
-                >
-                  {b.glyph}
-                </button>
-              ))}
+          {/* Hero Micro-Stats Ribbon */}
+          <div className="mt-12 pt-8 border-t border-slate-200/80 max-w-4xl mx-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+              <div className="p-3">
+                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">
+                  ₹480 Cr+
+                </div>
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">
+                  Debt Analyzed
+                </div>
+              </div>
+              <div className="p-3">
+                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tabular-nums">
+                  2.4 Lakh+
+                </div>
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">
+                  Indians Guided
+                </div>
+              </div>
+              <div className="p-3">
+                <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600 tabular-nums">
+                  ₹12,400
+                </div>
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">
+                  Avg Saved / Month
+                </div>
+              </div>
+              <div className="p-3">
+                <div className="text-2xl sm:text-3xl font-extrabold text-amber-600 tabular-nums">
+                  4.8 ★
+                </div>
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-1">
+                  Platform Rating
+                </div>
+              </div>
             </div>
-            <div className="lph-testi-scroll" ref={testiRef} onScroll={onTestiScroll}>
-              {TESTIMONIALS.map((t) => (
-                <div className="lph-testi-card" key={t.name}>
-                  <div className="lph-testi-stars" aria-label="5 out of 5 stars">★★★★★</div>
-                  <div className="lph-testi-text">{t.text}</div>
-                  <div className="lph-testi-author">
-                    <div className="lph-testi-avatar" style={{ background: t.bg }}>{t.initials}</div>
-                    <div>
-                      <div className="lph-testi-name">{t.name}</div>
-                      <div className="lph-testi-role">{t.role}</div>
+
+            {/* Trust Pill Bar */}
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mt-6 text-xs text-slate-600">
+              <div className="flex items-center gap-1.5 font-medium">
+                <Lock className="w-3.5 h-3.5 text-slate-700" />
+                <span>256-Bit Bank Grade SSL</span>
+              </div>
+              <div className="flex items-center gap-1.5 font-medium">
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                <span>ISO 27001 Certified Infrastructure</span>
+              </div>
+              <div className="flex items-center gap-1.5 font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Zero CIBIL Score Impact</span>
+              </div>
+              <div className="flex items-center gap-1.5 font-medium">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                <span>100% Free For Borrowers</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Signed-in customers: back into their plan */}
+      <WelcomeBack />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          PRESS / AS SEEN IN STRIP (From Original Design)
+      ═══════════════════════════════════════════════════════════════ */}
+      <section className="py-6 bg-slate-100/70 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+              As Seen In
+            </span>
+            {pressLogos.map((press) => (
+              <div
+                key={press.name}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/80 border border-slate-200/80 shadow-subtle text-xs font-bold text-slate-700"
+              >
+                <span>{press.name}</span>
+                <span className="text-[10px] text-slate-400 font-semibold font-mono">
+                  [{press.tag}]
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          INTERACTIVE BEFORE VS AFTER COMPARISON
+      ═══════════════════════════════════════════════════════════════ */}
+      <BeforeAfterSlider onOpenAudit={openAudit} />
+
+      {/* ═══════════════════════════════════════════════════════════════
+          INTERACTIVE TAKEOVER & SAVINGS CALCULATOR
+      ═══════════════════════════════════════════════════════════════ */}
+      <section id="calculator" className="py-16 bg-slate-50 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+              Interactive Financial Simulation
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-2">
+              Calculate Your Real-Time Takeover Savings
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              Adjust your outstanding balance and current interest rate to see the instant reduction in monthly EMI and lifetime interest.
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-elevated p-6 sm:p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              {/* Sliders Column */}
+              <div className="lg:col-span-7 space-y-6">
+                {/* Total Debt Slider */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs sm:text-sm font-semibold text-slate-700">
+                    <span>Total Outstanding Debt</span>
+                    <span className="font-extrabold text-slate-950 text-base tabular-nums">
+                      ₹{loanAmt.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={50000}
+                    max={2500000}
+                    step={25000}
+                    value={loanAmt}
+                    onChange={(e) => setLoanAmt(Number(e.target.value))}
+                    className="accent-blue-600"
+                  />
+                  <div className="flex justify-between text-[11px] text-slate-400 font-medium">
+                    <span>₹50K</span>
+                    <span>₹12.5 Lakhs</span>
+                    <span>₹25 Lakhs</span>
+                  </div>
+                </div>
+
+                {/* Current APR Slider */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs sm:text-sm font-semibold text-slate-700">
+                    <span>Current Blended Rate (APR)</span>
+                    <span className="font-extrabold text-rose-600 text-base tabular-nums">
+                      {currentRate}% p.a.{' '}
+                      <span className="text-xs font-normal text-slate-500">
+                        {currentRate >= 36 ? '(Credit Cards)' : currentRate >= 20 ? '(Expensive NBFC)' : '(Personal Loan)'}
+                      </span>
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={12}
+                    max={44}
+                    step={1}
+                    value={currentRate}
+                    onChange={(e) => setCurrentRate(Number(e.target.value))}
+                    className="accent-rose-600"
+                  />
+                  <div className="flex justify-between text-[11px] text-slate-400 font-medium">
+                    <span>12% (Standard)</span>
+                    <span>28% (NBFC)</span>
+                    <span>44% (Credit Cards)</span>
+                  </div>
+                </div>
+
+                {/* Tenure Slider */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs sm:text-sm font-semibold text-slate-700">
+                    <span>Desired Payoff Horizon</span>
+                    <span className="font-extrabold text-slate-900 text-base tabular-nums">
+                      {tenureMonths} Months ({Math.round(tenureMonths / 12)} Years)
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={12}
+                    max={60}
+                    step={6}
+                    value={tenureMonths}
+                    onChange={(e) => setTenureMonths(Number(e.target.value))}
+                    className="accent-blue-600"
+                  />
+                  <div className="flex justify-between text-[11px] text-slate-400 font-medium">
+                    <span>12 Mos</span>
+                    <span>36 Mos (Optimal)</span>
+                    <span>60 Mos</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Result Summary Column */}
+              <div className="lg:col-span-5 bg-gradient-to-br from-slate-900 via-slate-950 to-blue-950 rounded-xl p-6 text-white space-y-4 shadow-card">
+                <div className="flex justify-between items-center text-xs text-slate-400 border-b border-slate-800 pb-3">
+                  <span>Takeover Benchmark Rate</span>
+                  <span className="badge-emerald font-bold">{takeoverRate}% p.a.</span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400">Current Monthly EMI:</span>
+                    <span className="font-semibold text-slate-300 line-through tabular-nums">
+                      ₹{currentEMI.toLocaleString('en-IN')}/mo
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-white font-medium">New Refinanced EMI:</span>
+                    <span className="font-bold text-white text-base tabular-nums">
+                      ₹{takeoverEMI.toLocaleString('en-IN')}/mo
+                    </span>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-800">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+                      Total Interest Saved
+                    </div>
+                    <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400 tabular-nums mt-0.5">
+                      ₹{lifetimeInterestSavings.toLocaleString('en-IN')}
+                    </div>
+                    <div className="text-xs text-emerald-300 font-medium mt-1">
+                      Puts ₹{monthlySavings.toLocaleString('en-IN')}/mo back in your wallet
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 18 }}>
-              {TESTIMONIALS.map((t, i) => (
+
                 <button
-                  key={t.name}
-                  aria-label={`Show testimonial ${i + 1}`}
-                  aria-current={i === testiIdx}
-                  onClick={() => testiRef.current?.scrollTo({ left: i * CARD_W, behavior: 'smooth' })}
-                  style={{ width: i === testiIdx ? 24 : 8, height: 8, borderRadius: i === testiIdx ? 4 : '50%', background: i === testiIdx ? '#E07C10' : '#D4B896', cursor: 'pointer', transition: 'all .25s', display: 'inline-block', border: 'none', padding: 0 }}
-                />
-              ))}
+                  onClick={() => setAuthOpen(true)}
+                  className="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold text-slate-950 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm mt-2"
+                >
+                  <span>Claim Pre-Approved Rate</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Mid-page CTA */}
-        <section style={{ background: 'linear-gradient(135deg,#C96010 0%,#E07820 60%,#F09020 100%)', padding: '60px 5%', textAlign: 'center' }}>
-          <h2 style={{ fontSize: 'clamp(22px,3.5vw,32px)', fontFamily: 'var(--serif)', color: '#fff', fontWeight: 700, margin: '0 0 12px', letterSpacing: -0.4 }}>Ready to take control of your money?</h2>
-          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.85)', margin: '0 0 28px', fontFamily: 'var(--sans)' }}>Join 2.4 lakh+ Indians who&apos;ve already started. Free, always.</p>
-          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => signUpOr(null)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', color: '#C96010', fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 12, border: 'none', cursor: 'pointer', fontFamily: 'var(--sans)', boxShadow: '0 6px 20px rgba(0,0,0,0.15)', transition: 'transform .2s,box-shadow .2s' }}
-              {...hover({ transform: 'translateY(-2px)', boxShadow: '0 10px 28px rgba(0,0,0,0.2)' }, { transform: '', boxShadow: '0 6px 20px rgba(0,0,0,0.15)' })}
-            >
-              Start Free — No Card Required →
-            </button>
-          </div>
-          <div style={{ display: 'flex', gap: 28, justifyContent: 'center', marginTop: 28, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', fontFamily: 'var(--sans)' }}>✓ 2.4L+ users</span>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', fontFamily: 'var(--sans)' }}>✓ ₹90Cr interest saved</span>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', fontFamily: 'var(--sans)' }}>✓ 4.8★ rated</span>
-          </div>
-        </section>
+      {/* ═══════════════════════════════════════════════════════════════
+          INSTITUTIONAL PARTNERS SHOWCASE & RBI COMPLIANCE
+      ═══════════════════════════════════════════════════════════════ */}
+      <PartnerShowcase />
 
-        {/* Trusted By India */}
-        <section className="l-trusted reveal" ref={trustedRef}>
-          <div className="l-sec-label">Why India Trusts Navesta</div>
-          <h2 className="l-sec-h">Numbers That Speak</h2>
-          <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', justifyContent: 'center', marginTop: 40 }}>
-            <div className="trusted-stat">
-              <div className="trusted-stat-num"><CountUp run={countersRun} target={240000} comma suffix="+" initial="2,40,000+" /></div>
-              <div className="trusted-stat-lbl">Active Users</div>
-            </div>
-            <div className="trusted-stat">
-              <div className="trusted-stat-num"><CountUp run={countersRun} target={90} prefix="₹" suffix=" Cr+" initial="₹90 Cr+" /></div>
-              <div className="trusted-stat-lbl">Interest Saved</div>
-            </div>
-            <div className="trusted-stat">
-              <div className="trusted-stat-num"><CountUp run={countersRun} target={4.8} suffix=" ★" initial="4.8 ★" /></div>
-              <div className="trusted-stat-lbl">App Rating</div>
-            </div>
-            <div className="trusted-stat">
-              <div className="trusted-stat-num"><CountUp run={countersRun} target={3} suffix=" min" initial="3 min" /></div>
-              <div className="trusted-stat-lbl">Avg. Setup Time</div>
-            </div>
+      {/* ═══════════════════════════════════════════════════════════════
+          HOW IT WORKS (4 SIMPLE STEPS FROM PREVIOUS DESIGN)
+      ═══════════════════════════════════════════════════════════════ */}
+      <section id="how" className="py-16 bg-slate-50 border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+              Simple 4-Step Process
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-2">
+              Debt-Free in 4 Transparent Steps
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              From statement ingestion to direct bank payoff, here is how Navesta delivers clarity.
+            </p>
           </div>
-          <p style={{ fontSize: 14, color: 'rgba(42,22,6,0.5)', maxWidth: 560, margin: '32px auto 0', lineHeight: 1.7, fontFamily: 'var(--sans)', textAlign: 'center' }}>
-            From a 23-year-old managing their first credit card to a retired couple refinancing their home loan — Navesta works for every stage of life.
-          </p>
-        </section>
 
-        {/* App Download */}
-        <section style={{ background: '#EDE6DB', padding: '80px 5%' }}>
-          <div style={{ maxWidth: 1000, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 48, flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: 280 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', color: '#E07C10', marginBottom: 14, fontFamily: 'var(--sans)' }}>Mobile App</div>
-              <h2 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(28px,4vw,42px)', fontWeight: 800, color: '#2A1606', lineHeight: 1.15, marginBottom: 16 }}>
-                Your Finances,
-                <br />
-                In Your Pocket
-              </h2>
-              <p style={{ fontSize: 16, color: 'rgba(42,22,6,0.6)', lineHeight: 1.7, marginBottom: 32, fontFamily: 'var(--sans)', maxWidth: 400 }}>
-                Track EMIs, get AI nudges, and plan every rupee — all from the Navesta app. Free forever, no credit card needed.
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Step 1 */}
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-card hover:shadow-card-hover transition-all">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-white font-extrabold text-sm flex items-center justify-center mb-4 shadow-sm">
+                01
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-2">
+                Add Your Loans &amp; Cards
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Connect statements or perform a soft bureau pull. We automatically aggregate your credit cards, personal loans, and EMI accounts with zero CIBIL hit.
               </p>
-              <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-                <button style={storeBtn} onClick={appComingSoon} {...hover({ background: '#F09020' }, { background: '#2A1606' })}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                  </svg>
-                  <div>
-                    <div style={{ fontSize: 10, opacity: 0.7, lineHeight: 1 }}>Download on the</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}>App Store</div>
-                  </div>
-                </button>
-                <button style={storeBtn} onClick={appComingSoon} {...hover({ background: '#F09020' }, { background: '#2A1606' })}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                    <path d="M3.18 23.76c.3.17.64.24.99.2l12.6-7.27-2.79-2.79-10.8 9.86zm-1.7-20.4C1.18 3.7 1 4.14 1 4.64v14.72c0 .5.18.94.48 1.28l.07.06 8.25-8.25v-.2L1.55 3.3l-.07.06zM20.49 10.7l-2.35-1.36-3.12 3.12 3.12 3.12 2.38-1.37c.68-.39.68-1.02-.03-1.51zM4.17.24L16.77 7.5l-2.79 2.79L3.18.43a1.14 1.14 0 0 1 .99-.19z" />
-                  </svg>
-                  <div>
-                    <div style={{ fontSize: 10, opacity: 0.7, lineHeight: 1 }}>Get it on</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.3 }}>Google Play</div>
-                  </div>
-                </button>
+            </div>
+
+            {/* Step 2 */}
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-card hover:shadow-card-hover transition-all">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-extrabold text-sm flex items-center justify-center mb-4 shadow-sm">
+                02
               </div>
-              <div style={{ display: 'flex', gap: 24, marginTop: 28, flexWrap: 'wrap' }}>
-                {[
-                  ['4.8 ★', 'App Store'],
-                  ['4.7 ★', 'Google Play'],
-                  ['2.4L+', 'Downloads'],
-                ].map(([n, l]) => (
-                  <div key={l} style={{ fontFamily: 'var(--sans)' }}>
-                    <div style={{ fontSize: 20, fontWeight: 800, color: '#F09020', fontFamily: 'var(--serif)' }}>{n}</div>
-                    <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.5)', marginTop: 2 }}>{l}</div>
-                  </div>
-                ))}
+              <h3 className="text-base font-bold text-slate-900 mb-2">
+                See Your Whole Picture
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Get an instant diagnostic dashboard revealing total debt, exact monthly interest leakage, and your current projected freedom date.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-card hover:shadow-card-hover transition-all">
+              <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white font-extrabold text-sm flex items-center justify-center mb-4 shadow-sm">
+                03
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-2">
+                Avalanche &amp; Bank Takeover
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Select an institutional takeover offer starting from 10.25% p.a. The partner bank pays off your existing high-cost lenders directly.
+              </p>
+            </div>
+
+            {/* Step 4 */}
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-card hover:shadow-card-hover transition-all">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white font-extrabold text-sm flex items-center justify-center mb-4 shadow-sm">
+                04
+              </div>
+              <h3 className="text-base font-bold text-slate-900 mb-2">
+                Celebrate Calendar Freedom
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Pay one lower monthly EMI. Watch your balance extinguish month by month until you reach zero debt and unlock life event savings.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          NAVA AI: 24/7 FINANCIAL CO-PILOT
+      ═══════════════════════════════════════════════════════════════ */}
+      <section className="py-16 bg-slate-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400 bg-amber-950/60 px-3 py-1 rounded-full border border-amber-800/80">
+              Powered By Nava AI
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight mt-3">
+              Your Personal 24/7 Debt CFO
+            </h2>
+            <p className="text-sm sm:text-base text-slate-400 mt-2">
+              Nava analyzes your complete financial profile to plan, optimize, and eliminate debt faster than standard banking channels.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 space-y-4 hover:border-slate-600 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Debt Intelligence</h3>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Nava evaluates every loan and card balance, testing mathematical Avalanche and Snowball payoff scenarios. It monitors the market 24/7 and alerts you whenever bank takeover rates drop.
+              </p>
+              <div className="text-xs font-semibold text-emerald-400 pt-2 border-t border-slate-700/60">
+                Avg. ₹1.4 Lakhs interest saved
               </div>
             </div>
 
-            {/* Phone mockup */}
-            <div style={{ flexShrink: 0, width: 240, margin: '0 auto', position: 'relative' }} aria-hidden>
-              <div style={{ width: 232, background: '#1A0E04', borderRadius: 44, padding: 6, boxShadow: '0 32px 80px rgba(42,22,6,0.35),0 0 0 1px rgba(255,255,255,0.08)' }}>
-                <div style={{ borderRadius: 38, overflow: 'hidden', background: '#F5EDE0', position: 'relative' }}>
-                  <div style={{ background: '#1A0E04', height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ width: 72, height: 20, background: '#000', borderRadius: 20 }} />
-                  </div>
-                  <div style={{ padding: '10px 12px 0', background: '#F5EDE0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: '#0D9488', fontFamily: 'var(--sans)', lineHeight: 1 }}>
-                          Navesta <span style={{ fontSize: 9 }}>📊</span>
-                        </div>
-                        <div style={{ fontSize: 8, color: '#C96010', fontFamily: 'var(--sans)' }}>Companion for smarter money</div>
-                      </div>
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(42,22,6,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>🔍</div>
-                        <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg,#0D9488,#065F46)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 800, color: '#fff', fontFamily: 'var(--sans)' }}>RM</div>
-                      </div>
-                    </div>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'linear-gradient(135deg,#0D9488,#0891B2)', borderRadius: 20, padding: '3px 10px', marginBottom: 10 }}>
-                      <span style={{ fontSize: 9 }}>⚡</span>
-                      <span style={{ fontSize: 8, fontWeight: 700, color: '#fff', fontFamily: 'var(--sans)' }}>Powered by AI</span>
-                    </div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: '#1A0E04', fontFamily: 'var(--serif)', lineHeight: 1.25, marginBottom: 4 }}>
-                      Hi Rahul, meet your <span style={{ color: '#F09020' }}>money companion.</span>
-                    </div>
-                    <div style={{ fontSize: 8, color: 'rgba(42,22,6,0.55)', fontFamily: 'var(--sans)', lineHeight: 1.5, marginBottom: 12 }}>AI-powered tools for smarter money decisions — built around your goals.</div>
-                    <div style={{ background: 'linear-gradient(135deg,#D6EEFF,#B8DEFA)', borderRadius: 14, padding: 10, marginBottom: 8, position: 'relative', overflow: 'hidden' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                        <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>💳</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <div style={{ fontSize: 11, fontWeight: 800, color: '#0F4C8A', fontFamily: 'var(--serif)' }}>Debt Management</div>
-                          <div style={{ fontSize: 7, fontWeight: 700, background: '#059669', color: '#fff', borderRadius: 6, padding: '1px 5px', fontFamily: 'var(--sans)' }}>LIVE</div>
-                        </div>
-                      </div>
-                      <div style={{ fontSize: 7.5, color: 'rgba(15,76,138,0.75)', fontFamily: 'var(--sans)', lineHeight: 1.5, marginBottom: 8 }}>Escape the debt trap — see the real cost of paying the minimum, get AI-ranked fixes and a clear payoff plan.</div>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#1E5FAD', borderRadius: 8, padding: '4px 10px' }}>
-                        <span style={{ fontSize: 7.5, fontWeight: 700, color: '#fff', fontFamily: 'var(--sans)' }}>Get started →</span>
-                      </div>
-                    </div>
-                    <div style={{ background: 'linear-gradient(135deg,#EAD6FF,#C8AAFF)', borderRadius: 14, padding: 10, marginBottom: 8 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                        <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>🎉</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <div style={{ fontSize: 11, fontWeight: 800, color: '#5B21B6', fontFamily: 'var(--serif)' }}>Life-Event Planning</div>
-                          <div style={{ fontSize: 7, fontWeight: 700, background: '#059669', color: '#fff', borderRadius: 6, padding: '1px 5px', fontFamily: 'var(--sans)' }}>LIVE</div>
-                        </div>
-                      </div>
-                      <div style={{ fontSize: 7.5, color: 'rgba(91,33,182,0.75)', fontFamily: 'var(--sans)', lineHeight: 1.5, marginBottom: 8 }}>Big moments, planned early — wedding, travel, renovation and more. Get a loan plan in seconds.</div>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: '#6D28D9', borderRadius: 8, padding: '4px 10px' }}>
-                        <span style={{ fontSize: 7.5, fontWeight: 700, color: '#fff', fontFamily: 'var(--sans)' }}>Get started →</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ background: '#fff', padding: '8px 12px', display: 'flex', justifyContent: 'space-around', borderTop: '1px solid rgba(196,168,130,0.2)' }}>
-                    {[
-                      ['50k+', 'people guided'],
-                      ['₹90Cr', 'interest saved'],
-                      ['4.8★', '12k ratings'],
-                    ].map(([n, l]) => (
-                      <div key={l} style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: 11, fontWeight: 800, color: '#F09020', fontFamily: 'var(--serif)' }}>{n}</div>
-                        <div style={{ fontSize: 6.5, color: '#8A7058', fontFamily: 'var(--sans)' }}>{l}</div>
-                      </div>
+            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 space-y-4 hover:border-slate-600 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Life Event Planning</h3>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Planning a wedding, higher education, or home renovation? Nava builds a custom monthly cash flow roadmap that accommodates major life milestones without slipping into predatory debt cycles.
+              </p>
+              <div className="text-xs font-semibold text-amber-400 pt-2 border-t border-slate-700/60">
+                Roadmaps for 12+ life milestones
+              </div>
+            </div>
+
+            <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 space-y-4 hover:border-slate-600 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <h3 className="text-lg font-bold text-white">CIBIL Score Optimizer</h3>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Nava detects the exact credit factors pulling down your score — high card utilization, inquiry clustering, or repayment delays — and provides a week-by-week restoration schedule.
+              </p>
+              <div className="text-xs font-semibold text-emerald-400 pt-2 border-t border-slate-700/60">
+                Avg. +82 points increase in 6 months
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          REAL TESTIMONIALS (From Previous Design)
+      ═══════════════════════════════════════════════════════════════ */}
+      <section className="py-16 bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+              Verified Social Proof
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-2">
+              Stories That Started With One Decision
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              Real Indians who broke free from toxic minimum payments and high EMIs.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            {testimonials.map((testi) => (
+              <div
+                key={testi.name}
+                className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col justify-between shadow-subtle hover:shadow-card transition-all"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-center gap-1 text-amber-500 text-sm">
+                    {Array.from({ length: testi.stars }).map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-amber-500" />
                     ))}
                   </div>
+                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed italic">
+                    &ldquo;{testi.story}&rdquo;
+                  </p>
                 </div>
-              </div>
-              <div style={{ width: 72, height: 4, background: 'rgba(26,14,4,0.3)', borderRadius: 2, margin: '8px auto 0' }} />
-            </div>
-          </div>
-        </section>
 
-        {/* Lending Partners */}
-        <section style={{ background: '#FDF6EC', padding: '52px 5% 48px', textAlign: 'center', borderBottom: '1px solid rgba(196,168,130,0.15)' }}>
-          <div style={{ marginBottom: 32 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', color: '#8A7058', marginBottom: 8, fontFamily: 'var(--sans)' }}>Our Lending Partners</div>
-            <p style={{ fontSize: 14, color: '#8A7058', margin: 0, fontFamily: 'var(--sans)' }}>3 leading banks — we surface the best rate for your profile, without bias.</p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 28, flexWrap: 'wrap' }}>
-            {[
-              { src: '/design/partner-sbi.png', alt: 'SBI', name: 'State Bank of India' },
-              { src: '/design/partner-hdfc.png', alt: 'HDFC Bank', name: 'HDFC Bank' },
-              { src: '/design/partner-icici.png', alt: 'ICICI Bank', name: 'ICICI Bank' },
-            ].map((p) => (
-              <div key={p.name} style={partnerCard} {...hover({ boxShadow: '0 8px 28px rgba(196,96,16,0.12)', transform: 'translateY(-3px)' }, { boxShadow: '0 2px 10px rgba(0,0,0,0.04)', transform: '' })}>
-                <Image src={p.src} alt={p.alt} width={120} height={72} style={{ width: 120, height: 72, objectFit: 'contain' }} />
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#6A4020', fontFamily: 'var(--sans)', letterSpacing: 0.2 }}>{p.name}</span>
+                <div className="pt-4 mt-4 border-t border-slate-200 flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-bold text-slate-900">{testi.name}</div>
+                    <div className="text-[11px] text-slate-500">
+                      {testi.role} • {testi.city}
+                    </div>
+                  </div>
+                  <span className="badge-emerald text-[11px] font-bold">{testi.saved}</span>
+                </div>
               </div>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Personal Loan quick apply */}
-        <section className="l-loan-section reveal">
-          <div className="l-loan-inner">
-            <div className="l-loan-badge">Quick Apply</div>
-            <h2 className="l-loan-h">Apply for a Personal Loan</h2>
-            <p className="l-loan-sub">Get instant approval. No paperwork. Rates starting at 10.5% p.a.</p>
-            <form
-              className="l-loan-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void handleLoanApply();
-              }}
-              noValidate
-            >
-              <div className="l-loan-input-wrap">
-                <span className="l-loan-flag">🇮🇳 +91</span>
-                <input
-                  className="l-loan-input"
-                  id="loan-phone"
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel-national"
-                  placeholder="Enter your mobile number"
-                  aria-label="Mobile number"
-                  maxLength={10}
-                  value={loanPhone}
-                  onChange={(e) => setLoanPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                />
-              </div>
-              <button className="l-loan-btn" type="submit" disabled={loanBusy} style={loanBusy ? { opacity: 0.7, cursor: 'wait' } : undefined}>
-                {loanBusy ? 'Submitting…' : 'Apply Now →'}
-              </button>
-            </form>
-            <label className="l-loan-consent">
-              <input type="checkbox" id="loan-consent" checked={loanConsent} onChange={(e) => setLoanConsent(e.target.checked)} style={{ width: 15, height: 15, accentColor: '#0D9488', flexShrink: 0, marginTop: 1 }} />
-              <span>
-                By proceeding you agree to our <span style={{ color: '#0D9488' }}>Terms &amp; Conditions</span> &amp; <span style={{ color: '#0D9488' }}>Privacy Policy</span>
-              </span>
-            </label>
-            <div className="l-loan-msg" role="status" aria-live="polite" style={loanMsg ? { color: loanMsg.color } : undefined}>
-              {loanMsg?.text}
-            </div>
-          </div>
-        </section>
+      {/* Life Events Planner entry and the personal-loan callback (lead for the advisory team) */}
+      <LifeEventsStrip />
+      <QuickLoanApply />
 
-        {/* EMI Savings Calculator */}
-        <section className="l-calc reveal">
-          <div style={{ textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: 'uppercase', color: '#8A7058', marginBottom: 14, fontFamily: 'var(--sans)' }}>Free Calculator</div>
-            <h2 style={{ fontSize: 'clamp(26px,4vw,40px)', fontFamily: 'var(--serif)', color: '#1A0A00', fontWeight: 700, margin: '0 0 14px', letterSpacing: -0.5 }}>
-              See Your Savings in <em style={{ color: '#C96010', fontStyle: 'italic' }}>30 Seconds</em>
+      {/* ═══════════════════════════════════════════════════════════════
+          FAQ SECTION (Clear Transparency Answers)
+      ═══════════════════════════════════════════════════════════════ */}
+      <section id="faq" className="py-16 bg-slate-50 border-b border-slate-200">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Clear &amp; Transparent
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
+              Frequently Asked Questions
             </h2>
-            <p style={{ fontSize: 16, color: '#5A3A1A', lineHeight: 1.65, fontFamily: 'var(--sans)' }}>
-              Enter your loan details — we&apos;ll show how much interest Navesta can save you through refinancing or restructuring.
+            <p className="text-sm text-slate-600 mt-1">
+              Everything you need to know about our institutional takeovers, rates, and process.
             </p>
           </div>
-          <div className="calc-wrap">
-            <div className="calc-inputs">
-              <div className="calc-field">
-                <label htmlFor="calc-balance">Outstanding Balance</label>
-                <div className="calc-input-row">
-                  <span>₹</span>
-                  <input type="number" id="calc-balance" value={calcBal} min={10000} max={5000000} step={10000} onChange={(e) => setCalcBal(e.target.value)} />
-                </div>
-                <input type="range" className="calc-range" min={10000} max={5000000} step={10000} value={clamp(parseFloat(calcBal) || 500000, 10000, 5000000)} onChange={(e) => setCalcBal(e.target.value)} aria-label="Balance slider" style={pct(parseFloat(calcBal) || 500000, 10000, 5000000)} />
-                <div style={calcRangeLbl}><span>₹10K</span><span>₹50L</span></div>
-              </div>
-              <div className="calc-field">
-                <label htmlFor="calc-rate">Current Interest Rate</label>
-                <div className="calc-input-row">
-                  <input type="number" id="calc-rate" value={calcRate} min={8} max={36} step={0.5} onChange={(e) => setCalcRate(e.target.value)} />
-                  <span>% p.a.</span>
-                </div>
-                <input type="range" className="calc-range" min={8} max={36} step={0.5} value={clamp(parseFloat(calcRate) || 14.5, 8, 36)} onChange={(e) => setCalcRate(e.target.value)} aria-label="Rate slider" style={pct(parseFloat(calcRate) || 14.5, 8, 36)} />
-                <div style={calcRangeLbl}><span>8%</span><span>36%</span></div>
-              </div>
-              <div className="calc-field">
-                <label htmlFor="calc-tenure">Remaining Tenure</label>
-                <div className="calc-input-row">
-                  <input type="number" id="calc-tenure" value={calcTenure} min={3} max={120} step={1} onChange={(e) => setCalcTenure(e.target.value)} />
-                  <span>months</span>
-                </div>
-                <input type="range" className="calc-range" min={3} max={120} step={1} value={clamp(parseInt(calcTenure, 10) || 24, 3, 120)} onChange={(e) => setCalcTenure(e.target.value)} aria-label="Tenure slider" style={pct(parseInt(calcTenure, 10) || 24, 3, 120)} />
-                <div style={calcRangeLbl}><span>3 mo</span><span>10 yrs</span></div>
-              </div>
-            </div>
-            <div className="calc-result" aria-live="polite">
-              <div className="calc-result-label">Total Interest You&apos;ll Pay Now</div>
-              <div className="calc-result-current">{calcFmt(currentInterest)}</div>
-              <div className="calc-result-arrow">↓ Navesta finds you a better rate</div>
-              <div className="calc-result-label" style={{ marginTop: 8 }}>Estimated Interest After Navesta</div>
-              <div className="calc-result-new">{calcFmt(newInterest)}</div>
-              <div className="calc-savings-pill" style={{ display: 'inline-flex' }}>{saved > 0 ? 'You could save ' + calcFmt(saved) : 'Already at a great rate!'}</div>
-              <button className="calc-cta-btn" onClick={() => signUpOr('emi-calc')}>Get My Personalised Plan ➜</button>
-              <div className="calc-disclaimer">* Estimated savings based on avg. 3–4% rate reduction. Actual savings depend on your credit profile and lender offers.</div>
-            </div>
-          </div>
-        </section>
 
-        {/* Security & Compliance */}
-        <section className="l-security">
-          <div className="l-security-inner">
-            {[
-              ['🏛️', 'RBI Registered', 'NBFC · Digital Lending'],
-              ['🔒', '256-bit SSL', 'Bank-grade encryption'],
-              ['✅', 'ISO 27001', 'Certified data security'],
-              ['🛡️', 'DPDP Compliant', 'India Data Protection Act'],
-              ['🤝', 'AA Framework', 'RBI Account Aggregator'],
-            ].map(([icon, title, sub], i) => (
-              <div key={title} style={{ display: 'contents' }}>
-                {i > 0 && <div className="sec-badge-divider" />}
-                <div className="sec-badge">
-                  <div className="sec-badge-icon" aria-hidden>{icon}</div>
-                  <div>
-                    <div className="sec-badge-title">{title}</div>
-                    <div className="sec-badge-sub">{sub}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Follow Us */}
-        <section style={{ background: 'linear-gradient(160deg,#FFF8F2 0%,#FFF0E3 45%,#FDE8D0 100%)', padding: '56px 5%', textAlign: 'center', borderTop: '1px solid rgba(196,168,130,0.2)' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2.5, textTransform: 'uppercase', color: '#8A7058', marginBottom: 24, fontFamily: 'var(--sans)' }}>Follow Us</div>
-          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-            {SOCIAL.map((s) => (
-              <span
-                key={s.title}
-                title={s.title}
-                role="img"
-                aria-label={s.title}
-                style={{ width: 44, height: 44, borderRadius: '50%', background: '#fff', border: '1.5px solid rgba(196,140,80,0.3)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#C96010', transition: 'all .2s' }}
-                {...hover({ background: '#F09020', color: '#fff', borderColor: '#F09020' }, { background: '#fff', color: '#C96010', borderColor: 'rgba(196,140,80,0.3)' })}
-              >
-                <svg width={s.size} height={s.size} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                  <path d={s.d} />
-                </svg>
-              </span>
-            ))}
-          </div>
-          <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.4)', marginTop: 24, fontFamily: 'var(--sans)' }}>© 2026 Navesta Financial Technologies Pvt. Ltd.</div>
-        </section>
-
-        {/* FAQ */}
-        <section className="l-faq reveal">
-          <h2 className="l-sec-h" style={{ marginBottom: 40 }}>Got Questions? We&apos;ve Got Answers.</h2>
-          <div className="faq-list">
-            {FAQS.map((f, i) => (
-              <div key={f.q} className={`faq-item${openFaq === i ? ' open' : ''}`}>
-                <button className="faq-q" onClick={() => setOpenFaq(openFaq === i ? null : i)} aria-expanded={openFaq === i} aria-controls={`faq-a-${i}`}>
-                  {f.q}
-                  <Chevron />
-                </button>
-                <div className="faq-a" id={`faq-a-${i}`}>{f.a}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="l-footer">
-          <div className="footer-grid">
-            <div className="footer-brand">
-              <div className="l-logo">Navesta</div>
-              <div className="footer-desc">India&apos;s leading personal finance platform for debt management and life event planning. Helping families achieve financial freedom since 2022.</div>
-              <div style={{ marginTop: 16, fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 1.8 }}>
-                📍 Navesta Financial Technologies Pvt. Ltd.
-                <br />
-                Level 8, Prestige Tech Tower,
-                <br />
-                Outer Ring Road, Marathahalli,
-                <br />
-                Bengaluru, Karnataka — 560 037
-                <br />
-                <br />
-                📞{' '}
-                <a href="tel:18001233328" style={{ color: 'inherit', textDecoration: 'none' }}>
-                  1800-123-DEBT (1800-123-3328)
-                </a>
-                <br />
-                ✉️{' '}
-                <a href="mailto:support@navesta.in" style={{ color: 'inherit', textDecoration: 'none' }}>
-                  support@navesta.in
-                </a>
-              </div>
-            </div>
-            <div>
-              <div className="footer-col-title">Solutions</div>
-              <ul className="footer-links">
-                {FOOTER_SOLUTIONS.map((l) => (
-                  <li key={l.label}>{l.href ? <Link href={l.href}>{l.label}</Link> : <span style={plainFooterItem}>{l.label}</span>}</li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <div className="footer-col-title">Life Events</div>
-              <ul className="footer-links">
-                {FOOTER_LIFE.map((l) => (
-                  <li key={l}>
-                    <Link href="/life-events">{l}</Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <div className="footer-col-title">Company</div>
-              <ul className="footer-links">
-                {FOOTER_COMPANY.map((l) => (
-                  <li key={l.label}>{l.href ? <Link href={l.href}>{l.label}</Link> : <span style={plainFooterItem}>{l.label}</span>}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          <div className="footer-bottom">
-            <div className="footer-copy">© 2026 Navesta Financial Technologies Pvt. Ltd. All rights reserved. NBFC Registered. RBI Compliant.</div>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-              {SOCIAL.slice(0, 4).map((s) => (
-                <span
-                  key={s.title}
-                  title={s.title}
-                  role="img"
-                  aria-label={s.title}
-                  style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', border: '1.5px solid rgba(255,255,255,0.3)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.8)' }}
+          <div className="space-y-3">
+            {faqs.map((faq, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div
+                  key={idx}
+                  className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-subtle transition-all"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                    <path d={s.d} />
-                  </svg>
-                </span>
-              ))}
-            </div>
+                  <button
+                    onClick={() => setOpenFaq(isOpen ? null : idx)}
+                    className="w-full text-left p-4 sm:p-5 flex justify-between items-center gap-4 cursor-pointer hover:bg-slate-50/50"
+                  >
+                    <span className="text-sm sm:text-base font-bold text-slate-900">
+                      {faq.q}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 flex-shrink-0 ${
+                        isOpen ? 'rotate-180 text-blue-600' : ''
+                      }`}
+                    />
+                  </button>
+                  {isOpen && (
+                    <div className="px-4 pb-5 sm:px-5 sm:pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        </footer>
+        </div>
+      </section>
 
-        {/* Sticky mobile download bar */}
-        {!dlDismissed && (
-          // Right padding keeps the ✕ clear of the floating Nava chat button (fixed, bottom-right)
-          <div className="sticky-dl" style={{ paddingRight: 96 }}>
-            <div className="sticky-dl-text">
-              Free Download
-              <br />
-              No credit check · No fees
-            </div>
-            <div className="sticky-dl-btns">
-              <button className="sticky-dl-btn" onClick={appComingSoon} style={{ cursor: 'pointer' }}>
-                App Store
-              </button>
-              <button className="sticky-dl-btn" onClick={appComingSoon} style={{ cursor: 'pointer' }}>
-                Play Store
-              </button>
-            </div>
-            <button className="sticky-dl-close" onClick={() => setDlDismissed(true)} aria-label="Dismiss">
-              ✕
+      {/* ═══════════════════════════════════════════════════════════════
+          FINAL HIGH-CONVERSION CTA SECTION
+      ═══════════════════════════════════════════════════════════════ */}
+      <section className="py-16 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white text-center">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+            Ready to Take Control of Your Debt?
+          </h2>
+          <p className="text-base sm:text-lg text-amber-100 max-w-2xl mx-auto leading-relaxed">
+            Join 2.4 Lakh+ Indians who have replaced high-interest credit card debt and chaotic EMIs with an institutional takeover plan. 100% Free · Soft pull only.
+          </p>
+
+          <div className="pt-2">
+            <button
+              onClick={() => setAuthOpen(true)}
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm sm:text-base font-extrabold text-amber-950 bg-white hover:bg-amber-50 shadow-elevated transition-all cursor-pointer"
+            >
+              <span>Get Started Free — In 3 Minutes</span>
+              <ArrowRight className="w-5 h-5" />
             </button>
           </div>
-        )}
-      </div>
-    </>
+
+          <div className="flex flex-wrap justify-center gap-6 text-xs text-amber-100 pt-4">
+            <span>✓ 2.4L+ Users Helped</span>
+            <span>✓ ₹90Cr+ Interest Saved</span>
+            <span>✓ 4.8★ Rating</span>
+            <span>✓ Zero CIBIL Score Impact</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════════
+          INSTITUTIONAL FOOTER
+      ═══════════════════════════════════════════════════════════════ */}
+      <footer className="bg-slate-950 text-slate-400 text-xs py-12 border-t border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+                  N
+                </div>
+                <span className="text-base font-bold text-white tracking-tight">navesta</span>
+              </div>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                India&apos;s leading AI-powered debt advisory and institutional balance takeover platform. Helping consumers break the minimum payment trap.
+              </p>
+            </div>
+
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-3">
+                Solutions
+              </div>
+              <ul className="space-y-2">
+                <li>
+                  <a href="#calculator" className="hover:text-white transition-colors">
+                    Credit Card Takeover (24–42% APR)
+                  </a>
+                </li>
+                <li>
+                  <a href="#calculator" className="hover:text-white transition-colors">
+                    Personal Loan Consolidation
+                  </a>
+                </li>
+                <li>
+                  <a href="#calculator" className="hover:text-white transition-colors">
+                    EMI Amortization Simulator
+                  </a>
+                </li>
+                <li>
+                  <a href="#how" className="hover:text-white transition-colors">
+                    CIBIL Score Optimization
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-3">
+                Institutional Network
+              </div>
+              <ul className="space-y-2">
+                <li>HDFC Bank Limited</li>
+                <li>ICICI Bank Limited</li>
+                <li>State Bank of India</li>
+                <li>Axis Bank Limited</li>
+                <li>Tata Capital Financial Services</li>
+                <li>Bajaj Finserv Limited</li>
+              </ul>
+            </div>
+
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-3">
+                Security &amp; Legal
+              </div>
+              <ul className="space-y-2 text-[11px]">
+                <li>256-Bit TLS 1.3 Bank-Grade Security</li>
+                <li>Digital Personal Data Protection (DPDP) Act Compliant</li>
+                <li>Zero CIBIL Score Impact (Soft Pulls)</li>
+                <li>Registered Office: Bengaluru, Karnataka, India</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row justify-between items-center gap-3 text-[11px] text-slate-500">
+            <div>
+              &copy; {new Date().getFullYear()} Navesta Technologies Private Limited. All rights reserved.
+            </div>
+            <div>
+              Navesta is an advisory technology provider and does not directly disburse loans. Financing is provided exclusively by RBI-regulated partner lenders.
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
   );
 }

@@ -6,11 +6,8 @@ import JourneyGate from '@/components/design/JourneyGate';
 import JourneyHeader from '@/components/design/JourneyHeader';
 import { fmtINR, useJourney, type CardEntry } from '@/lib/journey';
 import { EMPTY_CC_JOURNEY, fmtLakh, hasCardDetails, minPayProjection, monthlySplit, weightedCard } from '@/lib/ccMath';
+import { ArrowRight, CheckCircle2, CreditCard, Info, Landmark } from 'lucide-react';
 
-// Design: #cc-analysis-page (Navesta_Website_22Sep26.html ~5603–5806),
-// populated by submitCCDetails (~7470–7670).
-
-const BG = 'linear-gradient(160deg,#FFF8F2 0%,#FFF0E3 50%,#FDE8D0 100%)';
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export default function CCAnalysisPage() {
@@ -31,7 +28,7 @@ function Analysis() {
     if (ready && !filled) router.replace('/journey/credit-card');
   }, [ready, filled, router]);
 
-  if (!ready || !filled) return <div className="nv" style={{ minHeight: '100vh', background: BG }} />;
+  if (!ready || !filled) return <div className="min-h-screen bg-slate-50" />;
 
   const cards = journey.cards.filter((c) => c.outstanding > 0);
   const d = weightedCard(cards);
@@ -47,225 +44,210 @@ function Analysis() {
   const debtMultR = (Math.round(debtMult * 10) / 10).toFixed(1);
   const barPct = Math.min(98, (debtMult / 4) * 100);
 
-  const tabBtn = (active: boolean): React.CSSProperties => ({
-    flex: 1,
-    padding: '10px 6px',
-    border: 'none',
-    borderRadius: 11,
-    fontSize: 13,
-    fontWeight: 700,
-    fontFamily: 'var(--sans)',
-    cursor: 'pointer',
-    transition: 'all .2s',
-    background: active ? '#fff' : 'transparent',
-    color: active ? '#2A1606' : 'rgba(42,22,6,0.45)',
-    boxShadow: active ? '0 2px 8px rgba(58,35,16,0.10)' : 'none',
-  });
+  const tabCls = (active: boolean) =>
+    `px-3 py-1.5 rounded-md text-xs font-medium ${active ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'}`;
 
   return (
-    <div className="nv" style={{ minHeight: '100vh', background: BG, fontFamily: 'var(--sans)', overflowX: 'hidden', width: '100%' }}>
+    <div className="min-h-screen bg-slate-50">
       <JourneyHeader backHref="/journey/credit-card" />
 
-      <div style={{ padding: '28px 24px 120px', maxWidth: 560, margin: '0 auto', boxSizing: 'border-box' }}>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {/* Page heading */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.2)', borderRadius: 20, padding: '5px 14px', marginBottom: 14 }}>
-            <span style={{ fontSize: 10 }} aria-hidden>
-              💳
-            </span>
-            <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '1.5px', color: '#DC2626', textTransform: 'uppercase' }}>Your Credit-Card Debt</span>
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider mb-3">
+            <CreditCard className="w-4 h-4" aria-hidden /> Your Credit-Card Debt
           </div>
-          <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(26px,6vw,34px)', fontWeight: 900, lineHeight: 1.15, color: '#2A1606', marginBottom: 6 }}>
-            Where your money <span style={{ color: '#DC2626', fontStyle: 'italic' }}>really</span> goes.
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            Where your money <span className="text-blue-600">really</span> goes.
           </h1>
-          <div style={{ fontSize: 13, color: 'rgba(42,22,6,0.5)', lineHeight: 1.5 }}>Analysing your cards · a pattern worth ₹{patternL}L</div>
+          <p className="text-sm text-slate-600 leading-relaxed mt-2">Analysing your cards · a pattern worth ₹{patternL}L</p>
         </div>
 
         {/* Payment breakdown card */}
-        <div style={{ background: '#fff', borderRadius: 20, padding: '24px 20px 20px', boxShadow: '0 4px 24px rgba(58,35,16,0.08)', marginBottom: 20 }}>
-          <div style={{ textAlign: 'center', fontSize: 13, color: 'rgba(42,22,6,0.5)', marginBottom: 6 }}>This month you paid</div>
-          <div style={{ textAlign: 'center', fontFamily: 'var(--serif)', fontSize: 'clamp(40px,12vw,52px)', fontWeight: 900, color: '#2A1606', lineHeight: 1, marginBottom: 20, fontVariantNumeric: 'tabular-nums' }}>{fmtINR(d.minDue)}</div>
+        <section className="card-fintech p-5 sm:p-6">
+          <div className="text-center text-xs font-medium text-slate-500 mb-1">This month you paid</div>
+          <div className="text-center text-4xl sm:text-5xl font-bold text-slate-900 tabular-nums mb-5">{fmtINR(d.minDue)}</div>
 
           <div
             role="img"
             aria-label={`${split.intPct}% of your payment goes to interest and GST, ${split.clearedPct}% clears debt`}
-            style={{ height: 10, borderRadius: 8, background: `linear-gradient(90deg,#DC2626 ${split.intPct}%,#0D9488 ${split.intPct}%)`, marginBottom: 8 }}
-          />
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: '#DC2626', letterSpacing: '.8px' }}>▶ INTEREST + GST</div>
-            <div style={{ fontSize: 10, fontWeight: 800, color: '#0D9488', letterSpacing: '.8px' }}>DEBT CLEARED ◀</div>
+            className="flex h-2.5 rounded-full overflow-hidden bg-slate-200 mb-2"
+          >
+            <div className="bg-rose-500" style={{ width: `${split.intPct}%` }} />
+            <div className="bg-emerald-500 flex-1" />
+          </div>
+          <div className="flex justify-between mb-4">
+            <div className="text-[11px] font-semibold text-rose-600 tracking-wide">▶ INTEREST + GST</div>
+            <div className="text-[11px] font-semibold text-emerald-600 tracking-wide">DEBT CLEARED ◀</div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <div style={{ background: 'linear-gradient(145deg,#FFF1F2,#FFE4E6)', border: '1.5px solid rgba(220,38,38,0.15)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
-              <div style={{ fontSize: 22, marginBottom: 8 }} aria-hidden>
-                🏦
-              </div>
-              <div style={{ fontSize: 10, fontWeight: 800, color: '#991B1B', letterSpacing: '.8px', marginBottom: 10 }}>INTEREST + GST</div>
-              <div style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(19px,5.5vw,24px)', fontWeight: 900, color: '#DC2626', marginBottom: 4 }}>{fmtINR(split.interestGST)}</div>
-              <div style={{ fontSize: 12, color: 'rgba(153,27,27,0.65)' }}>{split.intPct}% of payment</div>
-              <div style={{ fontSize: 10, color: 'rgba(153,27,27,0.5)', marginTop: 6, lineHeight: 1.4 }}>({(d.rate / 12).toFixed(2)}%/mo + 18% GST)</div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg bg-rose-50 border border-rose-200 p-4 text-center">
+              <Landmark className="w-5 h-5 text-rose-600 mx-auto mb-2" aria-hidden />
+              <div className="text-[11px] font-semibold text-rose-800 tracking-wide mb-2">INTEREST + GST</div>
+              <div className="text-xl font-bold text-rose-600 tabular-nums">{fmtINR(split.interestGST)}</div>
+              <div className="text-xs text-rose-700 mt-1">{split.intPct}% of payment</div>
+              <div className="text-[11px] text-rose-700/70 mt-1.5 leading-snug">({(d.rate / 12).toFixed(2)}%/mo + 18% GST)</div>
             </div>
-            <div style={{ background: 'linear-gradient(145deg,#F0FDFA,#CCFBF1)', border: '1.5px solid rgba(13,148,136,0.2)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
-              <div style={{ fontSize: 22, marginBottom: 8 }} aria-hidden>
-                ✅
-              </div>
-              <div style={{ fontSize: 10, fontWeight: 800, color: '#0F766E', letterSpacing: '.8px', marginBottom: 10 }}>DEBT CLEARED</div>
-              <div style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(19px,5.5vw,24px)', fontWeight: 900, color: '#0D9488', marginBottom: 4 }}>{fmtINR(split.cleared)}</div>
-              <div style={{ fontSize: 12, color: 'rgba(15,118,110,0.65)', marginBottom: 4 }}>{split.clearedPct}% of payment</div>
-              <div style={{ fontSize: 11, color: 'rgba(15,118,110,0.55)' }}>
+            <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-center">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 mx-auto mb-2" aria-hidden />
+              <div className="text-[11px] font-semibold text-emerald-800 tracking-wide mb-2">DEBT CLEARED</div>
+              <div className="text-xl font-bold text-emerald-600 tabular-nums">{fmtINR(split.cleared)}</div>
+              <div className="text-xs text-emerald-700 mt-1">{split.clearedPct}% of payment</div>
+              <div className="text-[11px] text-emerald-700/70 mt-1.5 leading-snug">
                 Reduces your
                 <br />
                 outstanding
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* Debt trajectory card */}
-        <div style={{ background: '#fff', borderRadius: 20, padding: 20, boxShadow: '0 4px 24px rgba(58,35,16,0.08)', marginBottom: 24 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.5)', marginBottom: 4 }}>You owe today</div>
-              <div style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(20px,5.5vw,26px)', fontWeight: 900, color: '#2A1606', fontVariantNumeric: 'tabular-nums' }}>{fmtINR(d.outstanding)}</div>
+        <section className="rounded-2xl bg-slate-900 text-white p-5 sm:p-6">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 mb-4">
+            <div className="min-w-0">
+              <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">You owe today</div>
+              <div className="text-xl sm:text-2xl font-bold tabular-nums">{fmtINR(d.outstanding)}</div>
             </div>
-            <div style={{ fontSize: 22, color: 'rgba(42,22,6,0.3)' }} aria-hidden>
-              →
-            </div>
-            <div style={{ textAlign: 'right', minWidth: 0 }}>
-              <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.5)', marginBottom: 4 }}>You&apos;ll owe in {MONTHS[m3.getMonth()]}</div>
-              <div style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(20px,5.5vw,26px)', fontWeight: 900, color: '#DC2626', fontVariantNumeric: 'tabular-nums' }}>{fmtINR(split.owe3m)}</div>
+            <ArrowRight className="w-5 h-5 text-slate-400" aria-hidden />
+            <div className="text-right min-w-0">
+              <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">You&apos;ll owe in {MONTHS[m3.getMonth()]}</div>
+              <div className="text-xl sm:text-2xl font-bold tabular-nums text-rose-400">{fmtINR(split.owe3m)}</div>
             </div>
           </div>
-          <div style={{ fontSize: 13, color: 'rgba(42,22,6,0.55)', lineHeight: 1.5, borderTop: '1px solid rgba(196,168,130,0.2)', paddingTop: 14 }}>
+          <div className="text-sm text-slate-300 leading-relaxed border-t border-slate-700 pt-4">
             Three more payments of about {fmtINR(d.minDue)} — and your debt barely moves.
           </div>
-        </div>
+        </section>
 
         {/* CTA */}
-        <button
-          type="button"
-          onClick={() => router.push('/journey/credit-card/fixes')}
-          style={{ width: '100%', background: 'linear-gradient(135deg,#1463C5,#0D4FA0)', border: 'none', borderRadius: 16, padding: 18, fontSize: 17, fontWeight: 800, color: '#fff', cursor: 'pointer', fontFamily: 'var(--sans)', boxShadow: '0 8px 28px rgba(20,99,197,0.35)', letterSpacing: '.2px' }}
-          onMouseOver={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
-          onMouseOut={(e) => (e.currentTarget.style.transform = '')}
-        >
-          Show me how to fix this →
-        </button>
-        <div style={{ textAlign: 'center', marginTop: 10, fontSize: 12, color: 'rgba(42,22,6,0.35)' }}>Your personalised debt escape plan</div>
+        <div>
+          <button type="button" onClick={() => router.push('/journey/credit-card/fixes')} className="btn-accent w-full">
+            Show me how to fix this <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
+          </button>
+          <div className="text-center mt-2 text-xs text-slate-500">Your personalised debt escape plan</div>
+        </div>
 
         {/* Tabs */}
-        <div role="tablist" aria-label="Card analysis" style={{ display: 'flex', background: 'rgba(196,168,130,0.2)', borderRadius: 14, padding: 3, margin: '28px 0 0' }}>
-          <button type="button" role="tab" id="cca-tab-cards" aria-selected={tab === 'cards'} aria-controls="cca-panel-cards" onClick={() => setTab('cards')} style={tabBtn(tab === 'cards')}>
+        <div role="tablist" aria-label="Card analysis" className="inline-flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+          <button type="button" role="tab" id="cca-tab-cards" aria-selected={tab === 'cards'} aria-controls="cca-panel-cards" onClick={() => setTab('cards')} className={tabCls(tab === 'cards')}>
             Your cards
           </button>
-          <button type="button" role="tab" id="cca-tab-know" aria-selected={tab === 'know'} aria-controls="cca-panel-know" onClick={() => setTab('know')} style={tabBtn(tab === 'know')}>
+          <button type="button" role="tab" id="cca-tab-know" aria-selected={tab === 'know'} aria-controls="cca-panel-know" onClick={() => setTab('know')} className={tabCls(tab === 'know')}>
             Know more
           </button>
         </div>
 
         {tab === 'cards' && (
-          <div id="cca-panel-cards" role="tabpanel" aria-labelledby="cca-tab-cards" style={{ marginTop: 20 }}>
-            <div style={{ background: '#fff', borderRadius: 20, padding: 18, boxShadow: '0 4px 20px rgba(58,35,16,0.07)', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <span style={{ fontSize: 16, fontWeight: 800, color: '#2A1606' }}>Your cards</span>
-                {cards.length > 1 && <span style={{ fontSize: 13, color: 'rgba(42,22,6,0.4)', fontWeight: 500 }}>swipe →</span>}
+          <div id="cca-panel-cards" role="tabpanel" aria-labelledby="cca-tab-cards">
+            <div className="card-fintech p-5 sm:p-6">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-semibold text-slate-900">Your cards</span>
+                {cards.length > 1 && <span className="text-xs text-slate-500">swipe →</span>}
               </div>
 
-              <div style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollSnapType: 'x mandatory', marginBottom: 16, paddingBottom: cards.length > 1 ? 4 : 0 }}>
+              <div className={`flex gap-3 overflow-x-auto snap-x snap-mandatory mb-5 ${cards.length > 1 ? 'pb-1' : ''}`}>
                 {cards.map((c, i) => (
                   <CardVisual key={i} card={c} />
                 ))}
               </div>
 
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: '#2A1606' }}>Card limit used</span>
-                  <span
-                    title="Outstanding ÷ Credit limit"
-                    aria-label="Outstanding divided by credit limit"
-                    style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(16,153,207,0.12)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#1099CF', fontWeight: 700, cursor: 'default' }}
-                  >
-                    ?
+                <div className="flex items-center gap-1.5 mb-2.5">
+                  <span className="text-sm font-semibold text-slate-900">Card limit used</span>
+                  <span title="Outstanding ÷ Credit limit" aria-label="Outstanding divided by credit limit" className="inline-flex items-center text-slate-400">
+                    <Info className="w-4 h-4" aria-hidden />
                   </span>
-                  <span style={{ fontSize: 15, fontWeight: 700, color: '#2A1606', marginLeft: 2 }}>{limitPct === null ? '—' : `${limitPct}%`}</span>
+                  <span className="text-sm font-bold text-slate-900 ml-0.5 tabular-nums">{limitPct === null ? '—' : `${limitPct}%`}</span>
                 </div>
-                <div style={{ height: 10, borderRadius: 6, overflow: 'hidden', background: 'linear-gradient(90deg,#22c55e 0%,#22c55e 30%,#eab308 30%,#eab308 70%,#ef4444 70%)', position: 'relative', marginBottom: 6 }}>
-                  {limitPct !== null && (
-                    <div style={{ position: 'absolute', top: -3, left: `${Math.min(96, limitPct)}%`, width: 4, height: 16, background: '#2A1606', borderRadius: 2, transform: 'translateX(-50%)', transition: 'left .5s' }} />
-                  )}
+                <div className="relative flex h-2.5 rounded-full overflow-hidden bg-slate-200 mb-1.5">
+                  <div className="bg-emerald-500 w-[30%]" />
+                  <div className="bg-amber-500 w-[40%]" />
+                  <div className="bg-rose-500 flex-1" />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                  <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 600 }}>Good &lt;30%</span>
-                  <span style={{ fontSize: 11, color: '#ca8a04', fontWeight: 600 }}>Watch 30–70%</span>
-                  <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 600 }}>High</span>
+                {limitPct !== null && (
+                  <div className="relative h-0">
+                    <div className="absolute -top-[18px] w-1 h-4 bg-slate-900 rounded-sm -translate-x-1/2" style={{ left: `${Math.min(96, limitPct)}%` }} />
+                  </div>
+                )}
+                <div className="flex justify-between mt-1.5">
+                  <span className="text-[11px] font-semibold text-emerald-600">Good &lt;30%</span>
+                  <span className="text-[11px] font-semibold text-amber-600">Watch 30–70%</span>
+                  <span className="text-[11px] font-semibold text-rose-600">High</span>
                 </div>
-                {limitPct === null && <div style={{ fontSize: 11, color: 'rgba(42,22,6,0.45)', marginTop: 8 }}>Add your credit limit on the previous step to see how much of it you use.</div>}
+                {limitPct === null && <div className="text-xs text-slate-500 mt-2">Add your credit limit on the previous step to see how much of it you use.</div>}
               </div>
             </div>
           </div>
         )}
 
         {tab === 'know' && (
-          <div id="cca-panel-know" role="tabpanel" aria-labelledby="cca-tab-know" style={{ marginTop: 20 }}>
+          <div id="cca-panel-know" role="tabpanel" aria-labelledby="cca-tab-know" className="space-y-6">
             {/* Reality check: Debt vs income */}
-            <div style={{ background: '#fff', borderRadius: 20, padding: 20, boxShadow: '0 4px 20px rgba(58,35,16,0.07)', marginBottom: 20 }}>
-              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: '#E07C10', textTransform: 'uppercase', marginBottom: 4 }}>Reality Check</div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 8 }}>
-                <div style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 700, color: '#2A1606' }}>Debt vs income</div>
-                <div style={{ background: '#FEF3C7', borderRadius: 20, padding: '5px 12px', fontSize: 12, fontWeight: 700, color: '#92400E', whiteSpace: 'nowrap' }}>{debtMultR}x income</div>
+            <section className="card-fintech p-5 sm:p-6">
+              <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Reality Check</div>
+              <div className="flex justify-between items-center gap-2 mb-4">
+                <h2 className="text-sm font-semibold text-slate-900">Debt vs income</h2>
+                <span className="badge-amber whitespace-nowrap">{debtMultR}x income</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-                <div style={{ background: '#F8F9FA', borderRadius: 12, padding: 14, minWidth: 0 }}>
-                  <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.8px', color: 'rgba(42,22,6,0.45)', textTransform: 'uppercase', marginBottom: 6 }}>Monthly Income</div>
-                  <div style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(17px,5vw,22px)', fontWeight: 900, color: '#2A1606' }}>{fmtINR(income)}</div>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 min-w-0">
+                  <div className="text-[11px] font-medium text-slate-500">Monthly Income</div>
+                  <div className="text-lg font-bold text-slate-900 tabular-nums">{fmtINR(income)}</div>
                 </div>
-                <div style={{ background: '#FFF7ED', borderRadius: 12, padding: 14, border: '1.5px solid rgba(220,38,38,0.1)', minWidth: 0 }}>
-                  <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.8px', color: 'rgba(42,22,6,0.45)', textTransform: 'uppercase', marginBottom: 6 }}>You Owe</div>
-                  <div style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(17px,5vw,22px)', fontWeight: 900, color: '#DC2626' }}>{fmtINR(d.outstanding)}</div>
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 min-w-0">
+                  <div className="text-[11px] font-medium text-slate-500">You Owe</div>
+                  <div className="text-lg font-bold text-rose-600 tabular-nums">{fmtINR(d.outstanding)}</div>
                 </div>
               </div>
-              <div style={{ position: 'relative', height: 8, background: 'linear-gradient(90deg,#22c55e 0%,#22c55e 25%,#eab308 25%,#eab308 50%,#f97316 50%,#f97316 75%,#dc2626 75%)', borderRadius: 4, marginBottom: 6 }}>
-                <div style={{ position: 'absolute', top: -5, width: 14, height: 18, background: '#2A1606', borderRadius: 3, left: `${barPct.toFixed(1)}%`, transform: 'translateX(-50%)', transition: 'left .6s' }} />
+              <div className="relative mb-1.5">
+                <div className="flex h-2 rounded overflow-hidden">
+                  <div className="bg-emerald-500 w-1/4" />
+                  <div className="bg-amber-400 w-1/4" />
+                  <div className="bg-orange-500 w-1/4" />
+                  <div className="bg-rose-500 w-1/4" />
+                </div>
+                <div className="absolute -top-1 w-3.5 h-4 bg-slate-900 rounded-sm -translate-x-1/2" style={{ left: `${barPct.toFixed(1)}%` }} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div className="flex justify-between mb-3">
                 {['0×', '1×', '2×', '3×', '4×'].map((t) => (
-                  <span key={t} style={{ fontSize: 11, color: 'rgba(42,22,6,0.4)' }}>
+                  <span key={t} className="text-[11px] text-slate-500">
                     {t}
                   </span>
                 ))}
               </div>
-              <div style={{ fontSize: 13, color: 'rgba(42,22,6,0.6)', lineHeight: 1.55 }}>
+              <div className="text-xs text-slate-600 leading-relaxed">
                 You&apos;d need <strong>{debtMultR} months</strong> of your entire income to clear this outright.
               </div>
-            </div>
+            </section>
 
             {/* Keep paying the minimum */}
-            <div style={{ background: '#fff', borderRadius: 20, padding: 20, boxShadow: '0 4px 20px rgba(58,35,16,0.07)', marginBottom: 20 }}>
-              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: '#DC2626', textTransform: 'uppercase', marginBottom: 4 }}>Keep Paying the Minimum</div>
-              <div style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 700, color: '#2A1606', marginBottom: 4 }}>What you&apos;ll hand over</div>
-              <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.5)', marginBottom: 14 }}>Amount paid vs debt remaining, month by month.</div>
-              <div style={{ display: 'flex', gap: 20, marginBottom: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <section className="card-fintech p-5 sm:p-6">
+              <div className="text-xs font-semibold text-rose-600 uppercase tracking-wider mb-1">Keep Paying the Minimum</div>
+              <h2 className="text-sm font-semibold text-slate-900">What you&apos;ll hand over</h2>
+              <div className="text-xs text-slate-500 mt-1 mb-3.5">Amount paid vs debt remaining, month by month.</div>
+              <div className="flex gap-5 mb-3">
+                <div className="flex items-center gap-2">
                   <svg width="24" height="6" aria-hidden>
-                    <line x1="0" y1="3" x2="24" y2="3" stroke="#1e40af" strokeWidth="2.5" strokeLinecap="round" />
-                    <circle cx="12" cy="3" r="3" fill="#1e40af" />
+                    <line x1="0" y1="3" x2="24" y2="3" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" />
+                    <circle cx="12" cy="3" r="3" fill="#2563EB" />
                   </svg>
-                  <span style={{ fontSize: 11, color: 'rgba(42,22,6,0.6)', fontWeight: 500 }}>Paid to Bank</span>
+                  <span className="text-[11px] font-medium text-slate-600">Paid to Bank</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <div className="flex items-center gap-2">
                   <svg width="24" height="6" aria-hidden>
-                    <line x1="0" y1="3" x2="24" y2="3" stroke="#ea580c" strokeWidth="2.5" strokeLinecap="round" />
-                    <circle cx="12" cy="3" r="3" fill="#ea580c" />
+                    <line x1="0" y1="3" x2="24" y2="3" stroke="#F43F5E" strokeWidth="2.5" strokeLinecap="round" />
+                    <circle cx="12" cy="3" r="3" fill="#F43F5E" />
                   </svg>
-                  <span style={{ fontSize: 11, color: 'rgba(42,22,6,0.6)', fontWeight: 500 }}>Still Owed</span>
+                  <span className="text-[11px] font-medium text-slate-600">Still Owed</span>
                 </div>
               </div>
               <MinPayChart outstanding={d.outstanding} rate={d.rate} minDue={d.minDue} />
-            </div>
+            </section>
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
@@ -274,23 +256,20 @@ function CardVisual({ card }: { card: CardEntry }) {
   const bank = (card.bank.trim() || 'Bank').split(/\s+/)[0].toLowerCase().substring(0, 8);
   const limitPct = card.limit > 0 ? `${Math.round((card.outstanding / card.limit) * 100)}%` : '—';
   return (
-    <div style={{ background: 'linear-gradient(135deg,#1a3a6b 0%,#1e4d8c 50%,#2a6099 100%)', borderRadius: 20, padding: '18px 20px 16px', position: 'relative', overflow: 'hidden', minHeight: 155, boxSizing: 'border-box', width: '100%', maxWidth: 320, flex: '0 0 min(100%, 320px)', scrollSnapAlign: 'start' }}>
-      <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 72% 18%,rgba(255,255,255,0.13) 0%,transparent 60%)', pointerEvents: 'none' }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-        <div style={{ fontSize: 16, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: '.5px', fontFamily: 'var(--sans)' }}>{bank}</div>
-        <div style={{ fontStyle: 'italic', fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: 1, fontFamily: 'var(--serif)' }}>VISA</div>
+    <div className="relative overflow-hidden rounded-2xl bg-slate-900 text-white p-5 min-h-[155px] w-full max-w-[320px] flex-[0_0_min(100%,320px)] snap-start">
+      <div className="flex justify-between items-start mb-2.5">
+        <div className="text-base font-semibold text-white/90 tracking-wide">{bank}</div>
+        <CreditCard className="w-5 h-5 text-slate-400" aria-hidden />
       </div>
-      <div style={{ width: 38, height: 28, background: 'linear-gradient(135deg,#D4A017,#B8860B)', borderRadius: 5, marginBottom: 12, position: 'relative' }}>
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 28, height: 17, border: '1.5px solid rgba(0,0,0,0.3)', borderRadius: 3 }} />
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 8 }}>
+      <div className="w-9 h-7 rounded bg-slate-600 mb-3" aria-hidden />
+      <div className="flex justify-between items-end gap-2">
         <div>
-          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '1.5px', color: 'rgba(255,255,255,0.5)', marginBottom: 3, textTransform: 'uppercase' }}>Outstanding</div>
-          <div style={{ fontSize: 'clamp(19px,5.5vw,24px)', fontWeight: 900, color: '#fff', fontFamily: 'var(--serif)', letterSpacing: '.5px' }}>{fmtINR(card.outstanding)}</div>
+          <div className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase mb-0.5">Outstanding</div>
+          <div className="text-xl font-bold tabular-nums">{fmtINR(card.outstanding)}</div>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '1.5px', color: 'rgba(255,255,255,0.5)', marginBottom: 3, textTransform: 'uppercase' }}>Limit Used · Rate</div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>
+        <div className="text-right">
+          <div className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase mb-0.5">Limit Used · Rate</div>
+          <div className="text-sm font-bold tabular-nums">
             {limitPct} · {card.rate.toFixed(2)}%
           </div>
         </div>
@@ -323,27 +302,27 @@ function MinPayChart({ outstanding, rate, minDue }: { outstanding: number; rate:
   const summary = milestones.map((m, i) => `${m} months: paid ${fmtLakh(paid[i])}, still owed ${fmtLakh(owed[i])}`).join('; ');
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={`Paying only the minimum. ${summary}.`} style={{ display: 'block', maxWidth: '100%', overflow: 'hidden' }} shapeRendering="geometricPrecision" textRendering="optimizeLegibility">
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={`Paying only the minimum. ${summary}.`} className="block max-w-full overflow-hidden" shapeRendering="geometricPrecision" textRendering="optimizeLegibility">
       <defs>
         <linearGradient id="cca-oGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ea580c" stopOpacity="0.15" />
-          <stop offset="100%" stopColor="#ea580c" stopOpacity="0.02" />
+          <stop offset="0%" stopColor="#F43F5E" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="#F43F5E" stopOpacity="0.02" />
         </linearGradient>
         <linearGradient id="cca-pGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1e40af" stopOpacity="0.12" />
-          <stop offset="100%" stopColor="#1e40af" stopOpacity="0.02" />
+          <stop offset="0%" stopColor="#2563EB" stopOpacity="0.12" />
+          <stop offset="100%" stopColor="#2563EB" stopOpacity="0.02" />
         </linearGradient>
       </defs>
       {milestones.map((_, i) => (
-        <line key={`g${i}`} x1={xAt(i).toFixed(1)} y1={padT} x2={xAt(i).toFixed(1)} y2={base} stroke="rgba(0,0,0,0.06)" strokeWidth="1" strokeDasharray="3,3" />
+        <line key={`g${i}`} x1={xAt(i).toFixed(1)} y1={padT} x2={xAt(i).toFixed(1)} y2={base} stroke="#E2E8F0" strokeWidth="1" strokeDasharray="3,3" />
       ))}
-      <line x1={padL} y1={base} x2={W - padR} y2={base} stroke="rgba(0,0,0,0.1)" strokeWidth="1" />
+      <line x1={padL} y1={base} x2={W - padR} y2={base} stroke="#E2E8F0" strokeWidth="1" />
       {N === owed.length && N > 1 && (
         <>
           <path d={area(oPts)} fill="url(#cca-oGrad)" />
           <path d={area(pPts)} fill="url(#cca-pGrad)" />
-          <path d={line(oPts)} fill="none" stroke="#ea580c" strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round" />
-          <path d={line(pPts)} fill="none" stroke="#1e40af" strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round" />
+          <path d={line(oPts)} fill="none" stroke="#F43F5E" strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round" />
+          <path d={line(pPts)} fill="none" stroke="#2563EB" strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round" />
           {milestones.map((m, i) => {
             const o = oPts[i];
             const p = pPts[i];
@@ -351,15 +330,15 @@ function MinPayChart({ outstanding, rate, minDue }: { outstanding: number; rate:
             const blueAbove = p.y < o.y;
             return (
               <g key={m}>
-                <circle cx={Math.round(o.x)} cy={Math.round(o.y)} r="5.5" fill="#ea580c" stroke="#fff" strokeWidth="2" />
-                <text x={Math.round(o.x)} y={Math.round(o.y - 11)} textAnchor={anchor} fontSize="10.5" fill="#ea580c" fontWeight="800" fontFamily="Inter,sans-serif">
+                <circle cx={Math.round(o.x)} cy={Math.round(o.y)} r="5.5" fill="#F43F5E" stroke="#fff" strokeWidth="2" />
+                <text x={Math.round(o.x)} y={Math.round(o.y - 11)} textAnchor={anchor} fontSize="10.5" fill="#F43F5E" fontWeight="700" fontFamily="Inter,sans-serif">
                   {fmtLakh(owed[i])}
                 </text>
-                <circle cx={Math.round(p.x)} cy={Math.round(p.y)} r="5.5" fill="#1e40af" stroke="#fff" strokeWidth="2" />
-                <text x={Math.round(p.x)} y={blueAbove ? Math.round(p.y - 11) : Math.round(p.y + 16)} textAnchor={anchor} fontSize="10.5" fill="#1e40af" fontWeight="800" fontFamily="Inter,sans-serif">
+                <circle cx={Math.round(p.x)} cy={Math.round(p.y)} r="5.5" fill="#2563EB" stroke="#fff" strokeWidth="2" />
+                <text x={Math.round(p.x)} y={blueAbove ? Math.round(p.y - 11) : Math.round(p.y + 16)} textAnchor={anchor} fontSize="10.5" fill="#2563EB" fontWeight="700" fontFamily="Inter,sans-serif">
                   {fmtLakh(paid[i])}
                 </text>
-                <text x={Math.round(o.x)} y={base + 16} textAnchor={anchor} fontSize="10.5" fill="rgba(42,22,6,0.4)" fontFamily="Inter,sans-serif">
+                <text x={Math.round(o.x)} y={base + 16} textAnchor={anchor} fontSize="10.5" fill="#64748B" fontFamily="Inter,sans-serif">
                   {m}M
                 </text>
               </g>

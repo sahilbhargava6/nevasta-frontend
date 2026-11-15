@@ -1,220 +1,244 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { initialsOf, useSession } from '@/components/session/SessionProvider';
+import {
+  LayoutDashboard,
+  CreditCard,
+  Landmark,
+  ArrowLeftRight,
+  LogOut,
+  Menu,
+  X,
+  ShieldCheck,
+  ChevronRight,
+  Sparkles,
+  FileText,
+  Settings,
+  Compass,
+} from 'lucide-react';
+import { useSession, initialsOf } from '@/components/session/SessionProvider';
 
 /**
- * Site navigation from the design (.l-nav): logo, Who We Are, Our Solutions
- * menu (Debt Management, Life Events Planner), Contact Us, and Login /
- * Get Started or the profile avatar. Account pages also get a second row
- * with their own sections.
- *
- * `onOpenAuth` is accepted for older pages; sign-in now comes from the
- * shared session.
+ * Site header in the original Navesta look (slate/blue), wired to the shared
+ * session: sign-in opens the mobile + OTP dialog, the avatar opens the
+ * profile, and "Start Debt Plan" enters the Debt Management journey.
  */
-
-const ACCOUNT_TABS = [
-  { href: '/dashboard', label: 'Overview' },
-  { href: '/loans', label: 'Loans & EMIs' },
-  { href: '/credit-cards', label: 'Credit Cards' },
-  { href: '/balance-transfer', label: 'Applications' },
-  { href: '/statements', label: 'Vault' },
-  { href: '/settings', label: 'Settings' },
+const PUBLIC_LINKS = [
+  { href: '/about', label: 'Who We Are' },
+  { href: '/debt-management', label: 'Debt Management', needsAccount: true },
+  { href: '/life-events', label: 'Life Events' },
+  { href: '/calculator', label: 'Calculator' },
+  { href: '/blog', label: 'Knowledge Hub' },
+  { href: '/contact', label: 'Contact Us' },
 ];
 
-const ChevronDown = () => (
-  <svg width="10" height="10" viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M1 1l4 4 4-4" />
-  </svg>
-);
-
-const ArrowRight = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <line x1="5" y1="12" x2="19" y2="12" />
-    <polyline points="12 5 19 12 12 19" />
-  </svg>
-);
-
-export function SolutionsMenu({ onPick }: { onPick?: () => void }) {
-  const router = useRouter();
-  const { requireAuth } = useSession();
-  const item = { display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '14px 18px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#2A1606', textAlign: 'left' as const };
-
-  return (
-    <div style={{ background: '#FFFAF6', border: '1px solid rgba(196,168,130,0.3)', borderRadius: 16, boxShadow: '0 8px 32px rgba(42,22,6,0.15)', overflow: 'hidden', minWidth: 240 }} role="menu">
-      <button
-        role="menuitem"
-        style={item}
-        onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(201,96,16,0.08)')}
-        onMouseOut={(e) => (e.currentTarget.style.background = 'none')}
-        onClick={() => {
-          onPick?.();
-          requireAuth('debt-management', () => router.push('/debt-management'));
-        }}
-      >
-        <span style={{ fontSize: 20 }}>💳</span>
-        <div>
-          <div style={{ fontWeight: 700, color: '#2A1606' }}>Debt Management</div>
-          <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.5)', fontWeight: 400 }}>Credit card payoff &amp; loan plans</div>
-        </div>
-      </button>
-      <div style={{ height: 1, background: 'rgba(196,168,130,0.2)', margin: '0 14px' }} />
-      <button
-        role="menuitem"
-        style={item}
-        onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(201,96,16,0.08)')}
-        onMouseOut={(e) => (e.currentTarget.style.background = 'none')}
-        onClick={() => {
-          onPick?.();
-          router.push('/life-events');
-        }}
-      >
-        <span style={{ fontSize: 20 }}>🎊</span>
-        <div>
-          <div style={{ fontWeight: 700, color: '#2A1606' }}>Life Events Planner</div>
-          <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.5)', fontWeight: 400 }}>Weddings, education &amp; big milestones</div>
-        </div>
-      </button>
-    </div>
-  );
-}
-
-/** Who We Are · Our Solutions ▾ · Contact Us (shared by the site nav and journey headers). */
-export function NavLinks() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
-    document.addEventListener('click', close);
-    return () => document.removeEventListener('click', close);
-  }, [open]);
-
-  const linkStyle = { background: 'none', border: 'none', cursor: 'pointer', padding: 0, font: 'inherit' };
-
-  return (
-    <div className="l-nav-links">
-      <Link className="l-nav-link" href="/about">
-        Who We Are
-      </Link>
-      <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
-        <button className="l-nav-link" style={{ ...linkStyle, display: 'inline-flex', alignItems: 'center', gap: 4 }} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-          Our Solutions <ChevronDown />
-        </button>
-        {open && (
-          <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)', zIndex: 9999 }}>
-            <SolutionsMenu onPick={() => setOpen(false)} />
-          </div>
-        )}
-      </div>
-      <Link className="l-nav-link" href="/contact">
-        Contact Us
-      </Link>
-    </div>
-  );
-}
-
-/** Avatar for signed-in customers, Login / Get Started otherwise. */
-export function NavAccount({ compact = false }: { compact?: boolean }) {
-  const { user, ready, openAuth, openProfile } = useSession();
-  if (!ready) return <div style={{ marginLeft: 'auto', width: 36 }} />;
-
-  if (user) {
-    return (
-      <div className="l-nav-user" style={{ marginLeft: 'auto', display: 'flex' }}>
-        <button className="user-avatar" onClick={openProfile} title="View Profile" aria-label="View profile" style={compact ? { width: 36, height: 36, fontSize: 13 } : undefined}>
-          {initialsOf(user.name)}
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="l-nav-actions" style={{ marginLeft: 'auto' }}>
-      <button className="l-btn-ghost" onClick={() => openAuth({ mode: 'login' })}>
-        Login
-      </button>
-      <button className="l-btn-cta" style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }} onClick={() => openAuth({ mode: 'signup' })}>
-        Get Started <ArrowRight />
-      </button>
-    </div>
-  );
-}
+const ACCOUNT_LINKS = [
+  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { href: '/debt-management', label: 'Debt Plan', icon: Compass },
+  { href: '/loans', label: 'Loans & EMIs', icon: Landmark },
+  { href: '/credit-cards', label: 'Credit Cards', icon: CreditCard },
+  { href: '/balance-transfer', label: 'Balance Transfer', icon: ArrowLeftRight },
+  { href: '/statements', label: 'Vault', icon: FileText },
+];
 
 export default function Navbar(_props: { onOpenAuth?: () => void } = {}) {
-  const pathname = usePathname();
-  const { user, openAuth } = useSession();
+  const router = useRouter();
+  const pathname = usePathname() ?? '';
+  const { user, ready, openAuth, requireAuth, openProfile, signOut } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const onAccountPage = !!user && ACCOUNT_TABS.some((t) => pathname === t.href || pathname.startsWith(t.href + '/'));
+  const isLoggedIn = ready && !!user;
 
-  useEffect(() => setMobileOpen(false), [pathname]);
+  const go = (href: string, needsAccount?: boolean) => {
+    setMobileOpen(false);
+    if (needsAccount) requireAuth('debt-management', () => router.push(href));
+    else router.push(href);
+  };
+  const startPlan = () => go('/debt-management', true);
+  const isActive = (href: string) => pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
 
   return (
-    <div className="nv" style={{ position: 'relative', zIndex: 200 }}>
-      <nav className="l-nav" aria-label="Main">
-        <button className={`l-hamburger${mobileOpen ? ' open' : ''}`} onClick={() => setMobileOpen((o) => !o)} aria-label="Menu" aria-expanded={mobileOpen}>
-          <span />
-          <span />
-          <span />
-        </button>
-        <Link href="/" title="Go to Home" style={{ cursor: 'pointer' }}>
-          <Image src="/design/navesta-logo.png" alt="Navesta" width={168} height={64} style={{ height: 64, width: 'auto', display: 'block' }} priority />
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-subtle">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        <Link href={isLoggedIn ? '/dashboard' : '/'} className="flex items-center gap-2.5 group">
+          <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white shadow-sm group-hover:bg-slate-800 transition-colors">
+            <ShieldCheck className="w-4 h-4 text-blue-400" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-lg font-bold text-slate-900 tracking-tight leading-none">navesta</span>
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">Debt Advisory</span>
+          </div>
         </Link>
-        <NavLinks />
-        <NavAccount />
-      </nav>
 
-      <div className={`l-mobile-nav${mobileOpen ? ' open' : ''}`}>
-        <Link href="/#journeys" onClick={() => setMobileOpen(false)}>
-          Journeys
-        </Link>
-        <Link href="/#how" onClick={() => setMobileOpen(false)}>
-          How It Works
-        </Link>
-        <Link href="/about" onClick={() => setMobileOpen(false)}>
-          Who We Are
-        </Link>
-        <Link href="/life-events" onClick={() => setMobileOpen(false)}>
-          Life Events Planner
-        </Link>
-        <Link href="/contact" onClick={() => setMobileOpen(false)}>
-          Contact Us
-        </Link>
-        {!user && (
-          <>
-            <a onClick={() => { setMobileOpen(false); openAuth({ mode: 'signup' }); }}>Sign Up Free</a>
-            <button className="l-mobile-cta" onClick={() => { setMobileOpen(false); openAuth({ mode: 'signup' }); }}>
-              Start Free — No Card Needed
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* The design nav is fixed; this keeps page content below it */}
-      <div style={{ height: 84 }} aria-hidden />
-
-      {onAccountPage && (
-        <div style={{ background: 'rgba(255,250,245,0.97)', borderBottom: '1px solid rgba(196,168,130,0.2)' }}>
-          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '8px 5%' }}>
-            {ACCOUNT_TABS.map((t) => {
-              const active = pathname === t.href || pathname.startsWith(t.href + '/');
+        {isLoggedIn ? (
+          <nav className="hidden lg:flex items-center gap-1 bg-slate-100/80 p-1 rounded-lg border border-slate-200/70">
+            {ACCOUNT_LINKS.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
               return (
                 <Link
-                  key={t.href}
-                  href={t.href}
-                  style={{ padding: '8px 14px', borderRadius: 10, fontSize: 13.5, fontWeight: 600, whiteSpace: 'nowrap', textDecoration: 'none', color: active ? '#fff' : '#3A2310', background: active ? 'linear-gradient(135deg,#F09020 0%,#D06000 100%)' : 'transparent' }}
+                  key={item.href}
+                  href={item.href}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                    active ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                  }`}
                 >
-                  {t.label}
+                  <Icon className={`w-3.5 h-3.5 ${active ? 'text-blue-600' : 'text-slate-400'}`} />
+                  <span>{item.label}</span>
                 </Link>
               );
             })}
-          </div>
+          </nav>
+        ) : (
+          <nav className="hidden lg:flex items-center gap-6">
+            {PUBLIC_LINKS.map((l) => (
+              <button
+                key={l.href}
+                type="button"
+                onClick={() => go(l.href, l.needsAccount)}
+                className={`text-xs font-semibold transition-colors cursor-pointer ${isActive(l.href) ? 'text-blue-700' : 'text-slate-600 hover:text-slate-900'}`}
+              >
+                {l.label}
+              </button>
+            ))}
+          </nav>
+        )}
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          {isLoggedIn ? (
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <button
+                type="button"
+                onClick={openProfile}
+                className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-medium text-slate-800 transition-colors cursor-pointer"
+                title="Your profile"
+              >
+                <div className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-[11px]">{initialsOf(user?.name)}</div>
+                <span className="hidden sm:inline max-w-[120px] truncate">{user?.name || 'Account'}</span>
+              </button>
+              <Link
+                href="/settings"
+                className="hidden sm:flex p-2 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-500 hover:text-blue-600 transition-colors min-w-[36px] min-h-[36px] items-center justify-center"
+                title="Settings & Privacy"
+                aria-label="Settings & Privacy"
+              >
+                <Settings className="w-4 h-4" />
+              </Link>
+              <button
+                type="button"
+                onClick={signOut}
+                className="hidden sm:flex p-2 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-500 hover:text-rose-600 transition-colors cursor-pointer min-w-[36px] min-h-[36px] items-center justify-center"
+                title="Sign Out"
+                aria-label="Sign Out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 sm:gap-2.5">
+              <button
+                type="button"
+                onClick={startPlan}
+                className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Start Debt Plan</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => openAuth({ mode: 'login' })}
+                className="hidden sm:inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                Sign In
+              </button>
+              <button type="button" onClick={() => openAuth({ mode: 'signup' })} className="btn-primary text-xs !py-1.5 !px-3 sm:!px-4 cursor-pointer font-bold shadow-subtle">
+                Get Started
+              </button>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="lg:hidden p-2 rounded-lg text-slate-700 hover:bg-slate-100 active:bg-slate-200 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+            aria-label="Toggle navigation menu"
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+      </div>
+
+      {mobileOpen && (
+        <div className="lg:hidden bg-white border-b border-slate-200 px-4 py-4 space-y-1.5 shadow-elevated">
+          {isLoggedIn ? (
+            <>
+              <button type="button" onClick={() => { setMobileOpen(false); openProfile(); }} className="w-full flex items-center gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200 mb-2 text-left cursor-pointer">
+                <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs">{initialsOf(user?.name)}</div>
+                <div className="min-w-0">
+                  <div className="font-semibold text-xs text-slate-900 truncate">{user?.name || 'Account'}</div>
+                  <div className="text-[11px] text-slate-500">View profile</div>
+                </div>
+              </button>
+              {[...ACCOUNT_LINKS, { href: '/settings', label: 'Account & Privacy Settings', icon: Settings }].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium min-h-[44px] transition-colors ${
+                      isActive(item.href) ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <Icon className="w-4 h-4 text-slate-500" />
+                      {item.label}
+                    </span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                  </Link>
+                );
+              })}
+              <button
+                type="button"
+                onClick={() => { setMobileOpen(false); signOut(); }}
+                className="w-full text-left px-3.5 py-3 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 mt-2 min-h-[44px] cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" /> Sign Out
+              </button>
+            </>
+          ) : (
+            <>
+              {PUBLIC_LINKS.map((l) => (
+                <button
+                  key={l.href}
+                  type="button"
+                  onClick={() => go(l.href, l.needsAccount)}
+                  className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold min-h-[44px] transition-colors cursor-pointer ${
+                    isActive(l.href) ? 'bg-blue-50 text-blue-900' : 'text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>{l.label}</span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+              ))}
+              <div className="pt-3 mt-1 border-t border-slate-100 flex flex-col gap-2">
+                <button type="button" onClick={startPlan} className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all min-h-[44px] cursor-pointer">
+                  <Sparkles className="w-4 h-4 text-emerald-600" />
+                  <span>Start My Free Debt Plan</span>
+                </button>
+                <button type="button" onClick={() => { setMobileOpen(false); openAuth({ mode: 'login' }); }} className="btn-secondary w-full text-xs !py-3 min-h-[44px] font-bold">
+                  Sign In to Account
+                </button>
+                <button type="button" onClick={() => { setMobileOpen(false); openAuth({ mode: 'signup' }); }} className="btn-primary w-full text-xs !py-3 min-h-[44px] font-bold">
+                  Get Started Free
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
-    </div>
+    </header>
   );
 }

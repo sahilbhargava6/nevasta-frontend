@@ -3,7 +3,9 @@
 import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession, type AuthIntent } from '@/components/session/SessionProvider';
+import JourneyTracker from './JourneyTracker';
 import NavaChatWidget from './NavaChatWidget';
+import WhatsAppButton from './WhatsAppButton';
 
 /**
  * Widgets on every page. The old 30-second audit popup is replaced by the
@@ -41,5 +43,11 @@ export default function GlobalInteractiveWidgets() {
     return () => window.removeEventListener('navesta:open-audit', handle);
   }, [startJourney]);
 
-  return <NavaChatWidget onOpenAudit={() => startJourney()} />;
+  return (
+    <>
+      <JourneyTracker />
+      <NavaChatWidget onOpenAudit={() => startJourney()} />
+      <WhatsAppButton variant="floating" />
+    </>
+  );
 }

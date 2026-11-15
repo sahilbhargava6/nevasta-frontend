@@ -3,12 +3,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ArrowRight, CalendarCheck, Calculator } from 'lucide-react';
 import JourneyGate from '@/components/design/JourneyGate';
 import JourneyHeader from '@/components/design/JourneyHeader';
 import { DEFAULT_LOAN_JOURNEY, useJourney, type LoanJourney } from '@/lib/journey';
 import { ANALYSIS_TYPE_LABEL, analyzeLoan, fmtLa, isUsableLoan } from '@/lib/loanMath';
-
-// Design: #loan-analysis-page (Navesta_Website_22Sep26.html ~6272–6351, JS showLoanAnalysisPage ~11593)
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -43,108 +42,102 @@ function LoanAnalysis() {
   const free = new Date(now.getFullYear(), now.getMonth() + loan.tenureLeft, 1);
 
   return (
-    <div className="nv" style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#FFF8F2 0%,#FFF0E3 50%,#FDE8D0 100%)', fontFamily: 'var(--sans)', overflowX: 'hidden' }}>
+    <div className="min-h-screen bg-slate-50">
       <JourneyHeader backHref="/journey/loan" />
 
-      <div style={{ padding: '28px 20px 4px', maxWidth: 560, margin: '0 auto', boxSizing: 'border-box' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(5,150,105,0.08)', border: '1px solid rgba(5,150,105,0.25)', borderRadius: 20, padding: '5px 14px', marginBottom: 14 }}>
-          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, color: '#059669', textTransform: 'uppercase' }}>{ANALYSIS_TYPE_LABEL[loan.loanType] ?? 'PERSONAL LOAN'} · ANALYSIS</span>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider">
+            <Calculator className="w-4 h-4" aria-hidden />
+            {ANALYSIS_TYPE_LABEL[loan.loanType] ?? 'PERSONAL LOAN'} · ANALYSIS
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            {usable ? `Your loan of ₹${fmtLa(loan.outstanding)} will cost ₹${(a.totalInterest / 100000).toFixed(1)}L in interest alone` : 'Tell us about your loan first'}
+          </h1>
+          <p className="text-sm text-slate-600 leading-relaxed">Here&apos;s what&apos;s really happening inside your repayments</p>
         </div>
-        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(22px,5vw,28px)', fontWeight: 900, lineHeight: 1.2, color: '#2A1606', marginBottom: 6 }}>
-          {usable ? `Your loan of ₹${fmtLa(loan.outstanding)} will cost ₹${(a.totalInterest / 100000).toFixed(1)}L in interest alone` : 'Tell us about your loan first'}
-        </h1>
-        <p style={{ fontSize: 14, color: 'rgba(42,22,6,0.55)', lineHeight: 1.6, margin: 0 }}>
-          Here&apos;s what&apos;s really happening inside your repayments
-        </p>
-      </div>
 
-      {!usable ? (
-        <div className="la-body">
-          <div className="la-card" style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: 14, color: '#7A5E44', marginBottom: 16 }}>We need your outstanding amount, tenure left and interest rate to analyse your loan.</p>
-            <Link href="/journey/loan" className="la-cta" style={{ display: 'block', textDecoration: 'none' }}>
-              Enter loan details →
+        {!usable ? (
+          <div className="card-fintech p-5 sm:p-6 text-center space-y-4">
+            <p className="text-sm text-slate-600">We need your outstanding amount, tenure left and interest rate to analyse your loan.</p>
+            <Link href="/journey/loan" className="btn-accent w-full sm:w-auto">
+              Enter loan details
+              <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
             </Link>
           </div>
-        </div>
-      ) : (
-        <div className="la-body">
-          {/* Interest vs Principal split */}
-          <div className="la-card">
-            <div className="la-card-title">How Your Total Repayment Breaks Down</div>
-            <div className="la-split">
-              <div className="la-split-item red">
-                <div className="la-split-num red">₹{fmtLa(a.totalInterest)}</div>
-                <div className="la-split-lbl">
-                  Goes to bank as
-                  <br />
-                  interest + charges
+        ) : (
+          <>
+            {/* Interest vs Principal split */}
+            <div className="card-fintech p-5 sm:p-6 space-y-4">
+              <div className="text-sm font-semibold text-slate-900">How Your Total Repayment Breaks Down</div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-rose-50 border border-rose-200 p-3">
+                  <div className="text-lg font-bold text-rose-600 tabular-nums">₹{fmtLa(a.totalInterest)}</div>
+                  <div className="text-[11px] font-medium text-slate-500 mt-1">Goes to bank as interest + charges</div>
+                </div>
+                <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
+                  <div className="text-lg font-bold text-emerald-600 tabular-nums">₹{fmtLa(loan.outstanding)}</div>
+                  <div className="text-[11px] font-medium text-slate-500 mt-1">Actually reduces your balance</div>
                 </div>
               </div>
-              <div className="la-split-item green">
-                <div className="la-split-num green">₹{fmtLa(loan.outstanding)}</div>
-                <div className="la-split-lbl">
-                  Actually reduces
-                  <br />
-                  your balance
-                </div>
+              <div
+                className="h-3 rounded-full bg-emerald-500 overflow-hidden"
+                role="img"
+                aria-label={`Interest ${intPct}%, principal ${prinPct}%`}
+              >
+                <div className="h-full bg-rose-500 transition-all duration-700" style={{ width: `${barWidth}%` }} />
+              </div>
+              <div className="flex justify-between text-xs text-slate-500">
+                <span>Interest {intPct}%</span>
+                <span>Principal {prinPct}%</span>
               </div>
             </div>
-            <div className="la-bar-wrap" role="img" aria-label={`Interest ${intPct}%, principal ${prinPct}%`}>
-              <div className="la-bar-inner" style={{ width: `${barWidth}%` }} />
-            </div>
-            <div className="la-bar-labels">
-              <span>Interest {intPct}%</span>
-              <span>Principal {prinPct}%</span>
-            </div>
-          </div>
 
-          {/* Monthly EMI breakdown */}
-          <div className="la-card">
-            <div className="la-card-title">This Month&apos;s EMI of ₹{fmtLa(Math.round(a.emi))}</div>
-            <div className="la-split">
-              <div className="la-split-item red">
-                <div className="la-split-num red">₹{fmtLa(Math.round(a.monthInterest))}</div>
-                <div className="la-split-lbl">
-                  Interest this
-                  <br />
-                  month
+            {/* Monthly EMI breakdown */}
+            <div className="card-fintech p-5 sm:p-6 space-y-4">
+              <div className="text-sm font-semibold text-slate-900">This Month&apos;s EMI of ₹{fmtLa(Math.round(a.emi))}</div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg bg-rose-50 border border-rose-200 p-3">
+                  <div className="text-lg font-bold text-rose-600 tabular-nums">₹{fmtLa(Math.round(a.monthInterest))}</div>
+                  <div className="text-[11px] font-medium text-slate-500 mt-1">Interest this month</div>
                 </div>
-              </div>
-              <div className="la-split-item green">
-                <div className="la-split-num green">₹{fmtLa(Math.round(a.monthPrincipal))}</div>
-                <div className="la-split-lbl">
-                  Principal paid
-                  <br />
-                  this month
+                <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3">
+                  <div className="text-lg font-bold text-emerald-600 tabular-nums">₹{fmtLa(Math.round(a.monthPrincipal))}</div>
+                  <div className="text-[11px] font-medium text-slate-500 mt-1">Principal paid this month</div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Big nudge number */}
-          <div className="la-nudge">
-            <div style={{ fontSize: 13, color: 'rgba(29,12,0,0.55)', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.8 }}>Interest you&apos;ll pay over the full loan</div>
-            <div className="la-nudge-num">₹{fmtLa(Math.round(a.totalInterest))}</div>
-            <div className="la-nudge-lbl">{intPct}% of every rupee you repay goes to the bank as interest. The tools below can help you cut this significantly.</div>
-          </div>
-
-          {/* Debt-free date */}
-          <div className="la-card" style={{ textAlign: 'center' }}>
-            <div className="la-card-title">Your Debt-Free Date</div>
-            <div style={{ fontFamily: 'var(--serif)', fontSize: 28, fontWeight: 700, color: '#1A0800', marginBottom: 6 }}>
-              {MONTHS[free.getMonth()]} {free.getFullYear()}
+            {/* Big nudge number */}
+            <div className="rounded-2xl bg-slate-900 text-white p-5 sm:p-6">
+              <div className="text-xs text-slate-400 uppercase tracking-wider">Interest you&apos;ll pay over the full loan</div>
+              <div className="text-3xl font-bold tabular-nums text-rose-400 mt-1">₹{fmtLa(Math.round(a.totalInterest))}</div>
+              <p className="text-sm text-slate-300 leading-relaxed mt-2">
+                {intPct}% of every rupee you repay goes to the bank as interest. The tools below can help you cut this significantly.
+              </p>
             </div>
-            <div style={{ fontSize: 13.5, color: 'rgba(29,12,0,0.55)' }}>
-              {loan.tenureLeft} months from now, at ₹{fmtLa(Math.round(a.emi))}/mo, with no prepayments
-            </div>
-          </div>
 
-          <button type="button" className="la-cta" onClick={() => router.push('/journey/loan/fixes')}>
-            Show Me How to Cut This ➜
-          </button>
-        </div>
-      )}
+            {/* Debt-free date */}
+            <div className="card-fintech p-5 sm:p-6 text-center">
+              <div className="flex items-center justify-center gap-2 text-sm font-semibold text-slate-900">
+                <CalendarCheck className="w-4 h-4 text-blue-600" aria-hidden />
+                Your Debt-Free Date
+              </div>
+              <div className="text-3xl font-bold text-slate-900 tracking-tight mt-2">
+                {MONTHS[free.getMonth()]} {free.getFullYear()}
+              </div>
+              <div className="text-sm text-slate-600 mt-1">
+                {loan.tenureLeft} months from now, at ₹{fmtLa(Math.round(a.emi))}/mo, with no prepayments
+              </div>
+            </div>
+
+            <button type="button" className="btn-accent w-full sm:w-auto" onClick={() => router.push('/journey/loan/fixes')}>
+              Show Me How to Cut This
+              <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
+            </button>
+          </>
+        )}
+      </main>
     </div>
   );
 }

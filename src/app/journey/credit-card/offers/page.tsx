@@ -2,11 +2,13 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { AlertTriangle, ArrowRight, Briefcase, Building2, CheckCircle2, ChevronDown, CreditCard, Home, Landmark, Loader2, Lock, MapPin, Store, Wallet } from 'lucide-react';
 import JourneyGate from '@/components/design/JourneyGate';
 import JourneyHeader from '@/components/design/JourneyHeader';
 import { api } from '@/lib/api';
 import { applyForCards, fetchOffers, journeyRunId, type Offer } from '@/lib/applyOffer';
+import { detailKey, trackStep } from '@/lib/track';
 import { combineCards } from '@/lib/ccPlanMath';
 import { DEFAULT_CC_JOURNEY, DEFAULT_PROFILE, estimateCreditScore, fmtINR, useJourney, type EligibilityProfile } from '@/lib/journey';
 import { isValidPincode, pincodeHint, usePincodeLookup } from '@/lib/pincodes';
@@ -14,17 +16,17 @@ import { isValidPincode, pincodeHint, usePincodeLookup } from '@/lib/pincodes';
 /* Offer-match wizard — design #cc-offer-match-page (prototype lines ~10763–11095, JS ~10279–10759),
    plus the "See all offers" list from #cc-loan-offers-page (~6543–6623). */
 
-const NAVY = '#1A2E3F';
-const GREEN = '#059669';
 const AMT_MIN = 10000;
 const AMT_MAX = 500000;
 const clampAmt = (v: number) => Math.min(AMT_MAX, Math.max(AMT_MIN, Math.round(v) || AMT_MIN));
 const clampTenure = (v: number) => Math.min(60, Math.max(6, Math.round(v) || 48));
 
-const labelStyle: React.CSSProperties = { display: 'block', fontSize: 11, fontWeight: 700, letterSpacing: 1.2, color: 'rgba(26,46,63,0.5)', textTransform: 'uppercase', marginBottom: 8 };
-const fieldBorder = '1.5px solid rgba(196,168,130,0.4)';
-const inputStyle: React.CSSProperties = { width: '100%', padding: 14, border: fieldBorder, borderRadius: 12, fontSize: 15, fontWeight: 600, color: NAVY, fontFamily: 'var(--sans)', background: '#fff', outline: 'none', boxSizing: 'border-box' };
-const primaryBtn: React.CSSProperties = { width: '100%', background: 'linear-gradient(135deg,#059669,#047857)', border: 'none', borderRadius: 14, padding: 16, fontSize: 16, fontWeight: 800, color: '#fff', cursor: 'pointer', fontFamily: 'var(--sans)', boxShadow: '0 4px 14px rgba(5,150,105,0.3)' };
+const inputCls =
+  'w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600';
+const smallInputCls =
+  'px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold text-slate-900 text-right tabular-nums focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600';
+const errCls = 'border-rose-400 focus:ring-rose-500/20 focus:border-rose-500';
+const labelCls = 'block text-xs font-semibold text-slate-700 mb-1.5';
 
 export default function CCOffersPage() {
   return (
@@ -136,6 +138,7 @@ function OfferMatch() {
     Promise.all([scoreReq, offersReq, minWait]).then(([onFile]) => {
       setScore(estimateCreditScore(profile, onFile as number | null));
       setPhase('results');
+      trackStep('credit_card', 'offers_shown');
     });
   };
 
@@ -194,6 +197,7 @@ function OfferMatch() {
       const apps = await applyForCards(cc.cards, offer.lenderId, tenure, journeyRunId());
       if (!apps.length) throw new Error('Add your card balance first — there is no outstanding amount to transfer.');
       setApplied({ name: offer.name, count: apps.length });
+      trackStep('credit_card', 'applied', detailKey(offer.name));
       setTimeout(() => successRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
     } catch (err) {
       setApplyError(err instanceof Error ? err.message : 'Could not submit your application. Please try again.');
@@ -204,26 +208,21 @@ function OfferMatch() {
 
   if (!ccReady || !profileReady) return null;
 
+  const pinHintClass =
+    pinCheck.status === 'verified' ? 'text-emerald-700' : pinCheck.status === 'not_found' ? 'text-rose-600' : pinCheck.status === 'unavailable' ? 'text-amber-700' : 'text-slate-500';
+
   return (
-    <div className="nv" style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#FFF8F2 0%,#FFF0E3 50%,#FDE8D0 100%)', fontFamily: 'var(--sans)', overflowX: 'hidden' }}>
+    <div className="min-h-screen bg-slate-50">
       <JourneyHeader onBack={onBack} />
 
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '28px 20px 60px', boxSizing: 'border-box' }}>
-        {/* Progress dots (steps 1–2) */}
+      <main className={`${step === 3 && phase === 'results' ? 'max-w-3xl' : 'max-w-xl'} mx-auto px-4 sm:px-6 py-8 space-y-6`}>
+        {/* Progress (steps 1–2) */}
         {step <= 2 && (
-          <div style={{ textAlign: 'center', marginBottom: 28 }} aria-label={`Step ${step} of 2`}>
-            <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+          <div aria-label={`Step ${step} of 2`}>
+            <span className="badge-blue">STEP {step} OF 2 — {step === 1 ? 'YOUR HOME' : 'YOUR DETAILS'}</span>
+            <div className="mt-3 flex gap-1.5" aria-hidden>
               {[1, 2].map((d) => (
-                <div
-                  key={d}
-                  style={{
-                    height: 8,
-                    transition: 'all .3s',
-                    width: d === step ? 20 : 8,
-                    borderRadius: d === step ? 4 : '50%',
-                    background: d < step ? '#047857' : d === step ? GREEN : 'rgba(26,46,63,0.18)',
-                  }}
-                />
+                <div key={d} className={`h-1.5 flex-1 rounded-full transition-all ${d <= step ? 'bg-blue-600' : 'bg-slate-200'}`} />
               ))}
             </div>
           </div>
@@ -231,21 +230,26 @@ function OfferMatch() {
 
         {/* ── Step 1: Property + inline rent ── */}
         {step === 1 && (
-          <div className="com-step-anim">
-            <h1 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 900, color: NAVY, marginBottom: 8, lineHeight: 1.25 }}>Do you own or rent your home?</h1>
-            <div style={{ fontSize: 14, color: 'rgba(26,46,63,0.55)', marginBottom: 24, lineHeight: 1.6 }}>Property ownership affects your eligibility and the rates lenders will offer you.</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <ChoiceCard selected={profile.housing === 'own'} onClick={() => updateProfile({ housing: 'own' })} icon="🏠" title="Own" sub="Property in my name or family-owned" />
-              <ChoiceCard selected={profile.housing === 'rent'} onClick={() => updateProfile({ housing: 'rent' })} icon="🏢" title="Rent" sub="Currently in rented accommodation" />
+          <div className="space-y-5">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">
+                <Home className="w-4 h-4" aria-hidden /> Eligibility
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Do you own or rent your home?</h1>
+              <p className="text-sm text-slate-600 leading-relaxed mt-1">Property ownership affects your eligibility and the rates lenders will offer you.</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <ChoiceCard selected={profile.housing === 'own'} onClick={() => updateProfile({ housing: 'own' })} icon={<Home className="w-5 h-5" />} title="Own" sub="Property in my name or family-owned" />
+              <ChoiceCard selected={profile.housing === 'rent'} onClick={() => updateProfile({ housing: 'rent' })} icon={<Building2 className="w-5 h-5" />} title="Rent" sub="Currently in rented accommodation" />
             </div>
 
             {profile.housing === 'rent' && (
-              <div style={{ marginTop: 20, background: '#F0FDF9', border: '1.5px solid rgba(5,150,105,0.2)', borderRadius: 16, padding: '16px 18px' }}>
-                <label htmlFor="com-rent-input" style={{ ...labelStyle, color: GREEN, marginBottom: 10 }}>
+              <div className="card-fintech p-5">
+                <label htmlFor="com-rent-input" className="block text-xs font-semibold text-slate-700 mb-1.5">
                   Monthly Rent Amount
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, fontWeight: 700, color: 'rgba(26,46,63,0.4)' }}>₹</span>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">₹</span>
                   <input
                     id="com-rent-input"
                     type="number"
@@ -254,296 +258,298 @@ function OfferMatch() {
                     placeholder="e.g. 18000"
                     value={profile.rent ?? ''}
                     onChange={(e) => updateProfile({ rent: e.target.value === '' ? null : Math.max(0, Number(e.target.value) || 0) })}
-                    style={{ ...inputStyle, padding: '14px 14px 14px 30px', border: '1.5px solid rgba(5,150,105,0.25)', fontSize: 18, fontWeight: 700 }}
+                    className={`${inputCls} pl-7`}
                   />
                 </div>
-                <div style={{ fontSize: 11, color: 'rgba(26,46,63,0.45)', marginTop: 8 }}>This goes into your debt-to-income calculation</div>
+                <p className="text-xs text-slate-500 mt-1">This goes into your debt-to-income calculation</p>
               </div>
             )}
 
             {profile.housing && (
-              <div style={{ marginTop: 20 }}>
-                <button
-                  onClick={() => {
-                    if (profile.housing === 'own') updateProfile({ rent: null });
-                    go(2);
-                  }}
-                  style={primaryBtn}
-                >
-                  Continue →
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (profile.housing === 'own') updateProfile({ rent: null });
+                  go(2);
+                }}
+                className="btn-accent w-full sm:w-auto"
+              >
+                Continue <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
+              </button>
             )}
           </div>
         )}
 
         {/* ── Step 2: Address ── */}
         {step === 2 && (
-          <div className="com-step-anim">
-            <h1 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 900, color: NAVY, marginBottom: 8, lineHeight: 1.25 }}>Where do you live?</h1>
-            <div style={{ fontSize: 14, color: 'rgba(26,46,63,0.55)', marginBottom: 24, lineHeight: 1.6 }}>We use this to surface lenders active in your area and for your loan application.</div>
-
-            <div style={{ marginBottom: 14 }}>
-              <label htmlFor="com-address-input" style={labelStyle}>
-                Full Address
-              </label>
-              <textarea
-                id="com-address-input"
-                rows={2}
-                placeholder="Flat / House No., Street, Area…"
-                value={profile.address}
-                onChange={(e) => {
-                  updateProfile({ address: e.target.value });
-                  if (errors.address) setErrors((x) => ({ ...x, address: undefined }));
-                }}
-                aria-invalid={!!errors.address}
-                style={{ ...inputStyle, fontWeight: 500, resize: 'none', lineHeight: 1.5, borderColor: errors.address ? '#DC2626' : undefined }}
-              />
-              <FieldError msg={errors.address} />
+          <div className="space-y-5">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">
+                <MapPin className="w-4 h-4" aria-hidden /> Address
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Where do you live?</h1>
+              <p className="text-sm text-slate-600 leading-relaxed mt-1">We use this to surface lenders active in your area and for your loan application.</p>
             </div>
 
-            <div style={{ marginBottom: 14 }}>
-              <label htmlFor="com-pincode-input" style={labelStyle}>
-                Pincode
-              </label>
-              <input
-                id="com-pincode-input"
-                type="text"
-                inputMode="numeric"
-                autoComplete="postal-code"
-                maxLength={6}
-                placeholder="e.g. 400001"
-                value={profile.pincode}
-                onChange={(e) => onPincode(e.target.value)}
-                aria-invalid={!!errors.pincode}
-                style={{ ...inputStyle, fontSize: 20, fontWeight: 700, letterSpacing: 3, borderColor: errors.pincode ? '#DC2626' : undefined }}
-              />
-              <FieldError msg={errors.pincode} />
-              {!errors.pincode && pinHint && (
-                <div role="status" style={{ fontSize: 12, marginTop: 6, color: pinHint.color }}>
-                  {pinHint.text}
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
-              <div style={{ minWidth: 0 }}>
-                <label htmlFor="com-city-input" style={labelStyle}>
-                  City
+            <div className="card-fintech p-5 sm:p-6 space-y-4">
+              <div>
+                <label htmlFor="com-address-input" className={labelCls}>
+                  Full Address
                 </label>
-                <input
-                  id="com-city-input"
-                  type="text"
-                  placeholder="Mumbai"
-                  value={profile.city}
+                <textarea
+                  id="com-address-input"
+                  rows={2}
+                  placeholder="Flat / House No., Street, Area…"
+                  value={profile.address}
                   onChange={(e) => {
-                    updateProfile({ city: e.target.value });
-                    if (errors.city) setErrors((x) => ({ ...x, city: undefined }));
+                    updateProfile({ address: e.target.value });
+                    if (errors.address) setErrors((x) => ({ ...x, address: undefined }));
                   }}
-                  aria-invalid={!!errors.city}
-                  style={{ ...inputStyle, borderColor: errors.city ? '#DC2626' : undefined }}
+                  aria-invalid={!!errors.address}
+                  className={`${inputCls} resize-none ${errors.address ? errCls : ''}`}
                 />
-                <FieldError msg={errors.city} />
+                <FieldError msg={errors.address} />
               </div>
-              <div style={{ minWidth: 0 }}>
-                <label htmlFor="com-state-input" style={labelStyle}>
-                  State <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: 'none', fontSize: 10, color: 'rgba(26,46,63,0.35)' }}>(auto)</span>
+
+              <div>
+                <label htmlFor="com-pincode-input" className={labelCls}>
+                  Pincode
                 </label>
                 <input
-                  id="com-state-input"
+                  id="com-pincode-input"
                   type="text"
-                  placeholder="Auto-filled"
-                  readOnly={!!pinInfo}
-                  value={profile.state}
-                  onChange={(e) => updateProfile({ state: e.target.value })}
-                  style={pinInfo ? { ...inputStyle, border: '1.5px solid rgba(196,168,130,0.18)', color: profile.state ? NAVY : 'rgba(26,46,63,0.55)', background: 'rgba(26,46,63,0.03)' } : inputStyle}
+                  inputMode="numeric"
+                  autoComplete="postal-code"
+                  maxLength={6}
+                  placeholder="e.g. 400001"
+                  value={profile.pincode}
+                  onChange={(e) => onPincode(e.target.value)}
+                  aria-invalid={!!errors.pincode}
+                  className={`${inputCls} tabular-nums tracking-widest ${errors.pincode ? errCls : ''}`}
                 />
+                <FieldError msg={errors.pincode} />
+                {!errors.pincode && pinHint && (
+                  <p role="status" className={`text-xs mt-1 ${pinHintClass}`}>
+                    {pinHint.text}
+                  </p>
+                )}
               </div>
-            </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label htmlFor="com-edu-select" style={labelStyle}>
-                Highest Education Level
-              </label>
-              <select
-                id="com-edu-select"
-                value={profile.education}
-                onChange={(e) => {
-                  updateProfile({ education: e.target.value });
-                  if (errors.education) setErrors((x) => ({ ...x, education: undefined }));
-                }}
-                aria-invalid={!!errors.education}
-                style={{ ...inputStyle, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none', borderColor: errors.education ? '#DC2626' : undefined }}
-              >
-                <option value="">Select your education level</option>
-                <option value="10th">10th / SSC</option>
-                <option value="12th">12th / HSC</option>
-                <option value="graduate">Graduate</option>
-                <option value="postgraduate">Post Graduate</option>
-                <option value="professional">Professional (CA / CFA / Doctor)</option>
-              </select>
-              <FieldError msg={errors.education} />
-            </div>
-
-            <div style={{ marginBottom: 24 }} role="group" aria-labelledby="com-sector-label">
-              <div id="com-sector-label" style={{ ...labelStyle, marginBottom: 10 }}>
-                Working Sector
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <ChoiceCard
-                  small
-                  selected={profile.sector === 'salaried'}
-                  onClick={() => {
-                    updateProfile({ sector: 'salaried' });
-                    setErrors((x) => ({ ...x, sector: undefined }));
-                  }}
-                  icon="💼"
-                  title="Salaried"
-                  sub="Fixed monthly income"
-                />
-                <ChoiceCard
-                  small
-                  selected={profile.sector === 'self'}
-                  onClick={() => {
-                    updateProfile({ sector: 'self' });
-                    setErrors((x) => ({ ...x, sector: undefined }));
-                  }}
-                  icon="🏪"
-                  title="Self Employed"
-                  sub="Business / Freelance"
-                />
-              </div>
-              <FieldError msg={errors.sector} />
-            </div>
-
-            <div style={{ marginBottom: 24 }} role="group" aria-labelledby="com-need-label">
-              <div id="com-need-label" style={{ ...labelStyle, marginBottom: 10 }}>
-                Loan Requirement
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <ChoiceCard
-                  small
-                  selected={profile.loanNeed === 'balance'}
-                  onClick={() => {
-                    updateProfile({ loanNeed: 'balance' });
-                    setErrors((x) => ({ ...x, loanNeed: undefined }));
-                  }}
-                  icon="💳"
-                  title="Card Balance Only"
-                  sub={combined.outstanding > 0 ? `Clear ${fmtINR(combined.outstanding)} outstanding` : 'Clear card outstanding'}
-                />
-                <ChoiceCard
-                  small
-                  selected={profile.loanNeed === 'more'}
-                  onClick={() => {
-                    updateProfile({ loanNeed: 'more' });
-                    setErrors((x) => ({ ...x, loanNeed: undefined }));
-                  }}
-                  icon="💰"
-                  title="Need More Funds"
-                  sub="Additional top-up"
-                />
-              </div>
-              <FieldError msg={errors.loanNeed} />
-
-              {profile.loanNeed === 'more' && (
-                <div style={{ marginTop: 14, background: '#F0FDF9', border: '1.5px solid rgba(5,150,105,0.2)', borderRadius: 14, padding: '16px 16px 14px' }}>
-                  <label htmlFor="com-extra-amt-input" style={{ ...labelStyle, letterSpacing: 1, color: '#065F46', marginBottom: 12 }}>
-                    Total Loan Amount Needed
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="min-w-0">
+                  <label htmlFor="com-city-input" className={labelCls}>
+                    City
                   </label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#fff', border: '1.5px solid rgba(5,150,105,0.35)', borderRadius: 10, padding: '10px 12px', marginBottom: 12 }}>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: NAVY, flexShrink: 0 }}>₹</span>
+                  <input
+                    id="com-city-input"
+                    type="text"
+                    placeholder="Mumbai"
+                    value={profile.city}
+                    onChange={(e) => {
+                      updateProfile({ city: e.target.value });
+                      if (errors.city) setErrors((x) => ({ ...x, city: undefined }));
+                    }}
+                    aria-invalid={!!errors.city}
+                    className={`${inputCls} ${errors.city ? errCls : ''}`}
+                  />
+                  <FieldError msg={errors.city} />
+                </div>
+                <div className="min-w-0">
+                  <label htmlFor="com-state-input" className={labelCls}>
+                    State <span className="font-normal text-slate-400">(auto)</span>
+                  </label>
+                  <input
+                    id="com-state-input"
+                    type="text"
+                    placeholder="Auto-filled"
+                    readOnly={!!pinInfo}
+                    value={profile.state}
+                    onChange={(e) => updateProfile({ state: e.target.value })}
+                    className={`${inputCls} ${pinInfo ? 'bg-slate-100 text-slate-600 cursor-default' : ''}`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="com-edu-select" className={labelCls}>
+                  Highest Education Level
+                </label>
+                <div className="relative">
+                  <select
+                    id="com-edu-select"
+                    value={profile.education}
+                    onChange={(e) => {
+                      updateProfile({ education: e.target.value });
+                      if (errors.education) setErrors((x) => ({ ...x, education: undefined }));
+                    }}
+                    aria-invalid={!!errors.education}
+                    className={`${inputCls} appearance-none pr-9 cursor-pointer ${errors.education ? errCls : ''}`}
+                  >
+                    <option value="">Select your education level</option>
+                    <option value="10th">10th / SSC</option>
+                    <option value="12th">12th / HSC</option>
+                    <option value="graduate">Graduate</option>
+                    <option value="postgraduate">Post Graduate</option>
+                    <option value="professional">Professional (CA / CFA / Doctor)</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden />
+                </div>
+                <FieldError msg={errors.education} />
+              </div>
+
+              <div role="group" aria-labelledby="com-sector-label">
+                <div id="com-sector-label" className={labelCls}>
+                  Working Sector
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <ChoiceCard
+                    small
+                    selected={profile.sector === 'salaried'}
+                    onClick={() => {
+                      updateProfile({ sector: 'salaried' });
+                      setErrors((x) => ({ ...x, sector: undefined }));
+                    }}
+                    icon={<Briefcase className="w-5 h-5" />}
+                    title="Salaried"
+                    sub="Fixed monthly income"
+                  />
+                  <ChoiceCard
+                    small
+                    selected={profile.sector === 'self'}
+                    onClick={() => {
+                      updateProfile({ sector: 'self' });
+                      setErrors((x) => ({ ...x, sector: undefined }));
+                    }}
+                    icon={<Store className="w-5 h-5" />}
+                    title="Self Employed"
+                    sub="Business / Freelance"
+                  />
+                </div>
+                <FieldError msg={errors.sector} />
+              </div>
+
+              <div role="group" aria-labelledby="com-need-label">
+                <div id="com-need-label" className={labelCls}>
+                  Loan Requirement
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <ChoiceCard
+                    small
+                    selected={profile.loanNeed === 'balance'}
+                    onClick={() => {
+                      updateProfile({ loanNeed: 'balance' });
+                      setErrors((x) => ({ ...x, loanNeed: undefined }));
+                    }}
+                    icon={<CreditCard className="w-5 h-5" />}
+                    title="Card Balance Only"
+                    sub={combined.outstanding > 0 ? `Clear ${fmtINR(combined.outstanding)} outstanding` : 'Clear card outstanding'}
+                  />
+                  <ChoiceCard
+                    small
+                    selected={profile.loanNeed === 'more'}
+                    onClick={() => {
+                      updateProfile({ loanNeed: 'more' });
+                      setErrors((x) => ({ ...x, loanNeed: undefined }));
+                    }}
+                    icon={<Wallet className="w-5 h-5" />}
+                    title="Need More Funds"
+                    sub="Additional top-up"
+                  />
+                </div>
+                <FieldError msg={errors.loanNeed} />
+
+                {profile.loanNeed === 'more' && (
+                  <div className="mt-3 rounded-lg bg-slate-50 border border-slate-200 p-4">
+                    <label htmlFor="com-extra-amt-input" className={labelCls}>
+                      Total Loan Amount Needed
+                    </label>
+                    <div className="relative mb-3">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">₹</span>
+                      <input
+                        id="com-extra-amt-input"
+                        type="number"
+                        min={AMT_MIN}
+                        max={AMT_MAX}
+                        step={5000}
+                        inputMode="numeric"
+                        value={profile.extraAmount}
+                        onChange={(e) => updateProfile({ extraAmount: Number(e.target.value) || 0 })}
+                        onBlur={() => updateProfile({ extraAmount: clampAmt(profile.extraAmount) })}
+                        className={`${inputCls} pl-7 tabular-nums`}
+                      />
+                    </div>
                     <input
-                      id="com-extra-amt-input"
-                      type="number"
+                      type="range"
                       min={AMT_MIN}
                       max={AMT_MAX}
                       step={5000}
-                      inputMode="numeric"
-                      value={profile.extraAmount}
-                      onChange={(e) => updateProfile({ extraAmount: Number(e.target.value) || 0 })}
-                      onBlur={() => updateProfile({ extraAmount: clampAmt(profile.extraAmount) })}
-                      style={{ flex: 1, border: 'none', outline: 'none', fontSize: 18, fontWeight: 800, color: NAVY, fontFamily: 'var(--sans)', background: 'transparent', width: '100%', minWidth: 0 }}
+                      aria-label="Total loan amount needed"
+                      value={clampAmt(profile.extraAmount)}
+                      onChange={(e) => updateProfile({ extraAmount: parseInt(e.target.value, 10) })}
+                      className="w-full accent-blue-600"
                     />
+                    <div className="flex justify-between mt-1">
+                      <span className="text-xs text-slate-500">₹10,000</span>
+                      <span className="text-xs text-slate-500">Max ₹5,00,000</span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">Subject to lender approval</p>
                   </div>
-                  <input
-                    type="range"
-                    min={AMT_MIN}
-                    max={AMT_MAX}
-                    step={5000}
-                    aria-label="Total loan amount needed"
-                    value={clampAmt(profile.extraAmount)}
-                    onChange={(e) => updateProfile({ extraAmount: parseInt(e.target.value, 10) })}
-                    style={{ width: '100%', accentColor: GREEN, height: 5, cursor: 'pointer', marginBottom: 6 }}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 10, color: 'rgba(26,46,63,0.4)', fontWeight: 600 }}>₹10,000</span>
-                    <span style={{ fontSize: 10, color: 'rgba(26,46,63,0.4)', fontWeight: 600 }}>Max ₹5,00,000</span>
-                  </div>
-                  <div style={{ fontSize: 11, color: 'rgba(26,46,63,0.45)', marginTop: 5 }}>Subject to lender approval</div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {Object.values(errors).some(Boolean) && (
-              <div role="alert" style={{ background: '#FEF2F2', border: '1px solid rgba(220,38,38,0.25)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: '#B91C1C', marginBottom: 14 }}>
+              <div role="alert" className="rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs p-3 flex gap-2 items-start">
+                <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden />
                 Please complete the highlighted fields.
               </div>
             )}
 
-            <button onClick={runEligibility} style={primaryBtn}>
-              Check my eligibility →
+            <button type="button" onClick={runEligibility} className="btn-accent w-full sm:w-auto">
+              Check my eligibility <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
             </button>
           </div>
         )}
 
         {/* ── Step 3: Eligibility check + results ── */}
         {step === 3 && phase === 'checking' && (
-          <div className="com-step-anim" role="status" aria-live="polite">
-            <div style={{ textAlign: 'center', padding: '52px 20px 48px' }}>
-              <div style={{ fontSize: 58, marginBottom: 22, display: 'inline-block', animation: 'comPulse 1.4s ease-in-out infinite' }} aria-hidden>
-                🔍
-              </div>
-              <h1 style={{ fontFamily: 'var(--serif)', fontSize: 23, fontWeight: 900, color: NAVY, marginBottom: 10, lineHeight: 1.25 }}>Finding your best offer…</h1>
-              <div style={{ fontSize: 13.5, color: 'rgba(26,46,63,0.45)', marginBottom: 28 }}>Matching your profile with lender criteria</div>
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 9 }}>
-                {[0, 0.2, 0.4].map((d) => (
-                  <div key={d} style={{ width: 9, height: 9, borderRadius: '50%', background: GREEN, animation: `comDotBounce 1.2s ease-in-out ${d}s infinite` }} />
-                ))}
-              </div>
-            </div>
+          <div role="status" aria-live="polite" className="card-fintech p-8 sm:p-12 text-center">
+            <Loader2 className="w-10 h-10 text-blue-600 animate-spin mx-auto mb-5" aria-hidden />
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">Finding your best offer…</h1>
+            <p className="text-sm text-slate-600">Matching your profile with lender criteria</p>
           </div>
         )}
 
         {step === 3 && phase === 'results' && score && (
-          <div className="com-step-anim">
-            <div style={{ textAlign: 'center', marginBottom: 20 }}>
-              <h1 style={{ fontFamily: 'var(--serif)', fontSize: 24, fontWeight: 900, color: NAVY, lineHeight: 1.2, marginBottom: 4 }}>Your Best Matched Offer</h1>
-              <div style={{ fontSize: 13, color: 'rgba(26,46,63,0.45)' }}>Based on your credit profile &amp; loan requirement</div>
+          <div className="space-y-6">
+            <div>
+              <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">
+                <CheckCircle2 className="w-4 h-4" aria-hidden /> Results
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Your Best Matched Offer</h1>
+              <p className="text-sm text-slate-600 leading-relaxed mt-1">Based on your credit profile &amp; loan requirement</p>
             </div>
 
             <ScoreCard score={score.score} estimated={score.estimated} lowestRate={offers && offers.length ? offers[0].offeredRatePercent : null} />
 
             {/* Loan summary */}
-            <div style={{ background: '#fff', borderRadius: 20, padding: '20px 18px 18px', border: '1.5px solid rgba(196,168,130,0.22)', boxShadow: '0 4px 18px rgba(26,46,63,0.08)', marginBottom: 16 }}>
-              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: 'rgba(26,46,63,0.32)', textTransform: 'uppercase', marginBottom: 14 }}>Your Loan Details</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, padding: '12px 14px', background: 'rgba(37,99,235,0.05)', borderRadius: 12, border: '1px solid rgba(37,99,235,0.1)' }}>
-                <span style={{ fontSize: 20 }} aria-hidden>
-                  💳
-                </span>
+            <div className="card-fintech p-5 sm:p-6">
+              <h2 className="text-sm font-semibold text-slate-900 mb-3.5">Your Loan Details</h2>
+              <div className="flex items-center gap-3 mb-5 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                <CreditCard className="w-5 h-5 text-blue-600 shrink-0" aria-hidden />
                 <div>
-                  <div style={{ fontSize: 11, color: 'rgba(26,46,63,0.42)', fontWeight: 600, marginBottom: 1 }}>Loan Purpose</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: NAVY }}>{profile.loanNeed === 'more' ? 'Balance Transfer + Extra Funds' : 'Card Balance Transfer Only'}</div>
+                  <div className="text-xs font-medium text-slate-500">Loan Purpose</div>
+                  <div className="text-sm font-semibold text-slate-900">{profile.loanNeed === 'more' ? 'Balance Transfer + Extra Funds' : 'Card Balance Transfer Only'}</div>
                 </div>
               </div>
 
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <label htmlFor="com-amt-input" style={{ fontSize: 12, fontWeight: 700, color: 'rgba(26,46,63,0.55)' }}>
+              <div className="mb-5">
+                <div className="flex justify-between items-center mb-2 gap-3">
+                  <label htmlFor="com-amt-input" className="text-xs font-semibold text-slate-700">
                     Loan Amount
                   </label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>₹</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-medium text-slate-500">₹</span>
                     <input
                       id="com-amt-input"
                       type="number"
@@ -562,7 +568,7 @@ function OfferMatch() {
                         setAmount(v);
                         setAmountText(String(v));
                       }}
-                      style={{ width: 90, border: fieldBorder, borderRadius: 8, padding: '5px 8px', fontSize: 13, fontWeight: 800, color: NAVY, fontFamily: 'var(--sans)', textAlign: 'right', background: '#FFF8F2', outline: 'none' }}
+                      className={`${smallInputCls} w-28`}
                     />
                   </div>
                 </div>
@@ -578,20 +584,20 @@ function OfferMatch() {
                     setAmount(v);
                     setAmountText(String(v));
                   }}
-                  style={{ width: '100%', accentColor: GREEN, height: 5, cursor: 'pointer' }}
+                  className="w-full accent-blue-600"
                 />
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                  <span style={{ fontSize: 10, color: 'rgba(26,46,63,0.35)', fontWeight: 600 }}>₹10,000</span>
-                  <span style={{ fontSize: 10, color: 'rgba(26,46,63,0.35)', fontWeight: 600 }}>₹5,00,000</span>
+                <div className="flex justify-between mt-1">
+                  <span className="text-xs text-slate-500">₹10,000</span>
+                  <span className="text-xs text-slate-500">₹5,00,000</span>
                 </div>
               </div>
 
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <label htmlFor="com-tenure-input" style={{ fontSize: 12, fontWeight: 700, color: 'rgba(26,46,63,0.55)' }}>
+                <div className="flex justify-between items-center mb-2 gap-3">
+                  <label htmlFor="com-tenure-input" className="text-xs font-semibold text-slate-700">
                     Tenure
                   </label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div className="flex items-center gap-1.5">
                     <input
                       id="com-tenure-input"
                       type="number"
@@ -610,9 +616,9 @@ function OfferMatch() {
                         setTenure(v);
                         setTenureText(String(v));
                       }}
-                      style={{ width: 55, border: fieldBorder, borderRadius: 8, padding: '5px 8px', fontSize: 13, fontWeight: 800, color: NAVY, fontFamily: 'var(--sans)', textAlign: 'right', background: '#FFF8F2', outline: 'none' }}
+                      className={`${smallInputCls} w-20`}
                     />
-                    <span style={{ fontSize: 13, fontWeight: 700, color: NAVY }}>months</span>
+                    <span className="text-sm font-medium text-slate-500">months</span>
                   </div>
                 </div>
                 <input
@@ -627,11 +633,11 @@ function OfferMatch() {
                     setTenure(v);
                     setTenureText(String(v));
                   }}
-                  style={{ width: '100%', accentColor: GREEN, height: 5, cursor: 'pointer' }}
+                  className="w-full accent-blue-600"
                 />
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                  <span style={{ fontSize: 10, color: 'rgba(26,46,63,0.35)', fontWeight: 600 }}>6 mo</span>
-                  <span style={{ fontSize: 10, color: 'rgba(26,46,63,0.35)', fontWeight: 600 }}>60 mo</span>
+                <div className="flex justify-between mt-1">
+                  <span className="text-xs text-slate-500">6 mo</span>
+                  <span className="text-xs text-slate-500">60 mo</span>
                 </div>
               </div>
             </div>
@@ -639,43 +645,46 @@ function OfferMatch() {
             {/* Eligibility banner — only when an offer actually matches the score */}
             {offers && offers.length > 0 && (
               bestOffer ? (
-                <div style={{ background: 'linear-gradient(135deg,#ECFDF5,#D1FAE5)', borderRadius: 18, padding: '18px 20px', border: '1.5px solid rgba(5,150,105,0.18)', boxShadow: '0 3px 14px rgba(5,150,105,0.1)', marginBottom: 18, textAlign: 'center' }}>
-                  <div style={{ fontSize: 28, marginBottom: 8 }} aria-hidden>
-                    🎉
-                  </div>
-                  <div style={{ fontFamily: 'var(--serif)', fontSize: 19, fontWeight: 900, color: '#065F46', marginBottom: 6, lineHeight: 1.25 }}>You&apos;re eligible for our best offers!</div>
-                  <div style={{ fontSize: 13, color: '#047857', lineHeight: 1.6 }}>
-                    Your credit profile meets {eligible.length === 1 ? '1 partner lender’s' : `${eligible.length} partner lenders’`} minimum score. Apply in minutes — no branch visit needed.
+                <div className="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 flex gap-3 items-start">
+                  <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" aria-hidden />
+                  <div>
+                    <div className="text-base font-semibold mb-1">You&apos;re eligible for our best offers!</div>
+                    <div className="text-sm leading-relaxed">
+                      Your credit profile meets {eligible.length === 1 ? '1 partner lender’s' : `${eligible.length} partner lenders’`} minimum score. Apply in minutes — no branch visit needed.
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div style={{ background: '#FFF7ED', borderRadius: 18, padding: '18px 20px', border: '1.5px solid rgba(249,115,22,0.25)', marginBottom: 18, textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--serif)', fontSize: 18, fontWeight: 900, color: '#9A3412', marginBottom: 6, lineHeight: 1.25 }}>No offer matches your score yet</div>
-                  <div style={{ fontSize: 13, color: '#9A3412', lineHeight: 1.6 }}>
-                    Our partner lenders ask for a credit score of at least {lowestMinScore}
-                    {score.estimated ? ' (yours above is an estimate — the lender checks your actual bureau score)' : ''}. You can still compare their offers below and apply — the lender makes the final decision.
+                <div className="rounded-lg bg-amber-50 border border-amber-200 text-amber-800 p-4 flex gap-3 items-start">
+                  <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" aria-hidden />
+                  <div>
+                    <div className="text-base font-semibold mb-1">No offer matches your score yet</div>
+                    <div className="text-sm leading-relaxed">
+                      Our partner lenders ask for a credit score of at least {lowestMinScore}
+                      {score.estimated ? ' (yours above is an estimate — the lender checks your actual bureau score)' : ''}. You can still compare their offers below and apply — the lender makes the final decision.
+                    </div>
                   </div>
                 </div>
               )
             )}
 
             {/* Matched offers */}
-            <div style={{ marginBottom: 6 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.3, color: 'rgba(26,46,63,0.38)', textTransform: 'uppercase', marginBottom: 14 }}>
-                Matched Offers {loadingOffers && <span className="com-spinner" style={{ width: 12, height: 12, verticalAlign: 'middle', marginLeft: 6 }} aria-label="Updating offers" />}
+            <div>
+              <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                Matched Offers {loadingOffers && <Loader2 className="w-3.5 h-3.5 animate-spin" role="img" aria-label="Updating offers" />}
               </div>
 
               {offersError ? (
-                <div role="alert" style={{ background: '#FEF2F2', border: '1px solid rgba(220,38,38,0.25)', borderRadius: 14, padding: 16, fontSize: 13, color: '#B91C1C', lineHeight: 1.6 }}>
+                <div role="alert" className="rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-sm p-4 leading-relaxed">
                   {offersError}{' '}
-                  <button onClick={retryOffers} style={{ background: 'none', border: 'none', color: '#B91C1C', fontWeight: 800, textDecoration: 'underline', cursor: 'pointer', padding: 0, fontFamily: 'var(--sans)' }}>
+                  <button type="button" onClick={retryOffers} className="font-semibold underline">
                     Try again
                   </button>
                 </div>
               ) : offers && offers.length === 0 ? (
-                <div style={{ background: '#fff', borderRadius: 14, padding: 16, fontSize: 13, color: 'rgba(26,46,63,0.65)', lineHeight: 1.6, border: '1.5px solid rgba(196,168,130,0.2)' }}>
+                <div className="card-fintech p-4 text-sm text-slate-600 leading-relaxed">
                   We couldn&apos;t find a partner offer for {fmtINR(amount)} over {tenure} months right now. Try a different amount or tenure, or{' '}
-                  <Link href="/contact" style={{ color: GREEN, fontWeight: 700 }}>
+                  <Link href="/contact" className="font-semibold text-blue-600 hover:text-blue-700">
                     talk to us
                   </Link>
                   .
@@ -687,26 +696,24 @@ function OfferMatch() {
 
             {/* Success / Apply */}
             {applied ? (
-              <div ref={successRef} role="status" style={{ marginTop: 22, background: 'linear-gradient(135deg,#ECFDF5,#D1FAE5)', border: '1.5px solid rgba(5,150,105,0.25)', borderRadius: 18, padding: '20px 18px', textAlign: 'center' }}>
-                <div style={{ fontFamily: 'var(--serif)', fontSize: 19, fontWeight: 900, color: '#065F46', marginBottom: 8, lineHeight: 1.3 }}>✅ Application submitted to {applied.name}</div>
-                <div style={{ fontSize: 13, color: '#047857', lineHeight: 1.6, marginBottom: 14 }}>
+              <div ref={successRef} role="status" className="rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 p-5 text-center">
+                <CheckCircle2 className="w-6 h-6 mx-auto mb-2" aria-hidden />
+                <div className="text-base font-semibold mb-2">Application submitted to {applied.name}</div>
+                <div className="text-sm leading-relaxed mb-4">
                   {applied.count > 1 ? `We sent ${applied.count} balance-transfer requests (one per card). ` : ''}The lender will review your profile and confirm your final rate. You can track it in My Applications.
                 </div>
-                <Link href="/balance-transfer" style={{ display: 'inline-block', background: GREEN, color: '#fff', borderRadius: 12, padding: '12px 20px', fontSize: 14, fontWeight: 800, textDecoration: 'none' }}>
-                  Go to My Applications →
+                <Link href="/balance-transfer" className="btn-accent">
+                  Go to My Applications <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
                 </Link>
               </div>
             ) : (
               bestOffer && (
-                <div style={{ marginTop: 22, marginBottom: 6 }}>
-                  <button
-                    onClick={() => apply(bestOffer)}
-                    disabled={!!applying}
-                    style={{ ...primaryBtn, padding: 17, fontSize: 17, boxShadow: '0 5px 18px rgba(5,150,105,0.35)', letterSpacing: 0.2, opacity: applying ? 0.7 : 1, cursor: applying ? 'wait' : 'pointer' }}
-                  >
-                    {applying === bestOffer.lenderId ? 'Submitting…' : 'Apply Now →'}
+                <div>
+                  <button type="button" onClick={() => apply(bestOffer)} disabled={!!applying} className="btn-accent w-full py-3 text-base">
+                    {applying === bestOffer.lenderId ? 'Submitting…' : 'Apply Now'}
+                    {applying !== bestOffer.lenderId && <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />}
                   </button>
-                  <div style={{ textAlign: 'center', marginTop: 10, fontSize: 12, color: 'rgba(26,46,63,0.4)' }}>
+                  <div className="text-center mt-2.5 text-xs text-slate-500">
                     Applying with {bestOffer.name} · Lowest rate match · {fmtINR(bestOffer.estimatedEmiRupees)}/mo
                   </div>
                 </div>
@@ -714,23 +721,25 @@ function OfferMatch() {
             )}
 
             {applyError && (
-              <div role="alert" style={{ marginTop: 12, background: '#FEF2F2', border: '1px solid rgba(220,38,38,0.25)', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: '#B91C1C' }}>
+              <div role="alert" className="rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-sm p-3">
                 {applyError}
               </div>
             )}
 
-            {/* See all offers (design #cc-loan-offers-page layout) */}
+            {/* See all offers */}
             {offers && offers.length > (bestOffer ? 1 : 0) && !applied && (
-              <div style={{ marginTop: 18 }}>
+              <div className="space-y-4">
                 <button
+                  type="button"
                   onClick={() => {
                     if (!showAll) setListTab(offers.some((o) => o.type === 'bank') ? 'bank' : 'nbfc');
                     setShowAll((v) => !v);
                   }}
                   aria-expanded={showAll}
-                  style={{ width: '100%', background: '#fff', border: '1.5px solid #2563EB', borderRadius: 14, padding: 14, fontSize: 14, fontWeight: 700, color: '#2563EB', cursor: 'pointer', fontFamily: 'var(--sans)' }}
+                  className="btn-secondary w-full"
                 >
-                  {showAll ? 'Hide all offers ↑' : `See all offers (${offers.length}) ↓`}
+                  {showAll ? 'Hide all offers' : `See all offers (${offers.length})`}
+                  <ChevronDown className={`w-4 h-4 ml-1.5 transition-transform ${showAll ? 'rotate-180' : ''}`} aria-hidden />
                 </button>
                 {showAll && (
                   <AllOffers offers={offers} tab={listTab} setTab={setListTab} cardRate={combined.rate} qualifies={qualifies} applying={applying} onApply={apply} />
@@ -739,7 +748,7 @@ function OfferMatch() {
             )}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
@@ -747,20 +756,27 @@ function OfferMatch() {
 function FieldError({ msg }: { msg?: string }) {
   if (!msg) return null;
   return (
-    <div role="alert" style={{ fontSize: 12, color: '#DC2626', marginTop: 6, fontWeight: 600 }}>
+    <div role="alert" className="text-xs font-medium text-rose-600 mt-1">
       {msg}
     </div>
   );
 }
 
-function ChoiceCard({ selected, onClick, icon, title, sub, small = false }: { selected: boolean; onClick: () => void; icon: string; title: string; sub: string; small?: boolean }) {
+function ChoiceCard({ selected, onClick, icon, title, sub, small = false }: { selected: boolean; onClick: () => void; icon: ReactNode; title: string; sub: string; small?: boolean }) {
   return (
-    <button type="button" className={`com-prop-card${selected ? ' selected' : ''}`} onClick={onClick} aria-pressed={selected} style={{ fontFamily: 'var(--sans)', ...(small ? { padding: '18px 12px' } : {}) }}>
-      <div style={{ fontSize: small ? 28 : 36, marginBottom: small ? 8 : 12 }} aria-hidden>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      className={`rounded-xl border-2 text-left transition-all cursor-pointer ${small ? 'p-3.5' : 'p-4'} ${
+        selected ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-600/10' : 'border-slate-200 bg-white hover:border-slate-300'
+      }`}
+    >
+      <div className={`mb-2 ${selected ? 'text-blue-600' : 'text-slate-500'}`} aria-hidden>
         {icon}
       </div>
-      <div style={{ fontSize: small ? 14 : 16, fontWeight: 800, color: NAVY, marginBottom: small ? 0 : 4 }}>{title}</div>
-      <div style={{ fontSize: small ? 11 : 12, color: 'rgba(26,46,63,0.5)', lineHeight: 1.4, marginTop: small ? 3 : 0 }}>{sub}</div>
+      <div className="text-sm font-semibold text-slate-900">{title}</div>
+      <div className="text-xs text-slate-500 leading-snug mt-0.5">{sub}</div>
     </button>
   );
 }
@@ -769,11 +785,11 @@ function ChoiceCard({ selected, onClick, icon, title, sub, small = false }: { se
 
 function bandFor(score: number, lowestRate: number | null) {
   const from = lowestRate !== null ? ` and rates starting at ${lowestRate}% p.a.` : '';
-  if (score >= 800) return { band: 'Excellent', color: GREEN, msg: 'Outstanding credit history! You qualify for the best rates and maximum loan amounts from our lending partners.' };
-  if (score >= 750) return { band: 'Very Good', color: GREEN, msg: `Strong credit profile — you're pre-matched with premium partner offers${from}.` };
-  if (score >= 700) return { band: 'Good', color: GREEN, msg: 'Your score clears the 700 threshold that unlocks NBFC lending. Great news — you have real options below.' };
-  if (score >= 650) return { band: 'Fair', color: '#D97706', msg: 'Your score is in the fair range. Select NBFCs with flexible criteria can still work with your profile.' };
-  return { band: 'Needs Improvement', color: '#DC2626', msg: 'Your score is below most lender thresholds. Focus on timely payments and reducing utilisation to improve it.' };
+  if (score >= 800) return { band: 'Excellent', cls: 'text-emerald-600', msg: 'Outstanding credit history! You qualify for the best rates and maximum loan amounts from our lending partners.' };
+  if (score >= 750) return { band: 'Very Good', cls: 'text-emerald-600', msg: `Strong credit profile — you're pre-matched with premium partner offers${from}.` };
+  if (score >= 700) return { band: 'Good', cls: 'text-blue-600', msg: 'Your score clears the 700 threshold that unlocks NBFC lending. Great news — you have real options below.' };
+  if (score >= 650) return { band: 'Fair', cls: 'text-amber-600', msg: 'Your score is in the fair range. Select NBFCs with flexible criteria can still work with your profile.' };
+  return { band: 'Needs Improvement', cls: 'text-rose-600', msg: 'Your score is below most lender thresholds. Focus on timely payments and reducing utilisation to improve it.' };
 }
 
 function ScoreCard({ score, estimated, lowestRate }: { score: number; estimated: boolean; lowestRate: number | null }) {
@@ -800,26 +816,18 @@ function ScoreCard({ score, estimated, lowestRate }: { score: number; estimated:
   const rad = ((180 - ((clamped - 300) / 600) * 180) * Math.PI) / 180;
   const nx = (cx + needleR * Math.cos(rad)).toFixed(1);
   const ny = (cy - needleR * Math.sin(rad)).toFixed(1);
-  const { band, color, msg } = bandFor(score, lowestRate);
+  const { band, cls, msg } = bandFor(score, lowestRate);
   const font = { fontFamily: 'Inter,sans-serif' };
 
   return (
-    <div style={{ background: '#fff', borderRadius: 24, padding: '22px 16px 20px', border: '1.5px solid rgba(196,168,130,0.18)', boxShadow: '0 6px 28px rgba(26,46,63,0.09),0 1px 4px rgba(26,46,63,0.05)', marginBottom: 16, textAlign: 'center' }}>
-      <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: 'rgba(26,46,63,0.32)', textTransform: 'uppercase', marginBottom: 8 }}>{estimated ? 'Your Estimated Credit Score' : 'Your Credit Score'}</div>
-      <div style={{ display: 'inline-block', fontSize: 11, fontWeight: 800, borderRadius: 10, padding: '3px 10px', marginBottom: 10, background: estimated ? '#FFF7ED' : '#ECFDF5', color: estimated ? '#C2410C' : '#047857', border: `1px solid ${estimated ? 'rgba(249,115,22,0.3)' : 'rgba(5,150,105,0.25)'}` }}>
-        {estimated ? 'Estimated' : 'On file'}
-      </div>
-      <svg viewBox="0 0 300 210" role="img" aria-label={`${estimated ? 'Estimated credit score' : 'Credit score'} ${score} out of 900, ${band}`} style={{ width: '100%', maxWidth: 290, display: 'block', margin: '0 auto' }}>
-        <defs>
-          <filter id="com-needle-shadow" x="-60%" y="-60%" width="220%" height="220%">
-            <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#1A2E3F" floodOpacity="0.25" />
-          </filter>
-        </defs>
-        <path d="M 85 145 L 35 145 A 115 115 0 0 1 265 145 L 215 145 A 65 65 0 0 0 85 145 Z" fill="rgba(26,46,63,0.06)" transform="translate(0,3)" />
-        <path d="M 85 145 L 35 145 A 115 115 0 0 1 137.2 30.7 L 142.8 80.4 A 65 65 0 0 0 85 145 Z" fill="#FDBA74" />
-        <path d="M 142.8 80.4 L 137.2 30.7 A 115 115 0 0 1 206.9 45.1 L 182.2 88.5 A 65 65 0 0 0 142.8 80.4 Z" fill="#FB923C" />
-        <path d="M 182.2 88.5 L 206.9 45.1 A 115 115 0 0 1 242.7 76.9 L 202.4 106.5 A 65 65 0 0 0 182.2 88.5 Z" fill="#FACC15" />
-        <path d="M 202.4 106.5 L 242.7 76.9 A 115 115 0 0 1 265 145 L 215 145 A 65 65 0 0 0 202.4 106.5 Z" fill="#4ADE80" />
+    <div className="card-fintech p-5 sm:p-6 text-center">
+      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{estimated ? 'Your Estimated Credit Score' : 'Your Credit Score'}</div>
+      <span className={`${estimated ? 'badge-amber' : 'badge-emerald'} mb-3`}>{estimated ? 'Estimated' : 'On file'}</span>
+      <svg viewBox="0 0 300 210" role="img" aria-label={`${estimated ? 'Estimated credit score' : 'Credit score'} ${score} out of 900, ${band}`} className="w-full max-w-[290px] block mx-auto">
+        <path d="M 85 145 L 35 145 A 115 115 0 0 1 137.2 30.7 L 142.8 80.4 A 65 65 0 0 0 85 145 Z" fill="#F43F5E" />
+        <path d="M 142.8 80.4 L 137.2 30.7 A 115 115 0 0 1 206.9 45.1 L 182.2 88.5 A 65 65 0 0 0 142.8 80.4 Z" fill="#F59E0B" />
+        <path d="M 182.2 88.5 L 206.9 45.1 A 115 115 0 0 1 242.7 76.9 L 202.4 106.5 A 65 65 0 0 0 182.2 88.5 Z" fill="#3B82F6" />
+        <path d="M 202.4 106.5 L 242.7 76.9 A 115 115 0 0 1 265 145 L 215 145 A 65 65 0 0 0 202.4 106.5 Z" fill="#10B981" />
         {[
           [35, 145],
           [137.2, 30.7],
@@ -843,27 +851,27 @@ function ScoreCard({ score, estimated, lowestRate }: { score: number; estimated:
         </text>
         <circle cx="150" cy="145" r="63" fill="white" />
         <line x1="150" y1="145" x2={nx} y2={ny} stroke="white" strokeWidth="6" strokeLinecap="round" />
-        <line x1="150" y1="145" x2={nx} y2={ny} stroke="#1A2E3F" strokeWidth="3.5" strokeLinecap="round" filter="url(#com-needle-shadow)" />
+        <line x1="150" y1="145" x2={nx} y2={ny} stroke="#0F172A" strokeWidth="3.5" strokeLinecap="round" />
         <circle cx="150" cy="145" r="16" fill="white" />
-        <circle cx="150" cy="145" r="13" fill="#1A2E3F" />
+        <circle cx="150" cy="145" r="13" fill="#0F172A" />
         <circle cx="150" cy="145" r="6.5" fill="white" />
-        <circle cx="150" cy="145" r="3" fill="#1A2E3F" />
-        <text x="28" y="161" textAnchor="middle" fontSize="11" fontWeight="700" fill="rgba(26,46,63,0.5)" {...font}>
+        <circle cx="150" cy="145" r="3" fill="#0F172A" />
+        <text x="28" y="161" textAnchor="middle" fontSize="11" fontWeight="700" fill="#64748B" {...font}>
           300
         </text>
-        <text x="272" y="161" textAnchor="middle" fontSize="11" fontWeight="700" fill="rgba(26,46,63,0.5)" {...font}>
+        <text x="272" y="161" textAnchor="middle" fontSize="11" fontWeight="700" fill="#64748B" {...font}>
           900
         </text>
-        <text x="150" y="181" textAnchor="middle" fontSize="44" fontWeight="900" fill="#1A2E3F" fontFamily="Playfair Display,serif">
+        <text x="150" y="181" textAnchor="middle" fontSize="44" fontWeight="700" fill="#0F172A" {...font}>
           {Math.round(shown)}
         </text>
-        <text x="150" y="198" textAnchor="middle" fontSize="10" fontWeight="800" fill="rgba(26,46,63,0.38)" letterSpacing="2" {...font}>
+        <text x="150" y="198" textAnchor="middle" fontSize="10" fontWeight="700" fill="#64748B" letterSpacing="2" {...font}>
           {estimated ? 'ESTIMATED' : 'CREDIT SCORE'}
         </text>
       </svg>
-      <div style={{ fontFamily: 'var(--serif)', fontSize: 24, fontWeight: 900, marginTop: 2, lineHeight: 1.2, color }}>{band}</div>
-      <div style={{ fontSize: 13, color: 'rgba(26,46,63,0.55)', marginTop: 7, lineHeight: 1.7, padding: '0 8px' }}>{msg}</div>
-      <div style={{ marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(26,46,63,0.05)', borderRadius: 10, padding: '5px 13px', border: '1px solid rgba(26,46,63,0.09)', fontSize: 11, color: 'rgba(26,46,63,0.55)', fontWeight: 600, lineHeight: 1.4 }}>
+      <div className={`text-2xl font-bold mt-0.5 leading-tight ${cls}`}>{band}</div>
+      <p className="text-sm text-slate-600 mt-2 leading-relaxed px-2">{msg}</p>
+      <div className="mt-3.5 inline-flex items-center rounded-lg bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 leading-snug">
         {estimated ? 'Estimated from your answers — the lender checks your bureau score' : 'From the credit report on your account'}
       </div>
     </div>
@@ -872,11 +880,14 @@ function ScoreCard({ score, estimated, lowestRate }: { score: number; estimated:
 
 /* ---------- Offer cards ---------- */
 
-function LenderMark({ offer, size = 52 }: { offer: Offer; size?: number }) {
-  const bg = offer.brandColor || '#EDE9FE';
-  const fg = offer.brandColor ? '#fff' : '#7C3AED';
+function LenderMark({ offer }: { offer: Offer }) {
+  const bg = offer.brandColor || '#2563EB';
   return (
-    <div aria-hidden style={{ width: size, height: size, borderRadius: 14, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: offer.initials.length > 3 ? 11 : 16, fontWeight: 900, color: fg, flexShrink: 0, letterSpacing: 0.5 }}>
+    <div
+      aria-hidden
+      className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white shrink-0 tracking-wide ${offer.initials.length > 3 ? 'text-[10px]' : 'text-sm'}`}
+      style={{ background: bg }}
+    >
       {offer.initials}
     </div>
   );
@@ -886,33 +897,31 @@ const disbursal = (o: Offer) => (o.disbursalDaysMin === o.disbursalDaysMax ? `${
 
 function BestMatchCard({ offer, amount, tenure }: { offer: Offer; amount: number; tenure: number }) {
   return (
-    <div style={{ background: '#fff', borderRadius: 18, padding: 20, border: `2px solid ${GREEN}`, boxShadow: '0 6px 24px rgba(5,150,105,0.14)', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', top: 0, right: 0, background: 'linear-gradient(135deg,#059669,#047857)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '6px 14px', borderRadius: '0 16px 0 10px', letterSpacing: 0.5 }}>BEST MATCH ✓</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16, marginTop: 8 }}>
+    <div className="card-fintech p-5 border-2 border-emerald-500">
+      <div className="flex items-start gap-3.5 mb-4">
         <LenderMark offer={offer} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 17, fontWeight: 800, color: NAVY, overflowWrap: 'anywhere' }}>{offer.name}</div>
-          <div style={{ fontSize: 12, color: 'rgba(26,46,63,0.45)', marginTop: 3 }}>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="font-semibold text-slate-900 break-words">{offer.name}</div>
+            <span className="badge-emerald">BEST MATCH ✓</span>
+          </div>
+          <div className="text-xs text-slate-500 mt-1">
             Up to {fmtINR(amount)} · {tenure} months tenure
           </div>
         </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontSize: 24, fontWeight: 900, color: GREEN }}>{offer.offeredRatePercent}%</div>
-          <div style={{ fontSize: 10, color: 'rgba(26,46,63,0.4)', marginTop: -2 }}>p.a.</div>
+        <div className="text-right shrink-0">
+          <div className="text-2xl font-bold text-slate-900 tabular-nums">{offer.offeredRatePercent}%</div>
+          <div className="text-[11px] text-slate-500 -mt-0.5">p.a.</div>
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+      <div className="grid grid-cols-3 gap-2">
         <Stat label="Monthly EMI" value={fmtINR(offer.estimatedEmiRupees)} highlight />
         <Stat label="Processing" value={fmtINR(offer.processingFeeRupees)} />
         <Stat label="Disbursal" value={disbursal(offer)} />
       </div>
-      <div style={{ marginTop: 12, background: 'rgba(37,99,235,0.05)', borderRadius: 10, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 16 }} aria-hidden>
-          🔒
-        </span>
-        <span style={{ fontSize: 12, color: 'rgba(26,46,63,0.55)', lineHeight: 1.4 }}>
-          Your data is shared securely with {offer.name} only after you apply. Checking offers has no impact on your credit score.
-        </span>
+      <div className="mt-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-800 text-xs p-3 flex gap-2 items-start">
+        <Lock className="w-4 h-4 shrink-0 mt-px" aria-hidden />
+        <span className="leading-relaxed">Your data is shared securely with {offer.name} only after you apply. Checking offers has no impact on your credit score.</span>
       </div>
     </div>
   );
@@ -920,9 +929,9 @@ function BestMatchCard({ offer, amount, tenure }: { offer: Offer; amount: number
 
 function Stat({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div style={{ background: highlight ? 'linear-gradient(135deg,#ECFDF5,#D1FAE5)' : 'rgba(26,46,63,0.04)', borderRadius: 11, padding: '11px 6px', textAlign: 'center', minWidth: 0 }}>
-      <div style={{ fontSize: 9, color: highlight ? '#065F46' : 'rgba(26,46,63,0.45)', fontWeight: 700, marginBottom: 4, letterSpacing: 0.5, textTransform: 'uppercase' }}>{label}</div>
-      <div style={{ fontSize: 14, fontWeight: 900, color: highlight ? '#065F46' : NAVY, overflowWrap: 'anywhere' }}>{value}</div>
+    <div className={`rounded-lg border p-2.5 text-center min-w-0 ${highlight ? 'bg-blue-50 border-blue-200' : 'bg-slate-50 border-slate-200'}`}>
+      <div className={`text-[11px] font-medium mb-1 ${highlight ? 'text-blue-700' : 'text-slate-500'}`}>{label}</div>
+      <div className={`text-sm font-bold break-words tabular-nums ${highlight ? 'text-blue-800' : 'text-slate-900'}`}>{value}</div>
     </div>
   );
 }
@@ -939,69 +948,55 @@ function AllOffers(props: {
   const { offers, tab, setTab, cardRate, qualifies, applying, onApply } = props;
   const list = offers.filter((o) => o.type === tab);
   return (
-    <div style={{ marginTop: 16 }}>
-      <div role="tablist" aria-label="Lender type" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: 'rgba(26,46,63,0.08)', borderRadius: 14, padding: 4, marginBottom: 16 }}>
+    <div className="space-y-4">
+      <div role="tablist" aria-label="Lender type" className="inline-flex bg-slate-100 p-1 rounded-lg border border-slate-200">
         {(['bank', 'nbfc'] as const).map((t) => (
           <button
             key={t}
+            type="button"
             role="tab"
             aria-selected={tab === t}
             onClick={() => setTab(t)}
-            style={{ background: tab === t ? GREEN : 'transparent', border: 'none', borderRadius: 10, padding: 12, fontSize: 14, fontWeight: tab === t ? 700 : 600, color: tab === t ? '#fff' : 'rgba(26,46,63,0.5)', cursor: 'pointer', fontFamily: 'var(--sans)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, boxShadow: tab === t ? '0 2px 8px rgba(5,150,105,0.25)' : 'none' }}
+            className={`px-3 py-1.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 ${
+              tab === t ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'
+            }`}
           >
-            {t === 'bank' ? '🏦 Banks' : '🏢 NBFCs'}
+            {t === 'bank' ? <Landmark className="w-3.5 h-3.5" aria-hidden /> : <Building2 className="w-3.5 h-3.5" aria-hidden />}
+            {t === 'bank' ? 'Banks' : 'NBFCs'}
           </button>
         ))}
       </div>
-      <div style={{ fontSize: 13, color: 'rgba(26,46,63,0.6)', lineHeight: 1.6, marginBottom: 20 }}>
+      <p className="text-sm text-slate-600 leading-relaxed">
         {tab === 'bank'
           ? 'Banks typically offer lower rates and stricter eligibility. Stable income and low existing EMIs help most.'
           : 'NBFCs are more flexible on credit score but charge slightly higher rates. Good fallback if banks decline.'}
-      </div>
+      </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
-        {list.length === 0 && (
-          <div style={{ fontSize: 13, color: 'rgba(26,46,63,0.55)', textAlign: 'center', padding: 12 }}>No {tab === 'bank' ? 'bank' : 'NBFC'} offers for this amount and tenure right now.</div>
-        )}
+      <div className="flex flex-col gap-4">
+        {list.length === 0 && <div className="text-sm text-slate-500 text-center p-3">No {tab === 'bank' ? 'bank' : 'NBFC'} offers for this amount and tenure right now.</div>}
         {list.map((o) => {
           const diff = cardRate - o.offeredRatePercent;
           const ok = qualifies(o);
           return (
-            <div key={o.lenderId} style={{ background: '#fff', border: '1.5px solid rgba(196,168,130,0.2)', borderRadius: 18, padding: '18px 16px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap' }}>
+            <div key={o.lenderId} className="card-fintech p-5">
+              <div className="flex items-start gap-3.5 flex-wrap">
                 <LenderMark offer={o} />
-                <div style={{ flex: 1, minWidth: 140 }}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: NAVY, marginBottom: 2 }}>{o.name}</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: GREEN }}>
-                    @{o.offeredRatePercent}% <span style={{ fontWeight: 500, fontSize: 13, color: 'rgba(26,46,63,0.55)' }}>p.a.</span>
+                <div className="flex-1 min-w-[140px]">
+                  <div className="font-semibold text-slate-900 mb-0.5">{o.name}</div>
+                  <div className="text-sm font-bold text-slate-900">
+                    @{o.offeredRatePercent}% <span className="font-normal text-slate-500">p.a.</span>
                   </div>
-                  <div style={{ fontSize: 12, color: 'rgba(26,46,63,0.5)', marginTop: 1 }}>
+                  <div className="text-xs text-slate-500 mt-0.5">
                     EMI {fmtINR(o.estimatedEmiRupees)}/mo · Processing fee: {fmtINR(o.processingFeeRupees)}
                   </div>
                   {cardRate > 0 && diff > 0 && (
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 4,
-                        borderRadius: 20,
-                        padding: '4px 10px',
-                        marginTop: 8,
-                        background: diff > 15 ? '#ECFDF5' : '#FFF7ED',
-                        border: `1px solid ${diff > 15 ? 'rgba(5,150,105,0.25)' : 'rgba(249,115,22,0.25)'}`,
-                      }}
-                    >
-                      <span style={{ color: diff > 15 ? GREEN : '#C2410C', fontSize: 12, fontWeight: 700 }}>{diff > 15 ? '✓ Well below your card rate' : '✓ Below your card rate'}</span>
-                    </div>
+                    <span className={`${diff > 15 ? 'badge-emerald' : 'badge-amber'} mt-2`}>{diff > 15 ? '✓ Well below your card rate' : '✓ Below your card rate'}</span>
                   )}
-                  {!ok && <div style={{ fontSize: 11, color: '#C2410C', marginTop: 6, fontWeight: 600 }}>Usually asks for a credit score of {o.minCreditScore}+</div>}
+                  {!ok && <div className="text-xs font-medium text-amber-700 mt-1.5">Usually asks for a credit score of {o.minCreditScore}+</div>}
                 </div>
-                <button
-                  onClick={() => onApply(o)}
-                  disabled={!!applying}
-                  style={{ background: GREEN, border: 'none', borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 700, color: '#fff', cursor: applying ? 'wait' : 'pointer', fontFamily: 'var(--sans)', flexShrink: 0, marginTop: 2, boxShadow: '0 2px 8px rgba(5,150,105,0.2)', opacity: applying && applying !== o.lenderId ? 0.6 : 1 }}
-                >
-                  {applying === o.lenderId ? 'Submitting…' : 'Apply →'}
+                <button type="button" onClick={() => onApply(o)} disabled={!!applying} className="btn-accent shrink-0">
+                  {applying === o.lenderId ? 'Submitting…' : 'Apply'}
+                  {applying !== o.lenderId && <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />}
                 </button>
               </div>
             </div>
@@ -1009,9 +1004,9 @@ function AllOffers(props: {
         })}
       </div>
 
-      <div style={{ background: '#fff', border: '1.5px solid rgba(196,168,130,0.3)', borderRadius: 16, padding: '18px 20px', marginBottom: 20 }}>
-        <div style={{ fontSize: 14, fontWeight: 800, color: NAVY, marginBottom: 10 }}>How to compare offers</div>
-        <div style={{ fontSize: 13, color: 'rgba(26,46,63,0.65)', lineHeight: 1.7 }}>
+      <div className="card-fintech p-5">
+        <div className="text-sm font-semibold text-slate-900 mb-2.5">How to compare offers</div>
+        <div className="text-sm text-slate-600 leading-relaxed">
           1. Compare the final rate, not just the starting or estimated rate.
           <br />
           2. Check for processing fees (0.5–2% of loan amount).

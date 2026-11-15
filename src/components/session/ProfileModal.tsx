@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { ArrowRight, LogOut, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { fmtINR } from '@/lib/journey';
 import { initialsOf, type SessionUser } from './SessionProvider';
 
 /**
- * Profile overlay from the design (#profile-modal), with the customer's real
- * account and debt figures, plus links to the account pages.
+ * Profile panel (original Navesta look) with the customer's real account and
+ * debt figures, plus links to the account pages.
  */
 
 type Profile = { phone: string | null; email: string; createdAt: string; creditScore: number | null };
@@ -20,21 +21,19 @@ type Summary = {
 };
 
 const Row = ({ k, v }: { k: string; v: React.ReactNode }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 14, borderBottom: '1px solid #F5E8D8' }}>
-    <span style={{ color: '#8A7058' }}>{k}</span>
-    <span style={{ fontWeight: 600, color: '#3A2310', textAlign: 'right' }}>{v}</span>
+  <div className="flex justify-between gap-4 py-2 text-sm border-b border-slate-100 last:border-0">
+    <span className="text-slate-500">{k}</span>
+    <span className="font-semibold text-slate-900 text-right">{v}</span>
   </div>
 );
 
-const sectionTitle = { fontSize: 13, fontWeight: 600, color: '#8A7058', textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 12 };
-
 const ACCOUNT_LINKS = [
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/debt-management', label: 'Debt plan' },
   { href: '/loans', label: 'Loans & EMIs' },
   { href: '/credit-cards', label: 'Credit cards' },
   { href: '/balance-transfer', label: 'My applications' },
   { href: '/statements', label: 'Statement vault' },
-  { href: '/settings', label: 'Settings & privacy' },
 ];
 
 export default function ProfileModal({ user, onClose, onSignOut }: { user: SessionUser; onClose: () => void; onSignOut: () => void }) {
@@ -59,45 +58,55 @@ export default function ProfileModal({ user, onClose, onSignOut }: { user: Sessi
   const score = profile?.creditScore ?? null;
 
   return (
-    <div className="nv">
-      <div className="modal-overlay" role="dialog" aria-modal="true" aria-label="Your profile" onClick={(e) => e.target === e.currentTarget && onClose()}>
-        <div className="modal-box">
-          <div className="modal-header" style={{ textAlign: 'center', padding: '32px 28px 24px' }}>
-            <button className="modal-close" onClick={onClose} aria-label="Close">
-              ✕
-            </button>
-            <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'linear-gradient(135deg,#1A5C5A,#0D3D3B)', border: '3px solid rgba(255,255,255,0.3)', color: '#fff', fontWeight: 700, fontSize: 26, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', letterSpacing: 1 }}>
-              {initialsOf(user.name)}
-            </div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>{user.name}</div>
-            <div style={{ fontSize: 13, opacity: 0.7, marginTop: 4, color: '#fff' }}>{contact}</div>
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Your profile"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-elevated border border-slate-200 overflow-hidden my-auto">
+        <div className="relative px-6 pt-8 pb-6 bg-slate-900 text-white text-center">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-all flex items-center justify-center cursor-pointer"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="w-16 h-16 rounded-full bg-blue-600 text-white font-bold text-xl flex items-center justify-center mx-auto mb-3 ring-4 ring-white/10">{initialsOf(user.name)}</div>
+          <div className="text-lg font-bold">{user.name}</div>
+          <div className="text-xs text-slate-400 mt-1">{contact}</div>
+        </div>
+
+        <div className="p-5 sm:p-6 space-y-5">
+          <div>
+            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Account details</div>
+            <Row k="Name" v={user.name} />
+            <Row k="Email / Phone" v={contact} />
+            <Row k="Member since" v={memberSince} />
           </div>
-          <div className="modal-body">
-            <div style={{ borderBottom: '1px solid #EDD8C4', paddingBottom: 16, marginBottom: 16 }}>
-              <div style={sectionTitle}>Account Details</div>
-              <Row k="Name" v={user.name} />
-              <Row k="Email / Phone" v={contact} />
-              <Row k="Member Since" v={memberSince} />
-            </div>
-            <div style={{ borderBottom: '1px solid #EDD8C4', paddingBottom: 16, marginBottom: 16 }}>
-              <div style={sectionTitle}>Financial Summary</div>
-              <Row k="Total Debt" v={summary ? fmtINR(summary.totalOutstandingRupees) : '—'} />
-              <Row k="Monthly EMI" v={summary ? fmtINR(summary.totalMonthlyObligationsRupees) : '—'} />
-              <Row k="Active Loans" v={summary ? `${summary.activeLoansCount} loans · ${summary.activeCreditCardsCount} cards` : '—'} />
-              <Row k="CIBIL Score" v={score ? `${score} · ${score >= 750 ? 'Excellent' : score >= 700 ? 'Good' : score >= 650 ? 'Fair' : 'Poor'}` : 'Not on file'} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
-              {ACCOUNT_LINKS.map((l) => (
-                <Link key={l.href} href={l.href} onClick={onClose} style={{ padding: '10px 12px', borderRadius: 10, background: '#FFF6EC', border: '1px solid #F0DCC4', color: '#3A2310', fontSize: 13, fontWeight: 600, textDecoration: 'none', textAlign: 'center' }}>
-                  {l.label}
-                </Link>
-              ))}
-            </div>
-            <Link href="/dashboard" onClick={onClose} style={{ display: 'block', textAlign: 'center', width: '100%', padding: 13, borderRadius: 12, border: '1.5px solid #E07C10', background: 'transparent', color: '#E07C10', fontWeight: 700, fontSize: 15, marginBottom: 10, textDecoration: 'none' }}>
-              View Full Profile →
+          <div>
+            <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Financial summary</div>
+            <Row k="Total debt" v={summary ? fmtINR(summary.totalOutstandingRupees) : '—'} />
+            <Row k="Monthly EMI" v={summary ? fmtINR(summary.totalMonthlyObligationsRupees) : '—'} />
+            <Row k="Active accounts" v={summary ? `${summary.activeLoansCount} loans · ${summary.activeCreditCardsCount} cards` : '—'} />
+            <Row k="Credit score" v={score ? `${score} · ${score >= 750 ? 'Excellent' : score >= 700 ? 'Good' : score >= 650 ? 'Fair' : 'Poor'}` : 'Not on file'} />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {ACCOUNT_LINKS.map((l) => (
+              <Link key={l.href} href={l.href} onClick={onClose} className="px-3 py-2.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-800 text-center transition-colors">
+                {l.label}
+              </Link>
+            ))}
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Link href="/settings" onClick={onClose} className="btn-secondary flex-1 text-xs">
+              Settings &amp; privacy <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
             </Link>
-            <button onClick={onSignOut} style={{ width: '100%', padding: 13, borderRadius: 12, border: 'none', background: '#FEE2E2', color: '#991B1B', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>
-              Sign Out
+            <button type="button" onClick={onSignOut} className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer">
+              <LogOut className="w-3.5 h-3.5" /> Sign out
             </button>
           </div>
         </div>

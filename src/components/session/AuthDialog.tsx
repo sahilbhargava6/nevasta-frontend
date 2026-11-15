@@ -1,24 +1,25 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
+import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, Lock, Mail, Phone, ShieldCheck, User, X } from 'lucide-react';
 import { api, ensureCsrf } from '@/lib/api';
+import { trackStep } from '@/lib/track';
 import type { AuthIntent, SessionUser } from './SessionProvider';
 
 /**
- * Sign-up / sign-in modal from the design (#auth-modal): name + mobile,
- * 6-digit SMS code, then a welcome step that continues the journey the
- * customer started. Accounts that use email still sign in with a password.
+ * Sign-up / sign-in dialog (original Navesta look): name + mobile, a 6-digit
+ * SMS code, then a welcome step that continues the journey the customer
+ * started. Accounts that use email still sign in with a password.
  */
 
 type Mode = 'signup' | 'login';
 type Step = 'form' | 'otp' | 'password' | 'success';
 
 const CONTINUE_LABEL: Record<string, string> = {
-  'debt-cc': 'Add My Credit Card →',
-  'debt-loan': 'Tell Me About My Loan →',
-  'debt-consolidation': 'Add My Debts →',
-  'debt-management': 'Start My Debt Plan →',
+  'debt-cc': 'Add My Credit Card',
+  'debt-loan': 'Tell Me About My Loan',
+  'debt-consolidation': 'Add My Debts',
+  'debt-management': 'Start My Debt Plan',
 };
 
 export default function AuthDialog({
@@ -61,6 +62,11 @@ export default function AuthDialog({
     if (step === 'otp') setTimeout(() => otpRefs.current[0]?.focus(), 50);
   }, [step]);
 
+  // Sign-up funnel: opened → code sent → account created
+  useEffect(() => {
+    if (mode === 'signup') trackStep('signup', 'opened');
+  }, [mode]);
+
   const fail = (message: string) => {
     setError(message);
     setNotice(null);
@@ -82,6 +88,7 @@ export default function AuthDialog({
     setChallenge({ id: res.data.challengeId, sentTo: res.data.phone, devCode, kind: 'phone' });
     setOtp(devCode ? devCode.split('') : ['', '', '', '', '', '']);
     setStep('otp');
+    if (mode === 'signup') trackStep('signup', 'code_sent');
   };
 
   const handleSignupSubmit = async () => {
@@ -124,6 +131,7 @@ export default function AuthDialog({
     onSignedIn(user);
     setFirstName(user.name.split(' ')[0] ?? '');
     if (mode === 'signup') {
+      trackStep('signup', 'account_created');
       setStep('success');
     } else {
       onContinue(false);
@@ -180,7 +188,7 @@ export default function AuthDialog({
     setError(null);
     try {
       await sendCode(mode === 'signup' ? phone : contact);
-      setNotice('New OTP sent! ✅');
+      setNotice('A new code has been sent.');
     } catch (e: any) {
       fail(e.message);
     }
@@ -201,175 +209,249 @@ export default function AuthDialog({
     if (digits && i < 5) otpRefs.current[i + 1]?.focus();
   };
 
-  const title = mode === 'signup' ? 'Create your free account' : 'Welcome back!';
-  const sub = mode === 'signup' ? 'Free forever · No card needed · 🔒 256-bit SSL' : 'Sign in to your account';
+  const title = step === 'success' ? 'You’re all set' : mode === 'signup' ? 'Create your free account' : 'Welcome back';
+  const sub = mode === 'signup' ? 'Free forever · No card needed · Encrypted end to end' : 'Sign in with your mobile number or email';
   const onSubmit = step === 'otp' ? handleVerify : step === 'password' ? handlePasswordLogin : mode === 'signup' ? handleSignupSubmit : handleLoginSubmit;
 
+  const input =
+    'w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600';
+  const label = 'block text-xs font-semibold text-slate-700 mb-1';
+  const link = 'font-semibold text-blue-600 hover:underline cursor-pointer';
+  const spinner = <Loader2 className="w-4 h-4 animate-spin mr-2" />;
+
   return (
-    <div className="nv">
-      <div className="modal-overlay" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.target === e.currentTarget && onClose()}>
-        <div className="modal-box">
-          <div className="modal-header">
-            <div className="modal-logo" style={{ marginBottom: 8 }}>
-              <Image src="/design/navesta-logo.png" alt="Navesta" width={136} height={52} style={{ height: 52, width: 'auto', display: 'block', filter: 'brightness(0) invert(1)', marginBottom: 8 }} priority />
-            </div>
-            <div className="modal-title">{step === 'success' ? 'You’re all set' : title}</div>
-            <div className="modal-sub">
-              <span>{sub}</span>
-            </div>
-            <button className="modal-close" onClick={onClose} aria-label="Close">
-              ✕
-            </button>
-          </div>
-
-          <form
-            className="modal-body"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!busy && step !== 'success') onSubmit();
-            }}
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-elevated border border-slate-200 overflow-hidden my-auto max-h-[94vh] flex flex-col">
+        <div className="relative p-5 sm:p-6 bg-slate-900 text-white flex-shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 w-9 h-9 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-all flex items-center justify-center cursor-pointer"
+            aria-label="Close"
           >
-            {error && (
-              <div className="modal-error" role="alert" style={{ background: '#FEE2E2', color: '#991B1B', padding: '10px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, marginBottom: 12 }}>
-                ⚠️ {error}
-              </div>
-            )}
-            {notice && !error && (
-              <div style={{ background: '#DCFCE7', color: '#166534', padding: '10px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, marginBottom: 12 }}>{notice}</div>
-            )}
+            <X className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 uppercase tracking-wider mb-2">
+            <ShieldCheck className="w-4 h-4" /> Navesta secure access
+          </div>
+          <h2 className="text-xl font-bold tracking-tight text-white">{title}</h2>
+          <p className="text-xs text-slate-400 mt-1 leading-relaxed">{sub}</p>
 
-            {step === 'otp' && challenge?.devCode && (
-              <div style={{ background: 'linear-gradient(135deg,#FFF3CD,#FFF8E1)', border: '1.5px dashed #E07C10', borderRadius: 10, padding: '8px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 14 }}>🧪</span>
-                <span style={{ fontSize: 11.5, color: '#92400E', fontWeight: 600 }}>Dev mode — OTP pre-filled: {challenge.devCode}</span>
-              </div>
-            )}
-
-            {/* ── Sign up: details ── */}
-            {mode === 'signup' && step === 'form' && (
-              <>
-                <label className="m-label" htmlFor="su-name">Full Name</label>
-                <input className="m-input" id="su-name" placeholder="Rahul Mehta" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
-                <span className="m-hint">📋 Enter name exactly as per your PAN card</span>
-                <label className="m-label" htmlFor="su-contact">Mobile Number</label>
-                <input className="m-input" id="su-contact" type="tel" inputMode="tel" autoComplete="tel" placeholder="+91 98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)} style={{ marginBottom: 0 }} />
-                <div className="m-consent-row" style={{ marginTop: 16 }}>
-                  <label className="m-consent-label">
-                    <input type="checkbox" className="m-consent-cb" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} />
-                    <span className="m-consent-box" />
-                    <span className="m-consent-text">
-                      By proceeding, you agree to Navesta&apos;s{' '}
-                      <a href="/about" target="_blank" className="m-consent-link">
-                        Terms &amp; Conditions
-                      </a>
-                    </span>
-                  </label>
-                </div>
-                <div className="m-consent-row" style={{ marginTop: 8 }}>
-                  <label className="m-consent-label">
-                    <input type="checkbox" className="m-consent-cb" checked={acceptMarketing} onChange={(e) => setAcceptMarketing(e.target.checked)} />
-                    <span className="m-consent-box" />
-                    <span className="m-consent-text">
-                      Send me money tips &amp; product updates from Navesta <span className="m-consent-optional">(optional)</span>
-                    </span>
-                  </label>
-                </div>
-                <button type="submit" className="m-btn m-btn-primary" style={{ marginTop: 16 }} disabled={busy}>
-                  {busy ? 'Sending…' : 'Send OTP →'}
+          {step !== 'success' && (
+            <div className="flex bg-slate-800/80 p-1 rounded-lg border border-slate-700 mt-5">
+              {(['login', 'signup'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => mode !== m && switchMode(m)}
+                  className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all cursor-pointer min-h-[36px] ${mode === m ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                >
+                  {m === 'login' ? 'Sign In' : 'Create Account'}
                 </button>
-                <div className="m-divider">or</div>
-                <div className="m-switch">
-                  Already have an account? <a onClick={() => switchMode('login')}>Sign In</a>
-                </div>
-              </>
-            )}
-
-            {/* ── Sign in: phone or email ── */}
-            {mode === 'login' && step === 'form' && (
-              <>
-                <label className="m-label" htmlFor="li-contact">Email or Phone</label>
-                <input className="m-input" id="li-contact" autoComplete="username" placeholder="rahul@gmail.com or +91 98765 43210" value={contact} onChange={(e) => setContact(e.target.value)} />
-                <button type="submit" className="m-btn m-btn-primary" disabled={busy}>
-                  {busy ? 'Sending…' : contact.includes('@') ? 'Continue →' : 'Send OTP →'}
-                </button>
-                <div className="m-divider">or</div>
-                <div className="m-switch">
-                  New to Navesta? <a onClick={() => switchMode('signup')}>Create account</a>
-                </div>
-              </>
-            )}
-
-            {mode === 'login' && step === 'password' && (
-              <>
-                <span className="otp-sent-label">Signing in as {contact}</span>
-                <label className="m-label" htmlFor="li-password">Password</label>
-                <input className="m-input" id="li-password" type="password" autoComplete="current-password" autoFocus value={password} onChange={(e) => setPassword(e.target.value)} />
-                <button type="submit" className="m-btn m-btn-primary" disabled={busy}>
-                  {busy ? 'Signing in…' : 'Sign In →'}
-                </button>
-                <button type="button" className="m-btn m-btn-outline" onClick={() => setStep('form')}>
-                  ← Back
-                </button>
-              </>
-            )}
-
-            {/* ── Code entry (both modes) ── */}
-            {step === 'otp' && challenge && (
-              <>
-                <span className="otp-sent-label">✅ OTP sent to {challenge.sentTo}</span>
-                <label className="m-label">Enter 6-digit OTP</label>
-                <div className="m-otp-row">
-                  {otp.map((d, i) => (
-                    <input
-                      key={i}
-                      ref={(el) => {
-                        otpRefs.current[i] = el;
-                      }}
-                      className="m-otp-input"
-                      inputMode="numeric"
-                      autoComplete={i === 0 ? 'one-time-code' : 'off'}
-                      aria-label={`Digit ${i + 1}`}
-                      maxLength={6}
-                      value={d}
-                      onChange={(e) => setDigit(i, e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Backspace' && !otp[i] && i > 0) otpRefs.current[i - 1]?.focus();
-                      }}
-                    />
-                  ))}
-                </div>
-                {challenge.kind === 'phone' && (
-                  <div className="otp-resend">
-                    Didn&apos;t receive? <a onClick={resend}>Resend OTP</a>
-                  </div>
-                )}
-                <button type="submit" className="m-btn m-btn-primary" style={{ marginTop: 16 }} disabled={busy}>
-                  {busy ? 'Verifying…' : mode === 'signup' ? 'Verify & Continue →' : 'Sign In →'}
-                </button>
-                <button type="button" className="m-btn m-btn-outline" onClick={() => switchMode(mode)}>
-                  {mode === 'signup' ? '← Change Contact' : '← Back'}
-                </button>
-                {error?.startsWith('No Navesta account') && (
-                  <div className="m-switch" style={{ marginTop: 12 }}>
-                    New to Navesta? <a onClick={() => { setPhone(contact); switchMode('signup'); }}>Create account</a>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* ── Welcome ── */}
-            {step === 'success' && (
-              <div className="m-success">
-                <div className="m-success-icon">🎉</div>
-                <div className="m-success-title">Welcome to Navesta, {firstName}!</div>
-                <div className="m-success-sub">Your account is ready. Let&apos;s start your debt-free journey.</div>
-                <button type="button" className="m-btn m-btn-primary" style={{ marginTop: 24 }} onClick={() => onContinue(true)} autoFocus>
-                  {(intent && CONTINUE_LABEL[intent]) || 'Go to Dashboard →'}
-                </button>
-              </div>
-            )}
-          </form>
+              ))}
+            </div>
+          )}
         </div>
+
+        <form
+          className="p-5 sm:p-6 space-y-4 overflow-y-auto flex-1"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!busy && step !== 'success') onSubmit();
+          }}
+        >
+          {error && (
+            <div role="alert" className="flex items-center gap-2.5 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
+              <span>{error}</span>
+            </div>
+          )}
+          {notice && !error && (
+            <div className="flex items-center gap-2.5 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+              <span>{notice}</span>
+            </div>
+          )}
+          {step === 'otp' && challenge?.devCode && (
+            <div className="p-3 rounded-lg bg-amber-50 border border-dashed border-amber-300 text-amber-800 text-xs font-semibold">
+              Development mode: code pre-filled ({challenge.devCode}). Real SMS is sent once a provider is set up.
+            </div>
+          )}
+
+          {/* Sign up: name + mobile */}
+          {mode === 'signup' && step === 'form' && (
+            <>
+              <div>
+                <label className={label} htmlFor="su-name">
+                  Full Name
+                </label>
+                <div className="relative flex items-center">
+                  <User className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <input className={input} id="su-name" placeholder="Rahul Mehta" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">Enter your name exactly as on your PAN card</p>
+              </div>
+              <div>
+                <label className={label} htmlFor="su-contact">
+                  Mobile Number
+                </label>
+                <div className="relative flex items-center">
+                  <Phone className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <input className={input} id="su-contact" type="tel" inputMode="tel" autoComplete="tel" placeholder="+91 98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                </div>
+              </div>
+              <label className="flex items-start gap-2 text-xs text-slate-700 leading-relaxed cursor-pointer">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600/30 mt-0.5" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} />
+                <span>
+                  By proceeding, you agree to Navesta&apos;s{' '}
+                  <a href="/about" target="_blank" className={link}>
+                    Terms &amp; Conditions
+                  </a>
+                </span>
+              </label>
+              <label className="flex items-start gap-2 text-xs text-slate-700 leading-relaxed cursor-pointer">
+                <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600/30 mt-0.5" checked={acceptMarketing} onChange={(e) => setAcceptMarketing(e.target.checked)} />
+                <span>
+                  Send me money tips &amp; product updates from Navesta <span className="text-slate-400">(optional)</span>
+                </span>
+              </label>
+              <button type="submit" className="btn-primary w-full !py-3 font-bold cursor-pointer" disabled={busy}>
+                {busy ? spinner : null}
+                {busy ? 'Sending…' : 'Send OTP'}
+                {!busy && <ArrowRight className="w-4 h-4 ml-1.5" />}
+              </button>
+            </>
+          )}
+
+          {/* Sign in: phone or email */}
+          {mode === 'login' && step === 'form' && (
+            <>
+              <div>
+                <label className={label} htmlFor="li-contact">
+                  Email or Phone
+                </label>
+                <div className="relative flex items-center">
+                  <Mail className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <input className={input} id="li-contact" autoComplete="username" placeholder="rahul@gmail.com or +91 98765 43210" value={contact} onChange={(e) => setContact(e.target.value)} />
+                </div>
+              </div>
+              <button type="submit" className="btn-primary w-full !py-3 font-bold cursor-pointer" disabled={busy}>
+                {busy ? spinner : null}
+                {busy ? 'Sending…' : contact.includes('@') ? 'Continue' : 'Send OTP'}
+                {!busy && <ArrowRight className="w-4 h-4 ml-1.5" />}
+              </button>
+            </>
+          )}
+
+          {mode === 'login' && step === 'password' && (
+            <>
+              <p className="text-xs text-slate-500">
+                Signing in as <span className="font-semibold text-slate-800">{contact}</span>
+              </p>
+              <div>
+                <label className={label} htmlFor="li-password">
+                  Password
+                </label>
+                <div className="relative flex items-center">
+                  <Lock className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
+                  <input className={input} id="li-password" type="password" autoComplete="current-password" autoFocus value={password} onChange={(e) => setPassword(e.target.value)} />
+                </div>
+              </div>
+              <button type="submit" className="btn-primary w-full !py-3 font-bold cursor-pointer" disabled={busy}>
+                {busy ? spinner : null}
+                {busy ? 'Signing in…' : 'Sign In'}
+              </button>
+              <button type="button" className="btn-secondary w-full text-xs cursor-pointer" onClick={() => setStep('form')}>
+                <ArrowLeft className="w-3.5 h-3.5 mr-1.5" /> Back
+              </button>
+            </>
+          )}
+
+          {/* Code entry (both modes) */}
+          {step === 'otp' && challenge && (
+            <>
+              <div>
+                <p className="text-xs font-semibold text-slate-900">Verification code</p>
+                <p className="text-xs text-slate-500 mt-0.5">Enter the 6-digit code sent to {challenge.sentTo}.</p>
+              </div>
+              <div className="flex justify-between gap-2">
+                {otp.map((d, i) => (
+                  <input
+                    key={i}
+                    ref={(el) => {
+                      otpRefs.current[i] = el;
+                    }}
+                    className="w-11 h-12 sm:w-12 text-center text-lg font-bold text-slate-900 bg-slate-50 border border-slate-300 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
+                    inputMode="numeric"
+                    autoComplete={i === 0 ? 'one-time-code' : 'off'}
+                    aria-label={`Digit ${i + 1}`}
+                    maxLength={6}
+                    value={d}
+                    onChange={(e) => setDigit(i, e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Backspace' && !otp[i] && i > 0) otpRefs.current[i - 1]?.focus();
+                    }}
+                  />
+                ))}
+              </div>
+              {challenge.kind === 'phone' && (
+                <p className="text-xs text-slate-500">
+                  Didn&apos;t receive it?{' '}
+                  <button type="button" onClick={resend} className={link}>
+                    Resend code
+                  </button>
+                </p>
+              )}
+              <button type="submit" className="btn-primary w-full !py-3 font-bold cursor-pointer" disabled={busy}>
+                {busy ? spinner : null}
+                {busy ? 'Verifying…' : mode === 'signup' ? 'Verify & Continue' : 'Sign In'}
+              </button>
+              <button type="button" className="btn-secondary w-full text-xs cursor-pointer" onClick={() => switchMode(mode)}>
+                <ArrowLeft className="w-3.5 h-3.5 mr-1.5" /> {mode === 'signup' ? 'Change number' : 'Back'}
+              </button>
+              {error?.startsWith('No Navesta account') && (
+                <p className="text-xs text-slate-600 text-center">
+                  New to Navesta?{' '}
+                  <button
+                    type="button"
+                    className={link}
+                    onClick={() => {
+                      setPhone(contact);
+                      switchMode('signup');
+                    }}
+                  >
+                    Create account
+                  </button>
+                </p>
+              )}
+            </>
+          )}
+
+          {/* Welcome */}
+          {step === 'success' && (
+            <div className="text-center py-4">
+              <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">Welcome to Navesta, {firstName}!</h3>
+              <p className="text-sm text-slate-600 mt-1">Your account is ready. Let&apos;s start your debt-free journey.</p>
+              <button type="button" className="btn-accent w-full !py-3 mt-6 font-bold cursor-pointer" onClick={() => onContinue(true)} autoFocus>
+                {(intent && CONTINUE_LABEL[intent]) || 'Go to Dashboard'}
+                <ArrowRight className="w-4 h-4 ml-1.5" />
+              </button>
+            </div>
+          )}
+
+          <p className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 pt-1">
+            <Lock className="w-3 h-3" /> Your data is encrypted and protected under India&apos;s DPDP Act
+          </p>
+        </form>
       </div>
     </div>
   );

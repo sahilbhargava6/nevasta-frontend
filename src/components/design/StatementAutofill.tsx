@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { CheckCircle2, FileText, Loader2, Lock } from 'lucide-react';
 import { readStatement, uploadStatement, type LoanFields, type ReadOutcome } from '@/lib/statementParse';
 
 type Phase = 'idle' | 'uploading' | 'reading' | 'password' | 'done' | 'failed';
@@ -10,7 +11,6 @@ type Phase = 'idle' | 'uploading' | 'reading' | 'password' | 'done' | 'failed';
  * form (loan details). The statement is saved to the customer's encrypted
  * vault, virus-scanned and read by the statement parser; the figures found
  * are handed to `onFields` and the customer can still edit everything.
- * Render inside a `.nv` wrapper.
  */
 export default function StatementAutofill({
   title,
@@ -86,22 +86,29 @@ export default function StatementAutofill({
   };
 
   const busy = phase === 'uploading' || phase === 'reading';
-  const tone = phase === 'done' ? '#059669' : phase === 'failed' ? '#B45309' : '#0D9488';
+  const msgCls =
+    phase === 'password'
+      ? 'bg-rose-50 border-rose-200 text-rose-800'
+      : phase === 'done'
+        ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+        : phase === 'failed'
+          ? 'bg-amber-50 border-amber-200 text-amber-800'
+          : 'bg-blue-50 border-blue-200 text-blue-800';
 
   return (
-    <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 1px 4px rgba(28,8,0,0.05),0 6px 20px rgba(28,8,0,0.09)', marginBottom: 18, border: '1.5px dashed rgba(13,148,136,0.35)' }}>
-      <input ref={fileRef} type="file" accept=".pdf,application/pdf" style={{ display: 'none' }} aria-label={title} onChange={(e) => pick(e.target.files?.[0])} />
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <span style={{ fontSize: 26, lineHeight: 1 }} aria-hidden>
-          📎
-        </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#2A1606', marginBottom: 3 }}>{title}</div>
-          <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.55)', lineHeight: 1.5 }}>{description}</div>
+    <div className="card-fintech p-5 sm:p-6 border-dashed">
+      <input ref={fileRef} type="file" accept=".pdf,application/pdf" className="hidden" aria-label={title} onChange={(e) => pick(e.target.files?.[0])} />
+      <div className="flex items-start gap-3">
+        <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0" aria-hidden>
+          <FileText className="w-5 h-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold text-slate-900">{title}</div>
+          <div className="text-xs text-slate-500 mt-1 leading-relaxed">{description}</div>
 
           {busy && (
-            <div role="status" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, fontSize: 12, fontWeight: 600, color: '#0369A1' }}>
-              <span aria-hidden style={{ width: 14, height: 14, border: '2px solid #0EA5E9', borderTopColor: 'transparent', borderRadius: '50%', animation: 'lfbtSpin .7s linear infinite', display: 'inline-block' }} />
+            <div role="status" className="flex items-center gap-2 mt-3 text-xs font-medium text-blue-700">
+              <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden />
               {phase === 'uploading' ? `Saving ${fileName} securely…` : 'Reading your statement… scanned statements can take a minute.'}
             </div>
           )}
@@ -112,10 +119,13 @@ export default function StatementAutofill({
                 e.preventDefault();
                 void unlock();
               }}
-              style={{ marginTop: 10 }}
+              className="mt-3"
             >
-              <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.6)', marginBottom: 6 }}>🔒 This PDF is password protected. We use the password once to read it and never save it.</div>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <div className="flex items-start gap-1.5 text-xs text-slate-600 mb-2">
+                <Lock className="w-3.5 h-3.5 mt-0.5 shrink-0" aria-hidden />
+                This PDF is password protected. We use the password once to read it and never save it.
+              </div>
+              <div className="flex flex-wrap gap-2">
                 <input
                   type="password"
                   autoComplete="off"
@@ -126,28 +136,27 @@ export default function StatementAutofill({
                     setPassword(e.target.value);
                     setMessage('');
                   }}
-                  style={{ flex: '1 1 160px', minWidth: 0, padding: '9px 12px', border: '1.5px solid rgba(196,168,130,0.4)', borderRadius: 10, fontSize: 14, fontFamily: 'var(--sans)', outline: 'none' }}
+                  className="flex-[1_1_160px] min-w-0 px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                 />
-                <button type="submit" style={{ padding: '9px 14px', borderRadius: 10, border: 'none', background: '#0D9488', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  Unlock &amp; read →
+                <button type="submit" className="btn-accent">
+                  Unlock &amp; read
                 </button>
               </div>
             </form>
           )}
 
           {message && (
-            <div role={phase === 'failed' || phase === 'password' ? 'alert' : 'status'} style={{ marginTop: 8, fontSize: 12, fontWeight: 600, color: phase === 'password' ? '#DC2626' : tone }}>
-              {phase === 'done' ? '✓ ' : ''}
-              {message}
+            <div
+              role={phase === 'failed' || phase === 'password' ? 'alert' : 'status'}
+              className={`mt-3 flex items-start gap-2 rounded-lg border p-3 text-xs font-medium ${msgCls}`}
+            >
+              {phase === 'done' && <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden />}
+              <span>{message}</span>
             </div>
           )}
 
           {!busy && phase !== 'password' && (
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              style={{ marginTop: 10, padding: '8px 14px', borderRadius: 10, border: '1.5px solid #0D9488', background: 'transparent', color: '#0D9488', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
-            >
+            <button type="button" onClick={() => fileRef.current?.click()} className="btn-secondary mt-3">
               {phase === 'idle' ? 'Upload statement (PDF)' : 'Upload a different statement'}
             </button>
           )}

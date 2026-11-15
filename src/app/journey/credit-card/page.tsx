@@ -7,6 +7,11 @@ import JourneyHeader from '@/components/design/JourneyHeader';
 import { useJourney, type CardEntry } from '@/lib/journey';
 import { fieldText, readStatement, uncertainKeys, uploadStatement, type CardFields } from '@/lib/statementParse';
 import { EMPTY_CC_JOURNEY, parseAmount } from '@/lib/ccMath';
+import { AlertTriangle, ArrowRight, BarChart3, Calendar, CreditCard, FileText, Loader2, Lock, Pencil, Plus, Upload, X } from 'lucide-react';
+
+const INPUT = 'w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600';
+const ERR_INPUT = 'border-rose-400 focus:ring-rose-500/20 focus:border-rose-500';
+const LABEL = 'block text-xs font-semibold text-slate-700 mb-1.5';
 
 // Design: #cc-page (Navesta_Website_22Sep26.html ~4865–4929),
 // renderCCCards / setCCMethod / addCCCard (~6892–6981), upload review cards (~7250–7360),
@@ -231,55 +236,38 @@ function AddYourCard() {
     router.push('/journey/credit-card/analysis');
   };
 
-  if (!ready) return <div className="nv" style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#FFF8F2 0%,#FFF0E3 50%,#FDE8D0 100%)' }} />;
+  if (!ready) return <div className="min-h-screen bg-slate-50" />;
 
-  const methodBox = (active: boolean): React.CSSProperties => ({
-    background: '#fff',
-    border: active ? '2px solid #0D9488' : '2px solid rgba(196,168,130,0.4)',
-    borderRadius: 14,
-    padding: 16,
-    textAlign: 'center',
-    cursor: 'pointer',
-    position: 'relative',
-    transition: 'all .2s',
-    fontFamily: 'inherit',
-    width: '100%',
-  });
+  const methodCls = (active: boolean) =>
+    `relative w-full rounded-xl border-2 p-4 text-center transition-all cursor-pointer ${active ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-600/10' : 'border-slate-200 bg-white hover:border-slate-300'}`;
 
   return (
-    <div className="nv" style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#FFF8F2 0%,#FFF0E3 50%,#FDE8D0 100%)', fontFamily: 'var(--sans)', overflowX: 'hidden', width: '100%' }}>
+    <div className="min-h-screen bg-slate-50">
       <JourneyHeader backHref="/debt-management" />
 
-      <div style={{ padding: '32px 24px 120px', maxWidth: 560, margin: '0 auto' }}>
-        {/* Eyebrow */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(13,148,136,0.1)', border: '1px solid rgba(13,148,136,0.25)', borderRadius: 20, padding: '5px 14px', marginBottom: 20 }}>
-          <span style={{ fontSize: 10 }} aria-hidden>
-            💳
-          </span>
-          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '1.5px', color: '#0D9488', textTransform: 'uppercase' }}>Your Card Details</span>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider mb-3">
+            <CreditCard className="w-4 h-4" aria-hidden /> Your Card Details
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            Add your <span className="text-blue-600">card.</span>
+          </h1>
+          <p className="text-sm text-slate-600 leading-relaxed mt-2">Add all your cards — Navesta plans across them together.</p>
         </div>
 
-        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(28px,6vw,36px)', fontWeight: 900, lineHeight: 1.15, color: '#2A1606', marginBottom: 10 }}>
-          Add your <span style={{ color: '#0D9488', fontStyle: 'italic' }}>card.</span>
-        </h1>
-        <p style={{ fontSize: 14, color: 'rgba(42,22,6,0.58)', lineHeight: 1.6, marginBottom: 28 }}>Add all your cards — Navesta plans across them together.</p>
-
         {/* Method toggle */}
-        <div role="radiogroup" aria-label="How would you like to add your cards?" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 28 }}>
-          <button type="button" role="radio" aria-checked={method === 'upload'} onClick={() => setCCMethod('upload')} style={methodBox(method === 'upload')}>
-            <div style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)', background: '#0D9488', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 10, whiteSpace: 'nowrap', letterSpacing: '.5px' }}>★ Recommended</div>
-            <div style={{ fontSize: 28, marginBottom: 8 }} aria-hidden>
-              📊
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#2A1606', marginBottom: 3 }}>Upload statements</div>
-            <div style={{ fontSize: 11, color: 'rgba(42,22,6,0.5)' }}>CSV / PDF · saved securely</div>
+        <div role="radiogroup" aria-label="How would you like to add your cards?" className="grid grid-cols-2 gap-3 pt-2">
+          <button type="button" role="radio" aria-checked={method === 'upload'} onClick={() => setCCMethod('upload')} className={methodCls(method === 'upload')}>
+            <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 badge-blue whitespace-nowrap">★ Recommended</span>
+            <BarChart3 className="w-6 h-6 mx-auto mb-2 text-blue-600" aria-hidden />
+            <div className="text-sm font-semibold text-slate-900">Upload statements</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">CSV / PDF · saved securely</div>
           </button>
-          <button type="button" role="radio" aria-checked={method === 'manual'} onClick={() => setCCMethod('manual')} style={methodBox(method === 'manual')}>
-            <div style={{ fontSize: 28, marginBottom: 8 }} aria-hidden>
-              ✏️
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#2A1606', marginBottom: 3 }}>Enter manually</div>
-            <div style={{ fontSize: 11, color: 'rgba(42,22,6,0.5)' }}>card by card</div>
+          <button type="button" role="radio" aria-checked={method === 'manual'} onClick={() => setCCMethod('manual')} className={methodCls(method === 'manual')}>
+            <Pencil className="w-6 h-6 mx-auto mb-2 text-blue-600" aria-hidden />
+            <div className="text-sm font-semibold text-slate-900">Enter manually</div>
+            <div className="text-[11px] text-slate-500 mt-0.5">card by card</div>
           </button>
         </div>
 
@@ -288,18 +276,18 @@ function AddYourCard() {
           const n = i + 1;
           const showFields = method === 'manual' || c.status === 'saved' || c.status === 'error' || hasFigures(c);
           return (
-            <div key={i} style={{ background: '#fff', border: '1.5px solid rgba(196,168,130,0.3)', borderRadius: 16, padding: 20, marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#2A1606' }}>Card {n} statement</div>
+            <div key={i} className="card-fintech p-5 sm:p-6">
+              <div className="flex items-center justify-between mb-3.5">
+                <div className="text-sm font-semibold text-slate-900">Card {n} statement</div>
                 {i > 0 && (
-                  <button type="button" onClick={() => removeCard(i)} aria-label={`Remove card ${n}`} style={{ background: 'none', border: 'none', fontSize: 12, fontWeight: 600, color: 'rgba(42,22,6,0.45)', cursor: 'pointer', fontFamily: 'inherit' }}>
-                    ✕ Remove
+                  <button type="button" onClick={() => removeCard(i)} aria-label={`Remove card ${n}`} className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-rose-600">
+                    <X className="w-3.5 h-3.5" aria-hidden /> Remove
                   </button>
                 )}
               </div>
 
-              <div style={{ marginBottom: 14 }}>
-                <label htmlFor={`cc-${i}-bank`} style={{ fontSize: 12, fontWeight: 600, color: '#8A7058', display: 'block', marginBottom: 6 }}>
+              <div className="mb-3.5">
+                <label htmlFor={`cc-${i}-bank`} className={LABEL}>
                   Card / bank name
                 </label>
                 <input
@@ -309,9 +297,7 @@ function AddYourCard() {
                   onChange={(e) => setCard(i, { bank: e.target.value })}
                   placeholder="e.g. HDFC Regalia, SBI SimplyCLICK"
                   autoComplete="off"
-                  style={{ width: '100%', padding: '12px 14px', border: '1.5px solid rgba(196,168,130,0.4)', borderRadius: 10, fontSize: 14, fontFamily: 'var(--sans)', background: '#FFFBF5', color: '#2A1606', outline: 'none' }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = '#C96010')}
-                  onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(196,168,130,0.4)')}
+                  className={INPUT}
                 />
               </div>
 
@@ -322,34 +308,26 @@ function AddYourCard() {
                   }}
                   type="file"
                   accept=".pdf,.csv,application/pdf,text/csv"
-                  style={{ display: 'none' }}
+                  className="hidden"
                   aria-label={`Card ${n} statement file`}
                   onChange={(e) => fileSelected(i, e.target.files?.[0])}
                 />
               )}
 
               {method === 'upload' && c.status === 'idle' && !hasFigures(c) && (
-                <button
-                  type="button"
-                  onClick={() => fileRefs.current[i]?.click()}
-                  style={{ width: '100%', fontFamily: 'inherit', border: '2px dashed rgba(201,96,16,0.35)', borderRadius: 12, padding: 24, textAlign: 'center', cursor: 'pointer', background: '#FFFBF5', transition: 'all .2s' }}
-                  onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(201,96,16,0.05)')}
-                  onMouseOut={(e) => (e.currentTarget.style.background = '#FFFBF5')}
-                >
-                  <div style={{ fontSize: 32, marginBottom: 8 }} aria-hidden>
-                    📎
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#2A1606', marginBottom: 4 }}>Upload PDF statement</div>
-                  <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.5)' }}>PDF or CSV · max 10 MB · stored encrypted in your vault</div>
+                <button type="button" onClick={() => fileRefs.current[i]?.click()} className="w-full rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-white hover:border-blue-600 p-6 text-center transition-all">
+                  <Upload className="w-7 h-7 mx-auto mb-2 text-slate-400" aria-hidden />
+                  <div className="text-sm font-semibold text-slate-900">Upload PDF statement</div>
+                  <div className="text-xs text-slate-500 mt-1">PDF or CSV · max 10 MB · stored encrypted in your vault</div>
                 </button>
               )}
 
               {method === 'upload' && (c.status === 'uploading' || c.status === 'reading') && (
-                <div role="status" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 16, background: '#F0F9FF', border: '1.5px solid rgba(14,165,233,0.3)', borderRadius: 12 }}>
-                  <div aria-hidden style={{ width: 20, height: 20, border: '2.5px solid #0EA5E9', borderTopColor: 'transparent', borderRadius: '50%', animation: 'lfbtSpin .7s linear infinite', flexShrink: 0 }} />
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#0369A1' }}>{c.status === 'uploading' ? 'Saving your statement securely…' : 'Reading your statement…'}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(3,105,161,0.65)', overflowWrap: 'anywhere' }}>
+                <div role="status" className="flex items-center gap-3 rounded-lg bg-blue-50 border border-blue-200 p-4">
+                  <Loader2 className="w-5 h-5 text-blue-600 animate-spin shrink-0" aria-hidden />
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-blue-800">{c.status === 'uploading' ? 'Saving your statement securely…' : 'Reading your statement…'}</div>
+                    <div className="text-xs text-blue-700 break-words">
                       {c.status === 'uploading' ? c.fileName : 'Checking it for viruses, then picking out the figures. Scanned statements can take a minute.'}
                     </div>
                   </div>
@@ -380,23 +358,17 @@ function AddYourCard() {
         })}
 
         {/* Add another card */}
-        <button
-          type="button"
-          onClick={addCCCard}
-          style={{ width: '100%', background: 'transparent', border: '1.5px dashed rgba(201,96,16,0.4)', borderRadius: 14, padding: 14, fontSize: 14, fontWeight: 600, color: '#C96010', cursor: 'pointer', fontFamily: 'var(--sans)', marginBottom: 24, transition: 'all .2s' }}
-          onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(201,96,16,0.05)')}
-          onMouseOut={(e) => (e.currentTarget.style.background = 'transparent')}
-        >
-          + Add Card {cards.length + 1} statement
+        <button type="button" onClick={addCCCard} className="w-full rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-600 hover:bg-blue-50 p-3.5 text-sm font-semibold text-blue-600 transition-all inline-flex items-center justify-center gap-1.5">
+          <Plus className="w-4 h-4" aria-hidden /> Add Card {cards.length + 1} statement
         </button>
 
         {/* Monthly income */}
-        <div style={{ marginBottom: 28 }}>
-          <label htmlFor="cc-income" style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#2A1606', marginBottom: 8 }}>
+        <div className="card-fintech p-5 sm:p-6">
+          <label htmlFor="cc-income" className={LABEL}>
             Your monthly income (₹)
           </label>
-          <div style={{ position: 'relative' }}>
-            <span aria-hidden style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 15, fontWeight: 600, color: '#8A7058' }}>
+          <div className="relative">
+            <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium">
               ₹
             </span>
             <input
@@ -414,33 +386,30 @@ function AddYourCard() {
                 if (incomeErr && parseAmount(e.target.value)) setIncomeErr(false);
               }}
               placeholder="e.g. 85000"
-              style={{ width: '100%', padding: '13px 14px 13px 32px', border: `1.5px solid ${incomeErr ? '#DC2626' : 'rgba(196,168,130,0.5)'}`, borderRadius: 12, fontSize: 15, fontFamily: 'var(--sans)', background: '#fff', color: '#2A1606', outline: 'none' }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = incomeErr ? '#DC2626' : '#C96010')}
-              onBlur={(e) => (e.currentTarget.style.borderColor = incomeErr ? '#DC2626' : 'rgba(196,168,130,0.5)')}
+              className={`${INPUT} pl-7 ${incomeErr ? ERR_INPUT : ''}`}
             />
           </div>
-          <div id="cc-income-help" style={{ fontSize: 11, color: incomeErr ? '#DC2626' : 'rgba(42,22,6,0.45)', marginTop: 6 }}>
+          <div id="cc-income-help" className={`text-xs mt-1 ${incomeErr ? 'font-medium text-rose-600' : 'text-slate-500'}`}>
             {incomeErr ? 'Please enter your monthly income.' : 'Used to calculate how much you can put toward clearing debt each month.'}
           </div>
         </div>
 
         {formError && (
-          <div role="alert" style={{ fontSize: 13, color: '#DC2626', fontWeight: 500, marginBottom: 12, padding: '10px 14px', background: '#FEF2F2', borderRadius: 8 }}>
-            ⚠ {formError}
+          <div role="alert" className="rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs p-3 flex gap-2 items-start">
+            <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden />
+            <span>{formError}</span>
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={submitCCDetails}
-          style={{ width: '100%', background: 'linear-gradient(135deg,#F09020,#C96010)', border: 'none', borderRadius: 14, padding: 16, fontSize: 16, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'var(--sans)', boxShadow: '0 6px 20px rgba(201,96,16,0.3)', transition: 'all .2s' }}
-          onMouseOver={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-          onMouseOut={(e) => (e.currentTarget.style.transform = '')}
-        >
-          Build My Escape Plan →
-        </button>
-        <div style={{ textAlign: 'center', marginTop: 12, fontSize: 12, color: 'rgba(42,22,6,0.4)' }}>🔒 256-bit encrypted · Never shared · RBI compliant</div>
-      </div>
+        <div>
+          <button type="button" onClick={submitCCDetails} className="btn-accent w-full">
+            Build My Escape Plan <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
+          </button>
+          <div className="flex items-center justify-center gap-1.5 mt-3 text-xs text-slate-500">
+            <Lock className="w-3.5 h-3.5" aria-hidden /> 256-bit encrypted · Never shared · RBI compliant
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
@@ -449,23 +418,11 @@ type FieldProps = { i: number; c: Draft; setCard: (i: number, patch: Partial<Dra
 
 /** Manual entry grid (design: renderCCCards, manual branch). */
 function ManualFields({ i, c, setCard, attempted }: FieldProps) {
-  const inp = (missing: boolean): React.CSSProperties => ({
-    width: '100%',
-    padding: '11px 12px',
-    border: `1.5px solid ${missing ? 'rgba(220,38,38,0.6)' : 'rgba(196,168,130,0.4)'}`,
-    borderRadius: 10,
-    fontSize: 14,
-    fontFamily: 'var(--sans)',
-    background: '#FFFBF5',
-    color: '#2A1606',
-    outline: 'none',
-  });
-  const lbl: React.CSSProperties = { fontSize: 12, fontWeight: 600, color: '#8A7058', display: 'block', marginBottom: 5 };
   const field = (key: 'outstanding' | 'rate' | 'minDue' | 'limit', label: string, placeholder: string, required: boolean) => {
     const missing = required && attempted && !parseAmount(c[key]);
     return (
       <div>
-        <label htmlFor={`cc-${i}-${key}`} style={lbl}>
+        <label htmlFor={`cc-${i}-${key}`} className={LABEL}>
           {label}
         </label>
         <input
@@ -476,26 +433,24 @@ function ManualFields({ i, c, setCard, attempted }: FieldProps) {
           onChange={(e) => setCard(i, { [key]: e.target.value })}
           placeholder={placeholder}
           aria-invalid={missing}
-          style={inp(missing)}
-          onFocus={(e) => (e.currentTarget.style.borderColor = '#C96010')}
-          onBlur={(e) => (e.currentTarget.style.borderColor = missing ? 'rgba(220,38,38,0.6)' : 'rgba(196,168,130,0.4)')}
+          className={`${INPUT} ${missing ? ERR_INPUT : ''}`}
         />
       </div>
     );
   };
   return (
     <>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {field('outstanding', 'Outstanding (₹)', 'e.g. 45000', true)}
         {field('rate', 'Interest rate (%)', 'e.g. 36', true)}
         {field('minDue', 'Min. due (₹)', 'e.g. 2000', true)}
         {field('limit', 'Credit limit (₹)', 'e.g. 1,00,000', false)}
       </div>
-      <div style={{ marginTop: 10 }}>
-        <label htmlFor={`cc-${i}-payDue`} style={lbl}>
+      <div className="mt-3">
+        <label htmlFor={`cc-${i}-payDue`} className={LABEL}>
           Payment due date
         </label>
-        <input id={`cc-${i}-payDue`} type="date" value={c.payDue} onChange={(e) => setCard(i, { payDue: e.target.value })} style={inp(false)} />
+        <input id={`cc-${i}-payDue`} type="date" value={c.payDue} onChange={(e) => setCard(i, { payDue: e.target.value })} className={INPUT} />
       </div>
     </>
   );
@@ -503,7 +458,6 @@ function ManualFields({ i, c, setCard, attempted }: FieldProps) {
 
 /** Figure fields inside the upload review / error cards (design: renderExtractedCard / renderErrorCard). */
 function StatementFields({ i, c, setCard, attempted, redWhenEmpty }: FieldProps & { redWhenEmpty: boolean }) {
-  const base: React.CSSProperties = { width: '100%', padding: '10px 12px', border: '1.5px solid rgba(196,168,130,0.4)', borderRadius: 10, fontSize: 13, fontFamily: 'var(--sans)', background: '#fff', color: '#2A1606', outline: 'none', fontVariantNumeric: 'tabular-nums' };
   const field = (key: 'outstanding' | 'minDue' | 'limit' | 'rate', label: string, placeholder: string, required: boolean) => {
     const empty = !parseAmount(c[key]);
     const red = required && empty && (redWhenEmpty || attempted);
@@ -511,7 +465,7 @@ function StatementFields({ i, c, setCard, attempted, redWhenEmpty }: FieldProps 
     const check = !empty && c.unsure.includes(key);
     return (
       <div>
-        <label htmlFor={`cc-${i}-${key}`} style={{ fontSize: 11, fontWeight: 600, color: check ? '#B45309' : '#8A7058', display: 'block', marginBottom: 4 }}>
+        <label htmlFor={`cc-${i}-${key}`} className={`block text-xs font-semibold mb-1.5 ${check ? 'text-amber-700' : 'text-slate-700'}`}>
           {label}
           {check && ' · please check'}
         </label>
@@ -523,15 +477,13 @@ function StatementFields({ i, c, setCard, attempted, redWhenEmpty }: FieldProps 
           onChange={(e) => setCard(i, { [key]: e.target.value, unsure: c.unsure.filter((u) => u !== key) })}
           placeholder={placeholder}
           aria-invalid={required && empty && attempted}
-          style={{ ...base, borderColor: red ? 'rgba(220,38,38,0.35)' : check ? 'rgba(217,119,6,0.6)' : 'rgba(196,168,130,0.4)', background: check ? '#FFFBEB' : '#fff' }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = '#C96010')}
-          onBlur={(e) => (e.currentTarget.style.borderColor = red ? 'rgba(220,38,38,0.35)' : check ? 'rgba(217,119,6,0.6)' : 'rgba(196,168,130,0.4)')}
+          className={`${INPUT} tabular-nums ${red ? ERR_INPUT : check ? 'border-amber-400 bg-amber-50 focus:ring-amber-500/20 focus:border-amber-500' : ''}`}
         />
       </div>
     );
   };
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
       {field('outstanding', 'Outstanding (₹)', 'e.g. 45,000', true)}
       {field('minDue', 'Min due (₹)', 'e.g. 2,500', true)}
       {field('limit', 'Credit limit (₹)', 'e.g. 2,00,000', false)}
@@ -542,24 +494,22 @@ function StatementFields({ i, c, setCard, attempted, redWhenEmpty }: FieldProps 
 
 function DueDateLine({ i, c, setCard }: Omit<FieldProps, 'attempted'>) {
   return (
-    <div style={{ fontSize: 12, fontWeight: 600, color: '#2A1606', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-      <label htmlFor={`cc-${i}-payDue`}>📅 Payment due:</label>
-      <input
-        id={`cc-${i}-payDue`}
-        type="date"
-        value={c.payDue}
-        onChange={(e) => setCard(i, { payDue: e.target.value })}
-        style={{ border: 'none', outline: 'none', fontSize: 12, fontWeight: 600, color: '#2A1606', fontFamily: 'var(--sans)', minWidth: 140, background: 'transparent', borderBottom: '1px dashed rgba(42,22,6,0.3)' }}
-      />
+    <div className="flex items-center gap-2 flex-wrap">
+      <label htmlFor={`cc-${i}-payDue`} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+        <Calendar className="w-4 h-4 text-slate-400" aria-hidden /> Payment due:
+      </label>
+      <input id={`cc-${i}-payDue`} type="date" value={c.payDue} onChange={(e) => setCard(i, { payDue: e.target.value })} className={`${INPUT} !w-auto min-w-[140px]`} />
     </div>
   );
 }
 
 function PasswordCard({ i, c, setCard, onUnlock, onSkip }: Omit<FieldProps, 'attempted'> & { onUnlock: () => void; onSkip: () => void }) {
   return (
-    <div style={{ background: '#FFFBF5', border: '1.5px solid rgba(201,96,16,0.3)', borderRadius: 12, padding: 16 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: '#2A1606', marginBottom: 4 }}>🔒 This PDF is password protected</div>
-      <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.6)', lineHeight: 1.5, marginBottom: 12 }}>
+    <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
+      <div className="flex items-center gap-1.5 text-sm font-semibold text-amber-800 mb-1">
+        <Lock className="w-4 h-4" aria-hidden /> This PDF is password protected
+      </div>
+      <div className="text-xs text-amber-800 leading-relaxed mb-3">
         Card statements are usually locked with a password your bank told you in its email (often part of your name and date of birth). We use it once to read the
         file and never save it.
       </div>
@@ -568,7 +518,7 @@ function PasswordCard({ i, c, setCard, onUnlock, onSkip }: Omit<FieldProps, 'att
           e.preventDefault();
           onUnlock();
         }}
-        style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}
+        className="flex gap-2 flex-wrap"
       >
         <input
           type="password"
@@ -577,18 +527,18 @@ function PasswordCard({ i, c, setCard, onUnlock, onSkip }: Omit<FieldProps, 'att
           placeholder="Statement password"
           value={c.password}
           onChange={(e) => setCard(i, { password: e.target.value, passwordMsg: '' })}
-          style={{ flex: '1 1 180px', minWidth: 0, padding: '10px 12px', border: '1.5px solid rgba(196,168,130,0.4)', borderRadius: 10, fontSize: 14, fontFamily: 'var(--sans)', background: '#fff', color: '#2A1606', outline: 'none' }}
+          className={`${INPUT} flex-[1_1_180px] min-w-0 !w-auto`}
         />
-        <button type="submit" style={{ padding: '10px 16px', borderRadius: 10, border: 'none', background: '#C96010', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
-          Unlock &amp; read →
+        <button type="submit" className="btn-accent">
+          Unlock &amp; read <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
         </button>
       </form>
       {c.passwordMsg && (
-        <div role="alert" style={{ fontSize: 12, color: '#DC2626', marginTop: 8 }}>
+        <div role="alert" className="text-xs font-medium text-rose-600 mt-2">
           {c.passwordMsg}
         </div>
       )}
-      <button type="button" onClick={onSkip} style={{ background: 'none', border: 'none', padding: 0, marginTop: 10, fontSize: 12, fontWeight: 600, color: '#8A7058', textDecoration: 'underline', cursor: 'pointer', fontFamily: 'inherit' }}>
+      <button type="button" onClick={onSkip} className="mt-2.5 text-xs font-semibold text-blue-600 hover:text-blue-700 underline">
         Skip — I’ll type the figures myself
       </button>
     </div>
@@ -600,28 +550,29 @@ function ReviewCard({ i, c, setCard, attempted, onReplace }: FieldProps & { onRe
   // Design copy: a full read asks for a quick check; a partial read flags what still needs typing
   const banner =
     c.read !== 'done'
-      ? { text: '⚠️ STATEMENT SAVED SECURELY — ENTER THE FIGURES FROM IT', color: '#B45309' }
+      ? { text: 'STATEMENT SAVED SECURELY — ENTER THE FIGURES FROM IT', warn: true }
       : missing.length || c.unsure.length
-        ? { text: '⚠️ PARTIAL READ — RED FIELDS NEED MANUAL ENTRY', color: '#B45309' }
-        : { text: '✓ READ FROM YOUR STATEMENT — PLEASE CHECK THE FIGURES', color: '#059669' };
+        ? { text: 'PARTIAL READ — RED FIELDS NEED MANUAL ENTRY', warn: true }
+        : { text: '✓ READ FROM YOUR STATEMENT — PLEASE CHECK THE FIGURES', warn: false };
   return (
-    <div style={{ background: '#F0FDF4', border: '1.5px solid rgba(5,150,105,0.3)', borderRadius: 12, padding: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, paddingBottom: 10, borderBottom: '1px solid rgba(5,150,105,0.15)' }}>
-        <span style={{ fontSize: 20 }} aria-hidden>
-          📄
-        </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#059669', overflowWrap: 'anywhere' }}>{c.fileName}</div>
-          <div style={{ fontSize: 10, color: 'rgba(5,150,105,0.65)' }}>Encrypted &amp; saved to your statement vault</div>
+    <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4">
+      <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-emerald-200">
+        <FileText className="w-5 h-5 text-emerald-600 shrink-0" aria-hidden />
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-semibold text-emerald-800 break-words">{c.fileName}</div>
+          <div className="text-[11px] text-emerald-700">Encrypted &amp; saved to your statement vault</div>
         </div>
-        <button type="button" onClick={onReplace} style={{ background: 'none', border: 'none', fontSize: 11, fontWeight: 700, color: '#059669', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+        <button type="button" onClick={onReplace} className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 shrink-0">
           Replace
         </button>
       </div>
-      <div style={{ fontSize: 10, fontWeight: 800, color: banner.color, letterSpacing: 1, marginBottom: c.readNote ? 4 : 12 }}>{banner.text}</div>
-      {c.readNote && <div style={{ fontSize: 11, color: 'rgba(42,22,6,0.55)', marginBottom: 12 }}>{c.readNote}</div>}
+      <div className={`flex items-center gap-1.5 text-[11px] font-semibold tracking-wide ${c.readNote ? 'mb-1' : 'mb-3'} ${banner.warn ? 'text-amber-700' : 'text-emerald-700'}`}>
+        {banner.warn && <AlertTriangle className="w-3.5 h-3.5 shrink-0" aria-hidden />}
+        {banner.text}
+      </div>
+      {c.readNote && <div className="text-xs text-slate-600 mb-3">{c.readNote}</div>}
       <StatementFields i={i} c={c} setCard={setCard} attempted={attempted} redWhenEmpty />
-      <div style={{ fontSize: 11, color: 'rgba(42,22,6,0.45)', marginBottom: 6 }}>
+      <div className="text-xs text-slate-500 mb-2">
         {missing.length ? (
           <>
             Still needed: <strong>{missing.join(', ')}</strong>. All figures are on page 1 of your statement.
@@ -637,22 +588,20 @@ function ReviewCard({ i, c, setCard, attempted, onReplace }: FieldProps & { onRe
 
 function ErrorCard({ i, c, setCard, attempted, onRetry }: FieldProps & { onRetry: () => void }) {
   return (
-    <div style={{ background: '#FFF7ED', border: '1.5px solid rgba(220,38,38,0.25)', borderRadius: 12, padding: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }} role="alert">
-        <span style={{ fontSize: 20 }} aria-hidden>
-          ⚠️
-        </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#B45309' }}>Could not save statement</div>
-          <div style={{ fontSize: 10, color: 'rgba(180,83,9,0.7)', overflowWrap: 'anywhere' }}>{c.error}</div>
+    <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
+      <div className="flex items-center gap-2 mb-3" role="alert">
+        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" aria-hidden />
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-semibold text-amber-800">Could not save statement</div>
+          <div className="text-[11px] text-amber-700 break-words">{c.error}</div>
         </div>
-        <button type="button" onClick={onRetry} style={{ background: 'none', border: 'none', fontSize: 11, fontWeight: 700, color: '#B45309', cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+        <button type="button" onClick={onRetry} className="text-xs font-semibold text-amber-800 hover:text-amber-900 shrink-0">
           Try again
         </button>
       </div>
-      <div style={{ fontSize: 10, fontWeight: 800, color: '#B45309', letterSpacing: 1, marginBottom: 12 }}>PLEASE ENTER FIGURES FROM YOUR STATEMENT</div>
+      <div className="text-[11px] font-semibold text-amber-800 tracking-wide mb-3">PLEASE ENTER FIGURES FROM YOUR STATEMENT</div>
       <StatementFields i={i} c={c} setCard={setCard} attempted={attempted} redWhenEmpty={false} />
-      <div style={{ fontSize: 11, color: 'rgba(42,22,6,0.45)', marginBottom: 6 }}>All figures are on page 1 of your statement.</div>
+      <div className="text-xs text-slate-500 mb-2">All figures are on page 1 of your statement.</div>
       <DueDateLine i={i} c={c} setCard={setCard} />
     </div>
   );

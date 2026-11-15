@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { ArrowRight, ChevronDown, Info, Landmark, Sparkles } from 'lucide-react';
 import JourneyGate from '@/components/design/JourneyGate';
 import JourneyHeader from '@/components/design/JourneyHeader';
 import { fetchOffers } from '@/lib/applyOffer';
@@ -11,8 +12,6 @@ import { cardMinOnlyInterest, cardMonthlyRate, combineCards, pmtMonthly } from '
 
 /* "Switch to a Loan." — design #cc-loan-page (prototype lines ~6352–6542, JS ~9799–10169) */
 
-const NAVY = '#1A2E3F';
-const GREEN = '#059669';
 /** Illustrative starting personal-loan rate used throughout the design. */
 const LOAN_RATE_PCT = 10.75;
 const LOAN_R = LOAN_RATE_PCT / 100 / 12;
@@ -90,83 +89,78 @@ function SwitchScreen() {
   const pct = incomeKnown ? Math.round((cur.emi / takeHome) * 100) : null;
 
   return (
-    <div className="nv" style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#FFF8F2 0%,#FFF0E3 50%,#FDE8D0 100%)', fontFamily: 'var(--sans)', overflowX: 'hidden' }}>
+    <div className="min-h-screen bg-slate-50">
       <JourneyHeader backHref="/journey/credit-card/fixes" />
 
-      <div style={{ padding: '28px 20px 80px', maxWidth: 560, margin: '0 auto', boxSizing: 'border-box' }}>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {/* Page heading */}
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(5,150,105,0.08)', border: '1px solid rgba(5,150,105,0.25)', borderRadius: 20, padding: '5px 14px', marginBottom: 14 }}>
-            <span style={{ fontSize: 10 }}>⚡</span>
-            <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, color: GREEN, textTransform: 'uppercase' }}>Loan Optimiser</span>
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">
+            <Landmark className="w-4 h-4" aria-hidden /> Loan Optimiser
           </div>
-          <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(26px,6vw,34px)', fontWeight: 900, lineHeight: 1.15, color: '#2A1606', marginBottom: 6 }}>
-            Switch to a <span style={{ color: GREEN, fontStyle: 'italic' }}>Loan.</span>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            Switch to a <span className="text-blue-600">Loan.</span>
           </h1>
-          <div style={{ fontSize: 13, color: 'rgba(42,22,6,0.5)', lineHeight: 1.5 }}>Cut interest · check eligibility</div>
+          <p className="text-sm text-slate-600 leading-relaxed mt-1">Cut interest · check eligibility</p>
         </div>
 
         {outstanding <= 0 ? (
-          <div style={{ background: '#fff', borderRadius: 20, padding: 22, boxShadow: '0 4px 20px rgba(0,0,0,0.06)', textAlign: 'center' }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: NAVY, marginBottom: 8 }}>Add your card balance first</div>
-            <div style={{ fontSize: 13, color: 'rgba(26,46,63,0.6)', lineHeight: 1.6, marginBottom: 16 }}>We need your outstanding balance to compare a loan with your cards.</div>
-            <Link href="/journey/credit-card" style={{ display: 'inline-block', background: GREEN, color: '#fff', borderRadius: 12, padding: '12px 20px', fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
-              Add my cards →
+          <div className="card-fintech p-5 sm:p-6 text-center">
+            <div className="text-sm font-semibold text-slate-900 mb-2">Add your card balance first</div>
+            <p className="text-sm text-slate-600 leading-relaxed mb-4">We need your outstanding balance to compare a loan with your cards.</p>
+            <Link href="/journey/credit-card" className="btn-accent">
+              Add my cards <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
             </Link>
           </div>
         ) : (
           <>
             {/* AI-MATCHED REFINANCE card */}
-            <div style={{ background: '#fff', border: '1.5px solid rgba(5,150,105,0.18)', borderRadius: 22, padding: '22px 20px', marginBottom: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(180,120,10,0.08)', border: '1.5px solid rgba(200,140,10,0.35)', borderRadius: 20, padding: '5px 12px', marginBottom: 18 }}>
-                <span style={{ fontSize: 14 }}>⚡</span>
-                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: '#9A6A00', textTransform: 'uppercase' }}>AI-MATCHED REFINANCE</span>
-              </div>
+            <div className="card-fintech p-5 sm:p-6">
+              <span className="badge-amber mb-4">
+                <Sparkles className="w-3.5 h-3.5" aria-hidden /> AI-MATCHED REFINANCE
+              </span>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-                <div style={{ flex: 1, background: '#FFF5F5', border: '1.5px solid rgba(220,38,38,0.18)', borderRadius: 14, padding: 16, textAlign: 'center', minWidth: 0 }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.5, color: 'rgba(42,22,6,0.5)', textTransform: 'uppercase', marginBottom: 6 }}>CARDS NOW</div>
-                  <div style={{ fontSize: 10, color: 'rgba(42,22,6,0.45)', marginBottom: 4 }}>avg. rate</div>
-                  <div style={{ fontFamily: 'var(--serif)', fontSize: 34, fontWeight: 900, color: '#DC2626', lineHeight: 1 }}>{Math.round(cardRate)}%</div>
-                  <div style={{ fontSize: 10, color: 'rgba(42,22,6,0.45)', marginTop: 4 }}>per year</div>
-                  <div style={{ fontSize: 10, color: 'rgba(42,22,6,0.45)' }}>no end date</div>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="flex-1 min-w-0 rounded-lg bg-rose-50 border border-rose-200 p-4 text-center">
+                  <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">CARDS NOW</div>
+                  <div className="text-xs text-slate-500 mb-1">avg. rate</div>
+                  <div className="text-3xl font-bold text-rose-600 tabular-nums leading-none">{Math.round(cardRate)}%</div>
+                  <div className="text-xs text-slate-500 mt-1">per year</div>
+                  <div className="text-xs text-slate-500">no end date</div>
                 </div>
-                <div style={{ fontSize: 22, color: 'rgba(42,22,6,0.2)', flexShrink: 0 }} aria-hidden>
-                  →
-                </div>
-                <div style={{ flex: 1, background: '#F0FDF9', border: '1.5px solid rgba(5,150,105,0.22)', borderRadius: 14, padding: 16, textAlign: 'center', minWidth: 0 }}>
-                  <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.5, color: 'rgba(42,22,6,0.5)', textTransform: 'uppercase', marginBottom: 6 }}>PERSONAL LOAN</div>
-                  <div style={{ fontSize: 10, color: 'rgba(42,22,6,0.45)', marginBottom: 4 }}>Starts @</div>
-                  <div style={{ fontFamily: 'var(--serif)', fontSize: 34, fontWeight: 900, color: GREEN, lineHeight: 1 }}>{LOAN_RATE_PCT}%</div>
-                  <div style={{ fontSize: 10, color: 'rgba(42,22,6,0.45)', marginTop: 4 }}>per year</div>
-                  <div style={{ fontSize: 10, color: 'rgba(42,22,6,0.45)' }}>{tenure} months</div>
+                <ArrowRight className="w-5 h-5 text-slate-400 shrink-0" aria-hidden />
+                <div className="flex-1 min-w-0 rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-center">
+                  <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">PERSONAL LOAN</div>
+                  <div className="text-xs text-slate-500 mb-1">Starts @</div>
+                  <div className="text-3xl font-bold text-emerald-600 tabular-nums leading-none">{LOAN_RATE_PCT}%</div>
+                  <div className="text-xs text-slate-500 mt-1">per year</div>
+                  <div className="text-xs text-slate-500">{tenure} months</div>
                 </div>
               </div>
 
-              <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: 'rgba(42,22,6,0.45)', textTransform: 'uppercase', marginBottom: 6 }}>YOU COULD SAVE</div>
-                <div style={{ fontFamily: 'var(--serif)', fontSize: 42, fontWeight: 900, color: GREEN, lineHeight: 1, marginBottom: 6 }}>{fmtCompact(cur.saving)}</div>
-                <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.55)' }}>
-                  vs card minimum · EMI <span style={{ color: NAVY, fontWeight: 700 }}>{fmtINR(cur.emi)}/mo</span>
+              <div className="rounded-2xl bg-slate-900 text-white p-5">
+                <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">YOU COULD SAVE</div>
+                <div className="text-3xl font-bold text-emerald-400 tabular-nums leading-none mb-1.5">{fmtCompact(cur.saving)}</div>
+                <div className="text-xs text-slate-400">
+                  vs card minimum · EMI <span className="text-white font-semibold">{fmtINR(cur.emi)}/mo</span>
                 </div>
               </div>
 
-              <div style={{ background: '#F0FDF9', border: '1px solid rgba(5,150,105,0.18)', borderRadius: 10, padding: '10px 12px', marginTop: 14 }}>
-                <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.6)', lineHeight: 1.55 }}>
-                  💡 Starts @{LOAN_RATE_PCT}% per year — your actual rate is confirmed after the lender reviews your profile
+              <div className="rounded-lg bg-blue-50 border border-blue-200 text-blue-800 text-xs p-3 mt-4 flex gap-2">
+                <Info className="w-4 h-4 shrink-0 mt-px" aria-hidden />
+                <div>
+                  <div className="leading-relaxed">Starts @{LOAN_RATE_PCT}% per year — your actual rate is confirmed after the lender reviews your profile</div>
+                  {lowestRate !== null && <div className="font-semibold text-emerald-700 mt-1.5">Lowest rate from our partners: {lowestRate}% p.a.</div>}
                 </div>
-                {lowestRate !== null && (
-                  <div style={{ fontSize: 12, color: GREEN, fontWeight: 700, marginTop: 6 }}>Lowest rate from our partners: {lowestRate}% p.a.</div>
-                )}
               </div>
             </div>
 
             {/* Pick your plan */}
-            <div style={{ background: '#fff', borderRadius: 20, padding: 20, marginBottom: 14, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: GREEN, textTransform: 'uppercase', marginBottom: 6 }}>PICK YOUR PLAN</div>
-              <h2 style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 900, color: NAVY, marginBottom: 18, lineHeight: 1.2 }}>How long do you want to take?</h2>
+            <div className="card-fintech p-5 sm:p-6">
+              <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1.5">PICK YOUR PLAN</div>
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight mb-4">How long do you want to take?</h2>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+              <div className="grid grid-cols-2 gap-3 mb-4">
                 {GRID.map((n) => {
                   const c = calc(n);
                   const selected = !isCustom && tenure === n;
@@ -177,7 +171,6 @@ function SwitchScreen() {
                       best={!best.custom && best.n === n}
                       onClick={() => setSel(n)}
                       title={`${n} months`}
-                      titleColor={selected ? GREEN : NAVY}
                       emi={c.emi}
                       sub={`saves ${fmtCompact(c.saving)}`}
                     />
@@ -188,19 +181,18 @@ function SwitchScreen() {
                   best={best.custom}
                   onClick={() => setSel('custom')}
                   title="Choose myself"
-                  titleColor={isCustom ? GREEN : 'rgba(26,46,63,0.5)'}
                   emi={isCustom ? cur.emi : null}
                   sub={isCustom ? `saves ${fmtCompact(cur.saving)} · ${customMonths}m` : 'choose months'}
                 />
               </div>
 
               {isCustom && (
-                <div style={{ marginBottom: 14, background: '#F0FDF9', border: '1.5px solid rgba(5,150,105,0.2)', borderRadius: 14, padding: '14px 16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                    <label htmlFor="ccl-custom-months" style={{ fontSize: 12, fontWeight: 700, color: 'rgba(26,46,63,0.6)' }}>
+                <div className="mb-4 rounded-lg bg-slate-50 border border-slate-200 p-4">
+                  <div className="flex justify-between items-center mb-2.5">
+                    <label htmlFor="ccl-custom-months" className="block text-xs font-semibold text-slate-700">
                       Choose tenure
                     </label>
-                    <span style={{ fontSize: 16, fontWeight: 900, color: GREEN, fontFamily: 'var(--sans)' }}>
+                    <span className="text-base font-bold text-blue-600 tabular-nums">
                       {customMonths} month{customMonths === 1 ? '' : 's'}
                     </span>
                   </div>
@@ -211,31 +203,31 @@ function SwitchScreen() {
                     max={84}
                     value={customMonths}
                     onChange={(e) => setCustomMonths(parseInt(e.target.value, 10))}
-                    style={{ width: '100%', accentColor: GREEN, height: 6, cursor: 'pointer' }}
+                    className="w-full accent-blue-600"
                   />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                    <span style={{ fontSize: 10, color: 'rgba(26,46,63,0.4)' }}>3m</span>
-                    <span style={{ fontSize: 10, color: 'rgba(26,46,63,0.4)' }}>84m</span>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-xs text-slate-500">3m</span>
+                    <span className="text-xs text-slate-500">84m</span>
                   </div>
                 </div>
               )}
 
-              <div style={{ fontSize: 12, color: 'rgba(26,46,63,0.4)', lineHeight: 1.6 }}>
+              <p className="text-xs text-slate-500 leading-relaxed">
                 Numbers based on a starting rate of {LOAN_RATE_PCT}% — your actual rate is confirmed by the lender after review.
-              </div>
+              </p>
             </div>
 
             {/* Optimisation insight */}
-            <div style={{ background: '#fff', borderRadius: 20, padding: 20, marginBottom: 14, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: GREEN, textTransform: 'uppercase', marginBottom: 6 }}>OPTIMISATION INSIGHT</div>
-              <h2 style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 900, color: NAVY, marginBottom: 12, lineHeight: 1.2 }}>Why {tenure} months?</h2>
-              <div style={{ fontSize: 14, color: 'rgba(26,46,63,0.7)', lineHeight: 1.65, marginBottom: 16 }}>
+            <div className="card-fintech p-5 sm:p-6">
+              <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1.5">OPTIMISATION INSIGHT</div>
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight mb-3">Why {tenure} months?</h2>
+              <div className="text-sm text-slate-600 leading-relaxed mb-4">
                 {pct === null ? (
                   <>Add your monthly income on the earlier step to see the shortest tenure your income supports — we keep your EMI within a safe 40% of take-home pay.</>
                 ) : pct <= 40 ? (
                   tenure === best.n ? (
                     <>
-                      {tenure} months is the <strong>shortest tenure your income supports</strong> — keeping your EMI within a safe 40% of take-home pay (yours: {pct}%). Shorter tenure = less total interest. This is your sweet spot.
+                      {tenure} months is the <strong className="text-slate-900">shortest tenure your income supports</strong> — keeping your EMI within a safe 40% of take-home pay (yours: {pct}%). Shorter tenure = less total interest. This is your sweet spot.
                     </>
                   ) : (
                     <>
@@ -254,53 +246,51 @@ function SwitchScreen() {
 
             {/* Toggle comparison */}
             <button
+              type="button"
               onClick={() => setShowCompare((v) => !v)}
               aria-expanded={showCompare}
-              style={{ width: '100%', background: '#fff', border: `1.5px solid ${showCompare ? '#7C3AED' : '#2563EB'}`, borderRadius: 14, padding: 14, fontSize: 14, fontWeight: 700, color: showCompare ? '#7C3AED' : '#2563EB', cursor: 'pointer', fontFamily: 'var(--sans)', letterSpacing: 0.2, marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+              className="btn-secondary w-full"
             >
-              {showCompare ? 'Hide comparison' : 'Show comparison'} <span style={{ fontSize: 16 }}>{showCompare ? '↑' : '↓'}</span>
+              {showCompare ? 'Hide comparison' : 'Show comparison'}
+              <ChevronDown className={`w-4 h-4 ml-1.5 transition-transform ${showCompare ? 'rotate-180' : ''}`} aria-hidden />
             </button>
 
             {showCompare && <Comparison outstanding={outstanding} cardRate={cardRate} loanMonths={tenure} minOnlyTotal={minOnlyTotal} />}
 
             {/* Next step */}
-            <div style={{ background: '#fff', borderRadius: 20, padding: '22px 20px', marginBottom: 14, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-              <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: '#2563EB', textTransform: 'uppercase', marginBottom: 8 }}>NEXT STEP</div>
-              <h2 style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 900, color: '#1E3A8A', marginBottom: 16, lineHeight: 1.3 }}>Compare loan offers from banks &amp; NBFCs</h2>
-              <button
-                onClick={() => router.push(`/journey/credit-card/offers?tenure=${tenure}`)}
-                style={{ width: '100%', background: 'linear-gradient(135deg,#2563EB,#1D4ED8)', border: 'none', borderRadius: 14, padding: 16, fontSize: 16, fontWeight: 800, color: '#fff', cursor: 'pointer', fontFamily: 'var(--sans)', letterSpacing: 0.2, boxShadow: '0 4px 14px rgba(37,99,235,0.35)' }}
-                onMouseOver={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-                onMouseOut={(e) => (e.currentTarget.style.transform = '')}
-              >
-                See offers →
+            <div className="card-fintech p-5 sm:p-6">
+              <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">NEXT STEP</div>
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight mb-4">Compare loan offers from banks &amp; NBFCs</h2>
+              <button type="button" onClick={() => router.push(`/journey/credit-card/offers?tenure=${tenure}`)} className="btn-accent w-full sm:w-auto">
+                See offers <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
               </button>
             </div>
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }
 
-function PlanCard(props: { selected: boolean; best: boolean; onClick: () => void; title: string; titleColor: string; emi: number | null; sub: string }) {
-  const { selected, best, onClick, title, titleColor, emi, sub } = props;
+function PlanCard(props: { selected: boolean; best: boolean; onClick: () => void; title: string; emi: number | null; sub: string }) {
+  const { selected, best, onClick, title, emi, sub } = props;
   return (
     <button
+      type="button"
       onClick={onClick}
       aria-pressed={selected}
-      style={{ border: selected ? `2px solid ${GREEN}` : '2px solid rgba(26,46,63,0.1)', background: selected ? '#F0FDF4' : '#fff', borderRadius: 14, padding: 14, cursor: 'pointer', position: 'relative', textAlign: 'left', fontFamily: 'var(--sans)' }}
+      className={`relative rounded-xl border-2 p-4 text-left transition-all cursor-pointer ${
+        selected ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-600/10' : 'border-slate-200 bg-white hover:border-slate-300'
+      } ${best ? 'mt-2' : ''}`}
     >
-      {best && (
-        <span style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)', background: GREEN, color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 10px', borderRadius: 10, whiteSpace: 'nowrap', letterSpacing: 0.5 }}>★ Best option</span>
-      )}
-      <div style={{ fontSize: 14, fontWeight: 700, color: titleColor, marginBottom: 4 }}>{title}</div>
-      <div style={{ fontSize: 18, fontWeight: 900, color: NAVY }}>
-        <span style={{ fontSize: 12 }}>₹</span>
+      {best && <span className="badge-emerald absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap">★ Best option</span>}
+      <div className={`text-sm font-semibold mb-1 ${selected ? 'text-blue-700' : 'text-slate-900'}`}>{title}</div>
+      <div className="text-lg font-bold text-slate-900 tabular-nums">
+        <span className="text-xs">₹</span>
         {emi === null ? '–' : Math.round(emi).toLocaleString('en-IN')}
-        <span style={{ fontSize: 12 }}>/mo</span>
+        <span className="text-xs text-slate-500">/mo</span>
       </div>
-      <div style={{ fontSize: 11, color: GREEN, fontWeight: 600, marginTop: 4 }}>{sub}</div>
+      <div className="text-xs font-medium text-emerald-600 mt-1">{sub}</div>
     </button>
   );
 }
@@ -313,42 +303,41 @@ function TenureBars({ outstanding, safeEmi, selected, best }: { outstanding: num
   });
   const maxInt = data[data.length - 1].totalInt || 1;
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <div style={{ fontSize: 10, color: 'rgba(26,46,63,0.4)' }}>← total over loan term (less = better)</div>
-        <div style={{ fontSize: 10, fontWeight: 700, color: GREEN }}>+ Optimal</div>
+    <div className="flex flex-col gap-2">
+      <div className="flex justify-between items-center mb-2">
+        <div className="text-[11px] text-slate-500">← total over loan term (less = better)</div>
+        <div className="text-[11px] font-semibold text-emerald-600">+ Optimal</div>
       </div>
       {data.map((row) => {
         const barW = Math.max(4, Math.round((row.totalInt / maxInt) * 100));
         const isSel = row.n === selected;
         const isOpt = best !== null ? row.n === best : isSel;
-        const barColor = !row.affordable ? 'rgba(26,46,63,0.15)' : isSel ? '#0D9488' : '#99D6CF';
-        const lc = isSel ? '#0D9488' : row.affordable ? 'rgba(26,46,63,0.65)' : 'rgba(26,46,63,0.35)';
-        const fw = isSel ? 800 : 600;
+        const barClass = !row.affordable ? 'bg-slate-300' : isSel ? 'bg-blue-600' : 'bg-blue-300';
+        const textClass = isSel ? 'text-blue-700 font-bold' : row.affordable ? 'text-slate-600 font-semibold' : 'text-slate-400 font-semibold';
         return (
-          <div key={row.n} style={{ display: 'flex', alignItems: 'center', gap: 8 }} title={`${row.n} months: ${fmtINR(row.totalInt)} total interest${row.affordable ? '' : ' (EMI too high for income)'}`}>
-            <div style={{ fontSize: 11, fontWeight: fw, color: lc, width: 38, flexShrink: 0 }}>
-              {row.n}m{isOpt && <span style={{ color: '#0D9488', fontSize: 11 }}> ★</span>}
+          <div key={row.n} className="flex items-center gap-2" title={`${row.n} months: ${fmtINR(row.totalInt)} total interest${row.affordable ? '' : ' (EMI too high for income)'}`}>
+            <div className={`text-[11px] w-10 shrink-0 ${textClass}`}>
+              {row.n}m{isOpt && <span className="text-blue-600"> ★</span>}
             </div>
-            <div style={{ flex: 1, height: 9, background: 'rgba(26,46,63,0.06)', borderRadius: 4, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${barW}%`, background: barColor, borderRadius: 4, transition: 'width 0.3s' }} />
+            <div className="flex-1 h-2.5 bg-slate-100 rounded overflow-hidden">
+              <div className={`h-full rounded transition-all duration-300 ${barClass}`} style={{ width: `${barW}%` }} />
             </div>
-            <div style={{ fontSize: 11, color: lc, fontWeight: fw, textAlign: 'right', minWidth: 60 }}>{fmtINR(row.totalInt)}</div>
+            <div className={`text-[11px] text-right min-w-[60px] tabular-nums ${textClass}`}>{fmtINR(row.totalInt)}</div>
           </div>
         );
       })}
-      <div style={{ display: 'flex', gap: 14, marginTop: 10, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <div style={{ width: 12, height: 9, background: '#0D9488', borderRadius: 3 }} />
-          <span style={{ fontSize: 10, color: 'rgba(26,46,63,0.55)' }}>Affordable</span>
+      <div className="flex gap-4 mt-2.5 flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-2.5 bg-blue-600 rounded-sm" />
+          <span className="text-[11px] text-slate-500">Affordable</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <div style={{ width: 12, height: 9, background: 'rgba(26,46,63,0.15)', borderRadius: 3 }} />
-          <span style={{ fontSize: 10, color: 'rgba(26,46,63,0.55)' }}>EMI too high for income</span>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-2.5 bg-slate-300 rounded-sm" />
+          <span className="text-[11px] text-slate-500">EMI too high for income</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <span style={{ fontSize: 11, color: '#0D9488' }}>★</span>
-          <span style={{ fontSize: 10, color: 'rgba(26,46,63,0.55)' }}>Optimal point</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[11px] text-blue-600">★</span>
+          <span className="text-[11px] text-slate-500">Optimal point</span>
         </div>
       </div>
     </div>
@@ -410,23 +399,23 @@ function Comparison({ outstanding, cardRate, loanMonths, minOnlyTotal }: { outst
   const label = `Cumulative interest over ${loanMonths} months: ${fmtINR(lp.v)} with a loan versus ${fmtINR(cp.v)} on cards paying the minimum.`;
 
   return (
-    <div style={{ background: '#fff', borderRadius: 20, padding: 20, marginBottom: 14, boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-      <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: GREEN, textTransform: 'uppercase', marginBottom: 6 }}>INTEREST YOU&apos;D PAY</div>
-      <h2 style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 900, color: NAVY, marginBottom: 12, lineHeight: 1.2 }}>Card route vs Loan route</h2>
-      <div style={{ fontSize: 13, color: 'rgba(26,46,63,0.65)', lineHeight: 1.6, marginBottom: 20 }}>
-        🔴 Cards only — interest piles up with no end date. 🟢 With a loan — fixed end, far less total interest.
-      </div>
+    <div className="card-fintech p-5 sm:p-6">
+      <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1.5">INTEREST YOU&apos;D PAY</div>
+      <h2 className="text-lg font-bold text-slate-900 tracking-tight mb-3">Card route vs Loan route</h2>
+      <p className="text-sm text-slate-600 leading-relaxed mb-5">
+        Cards only — interest piles up with no end date. With a loan — fixed end, far less total interest.
+      </p>
 
-      <div style={{ position: 'relative', width: '100%', overflow: 'hidden', marginBottom: 12 }}>
-        <svg width="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={label} style={{ display: 'block', fontFamily: 'var(--sans)' }}>
+      <div className="relative w-full overflow-hidden mb-3">
+        <svg width="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={label} className="block">
           <title>{label}</title>
           {yTicks.map((t) => {
             const y = py(t);
             if (y < pad.t || y > pad.t + ch + 2) return null;
             return (
               <g key={t}>
-                <line x1={pad.l} y1={y} x2={W - pad.r} y2={y} stroke="rgba(26,46,63,0.07)" strokeWidth="1" />
-                <text x={pad.l - 4} y={y + 4} fontSize="9" fill="rgba(26,46,63,0.4)" textAnchor="end">
+                <line x1={pad.l} y1={y} x2={W - pad.r} y2={y} stroke="#E2E8F0" strokeWidth="1" />
+                <text x={pad.l - 4} y={y + 4} fontSize="11" fill="#64748B" textAnchor="end">
                   {fmtY(t)}
                 </text>
               </g>
@@ -435,50 +424,45 @@ function Comparison({ outstanding, cardRate, loanMonths, minOnlyTotal }: { outst
           {xTicks.map((m) => {
             const isSel = m === loanMonths;
             return (
-              <text key={m} x={px(m)} y={H - pad.b + 14} fontSize={isSel ? 10 : 9} fontWeight={isSel ? 800 : 400} fill={isSel ? NAVY : 'rgba(26,46,63,0.4)'} textAnchor={m === 0 ? 'start' : isSel ? 'end' : 'middle'}>
+              <text key={m} x={px(m)} y={H - pad.b + 14} fontSize="11" fontWeight={isSel ? 800 : 400} fill={isSel ? '#0F172A' : '#64748B'} textAnchor={m === 0 ? 'start' : isSel ? 'end' : 'middle'}>
                 {m}m
               </text>
             );
           })}
-          <path d={greenArea} fill="rgba(5,150,105,0.08)" />
-          <path d={line(cardPts)} fill="none" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <path d={line(loanPts)} fill="none" stroke={GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx={px(lp.m)} cy={py(lp.v)} r="4" fill={GREEN} />
-          <text x={px(lp.m) - 6} y={py(lp.v) - 8} fontSize="9" fontWeight="700" fill={GREEN} textAnchor="end">
+          <path d={greenArea} fill="rgba(16,185,129,0.10)" />
+          <path d={line(cardPts)} fill="none" stroke="#F43F5E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={line(loanPts)} fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx={px(lp.m)} cy={py(lp.v)} r="4" fill="#10B981" />
+          <text x={px(lp.m) - 6} y={py(lp.v) - 8} fontSize="11" fontWeight="700" fill="#10B981" textAnchor="end">
             {fmtINR(lp.v)}
           </text>
-          <circle cx={px(cp.m)} cy={py(cp.v)} r="4" fill="#EF4444" />
-          <text x={px(cp.m) - 6} y={py(cp.v) - 8} fontSize="9" fontWeight="700" fill="#EF4444" textAnchor="end">
+          <circle cx={px(cp.m)} cy={py(cp.v)} r="4" fill="#F43F5E" />
+          <text x={px(cp.m) - 6} y={py(cp.v) - 8} fontSize="11" fontWeight="700" fill="#F43F5E" textAnchor="end">
             {fmtINR(cp.v)}
           </text>
         </svg>
       </div>
 
-      <div style={{ display: 'flex', gap: 18, marginBottom: 14, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div style={{ width: 18, height: 3, background: GREEN, borderRadius: 2 }} />
-          <span style={{ fontSize: 12, color: 'rgba(26,46,63,0.65)' }}>With a loan ({LOAN_RATE_PCT}% illustrated)</span>
+      <div className="flex gap-4 mb-4 flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <div className="w-4 h-[3px] bg-emerald-500 rounded-sm" />
+          <span className="text-xs text-slate-600">With a loan ({LOAN_RATE_PCT}% illustrated)</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div style={{ width: 18, height: 3, background: '#EF4444', borderRadius: 2 }} />
-          <span style={{ fontSize: 12, color: 'rgba(26,46,63,0.65)' }}>Cards · minimum only</span>
+        <div className="flex items-center gap-1.5">
+          <div className="w-4 h-[3px] bg-rose-500 rounded-sm" />
+          <span className="text-xs text-slate-600">Cards · minimum only</span>
         </div>
       </div>
 
-      <div style={{ fontSize: 13, color: 'rgba(26,46,63,0.7)', lineHeight: 1.65, marginBottom: 16 }}>
-        After <strong>{loanMonths} months</strong> the loan is fully cleared. On cards only, you&apos;d still owe <strong>{fmtCompact(cardBal)}</strong> and have paid{' '}
-        <strong>{fmtINR(cp.v)}</strong> in interest by then.
-      </div>
+      <p className="text-sm text-slate-600 leading-relaxed mb-4">
+        After <strong className="text-slate-900">{loanMonths} months</strong> the loan is fully cleared. On cards only, you&apos;d still owe <strong className="text-slate-900">{fmtCompact(cardBal)}</strong> and have paid{' '}
+        <strong className="text-slate-900">{fmtINR(cp.v)}</strong> in interest by then.
+      </p>
 
-      <div style={{ background: 'linear-gradient(135deg,#ECFDF5,#D1FAE5)', border: '1.5px solid rgba(5,150,105,0.2)', borderRadius: 14, padding: 16 }}>
-        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: '#065F46', textTransform: 'uppercase', marginBottom: 8 }}>YOU SAVE</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-          <span style={{ fontSize: 24 }} aria-hidden>
-            💰
-          </span>
-          <div style={{ fontFamily: 'var(--serif)', fontSize: 36, fontWeight: 900, color: GREEN, lineHeight: 1 }}>{fmtCompact(totalSaving)}</div>
-        </div>
-        <div style={{ fontSize: 12, color: '#065F46', lineHeight: 1.55 }}>vs staying on card minimum · illustrated at {LOAN_RATE_PCT}% p.a. (your rate will vary)</div>
+      <div className="rounded-2xl bg-slate-900 text-white p-5">
+        <div className="text-xs text-slate-400 uppercase tracking-wider mb-1.5">YOU SAVE</div>
+        <div className="text-3xl font-bold text-emerald-400 tabular-nums leading-none mb-1.5">{fmtCompact(totalSaving)}</div>
+        <div className="text-xs text-slate-400 leading-relaxed">vs staying on card minimum · illustrated at {LOAN_RATE_PCT}% p.a. (your rate will vary)</div>
       </div>
     </div>
   );

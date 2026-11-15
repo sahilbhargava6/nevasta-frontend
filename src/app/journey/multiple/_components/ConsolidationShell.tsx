@@ -4,8 +4,8 @@ import JourneyGate from '@/components/design/JourneyGate';
 import JourneyHeader from '@/components/design/JourneyHeader';
 
 /**
- * Frame shared by the debt-consolidation screens: sign-in gate, design scope,
- * the overlay pages' warm gradient background and the sticky journey header.
+ * Frame shared by the debt-consolidation screens: sign-in gate, page background
+ * and the sticky journey header.
  */
 export default function ConsolidationShell({
   backHref,
@@ -18,14 +18,7 @@ export default function ConsolidationShell({
 }) {
   return (
     <JourneyGate intent="debt-consolidation">
-      <div
-        className="nv"
-        style={{
-          minHeight: '100vh',
-          background: 'linear-gradient(160deg,#FFF8F2 0%,#FFF0E3 50%,#FDE8D0 100%)',
-          fontFamily: 'var(--sans)',
-        }}
-      >
+      <div className="min-h-screen bg-slate-50">
         <JourneyHeader backHref={backHref} onBack={onBack} />
         {children}
       </div>

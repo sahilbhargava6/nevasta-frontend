@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DEFAULT_MULTI_JOURNEY, useJourney, type DebtEntry } from '@/lib/journey';
 import { activeDebts } from '@/lib/consolidationMath';
+import { AlertTriangle, ArrowRight, ChevronDown, Landmark, Plus, X } from 'lucide-react';
 import ConsolidationShell from './_components/ConsolidationShell';
 
 /** Design: #multi-debt-page ("Your Debt Portfolio"), mdAddDebt / mdAnalyse. */
@@ -68,72 +69,105 @@ export default function MultipleDebtsPage() {
     router.push('/journey/multiple/summary');
   };
 
+  const inputCls =
+    'w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600';
+  const labelCls = 'block text-xs font-semibold text-slate-700 mb-1.5';
+
   return (
     <ConsolidationShell backHref="/debt-management">
-      <div className="acc-page">
-        <div className="acc-left">
-          <div className="acc-label">🏦 DEBT CONSOLIDATION</div>
-          <h1 className="acc-h1">
-            Your Debt <span>Portfolio</span>
-          </h1>
-          <p className="acc-sub">Add all your loans &amp; credit cards below</p>
-          <div className="md-body">
-            {ready && (
-              <div>
-                {debts.map((d, i) => {
-                  const id = `md-${i}`;
-                  return (
-                    <div className="md-debt-row" key={i}>
-                      <div className="md-debt-row-head">
-                        <div className="md-debt-badge">Debt #{i + 1}</div>
-                        <button type="button" className="md-remove-btn" onClick={() => removeDebt(i)} aria-label={`Remove debt #${i + 1}`}>
-                          ×
-                        </button>
-                      </div>
-                      <div className="md-debt-fields">
-                        <div className="md-field" style={{ gridColumn: '1/-1' }}>
-                          <label htmlFor={`${id}-type`}>Debt Type</label>
-                          <select id={`${id}-type`} value={d.type} onChange={(e) => setDebt(i, { type: e.target.value as DebtEntry['type'] })}>
-                            <option value="personal_loan">Personal Loan</option>
-                            <option value="credit_card">Credit Card</option>
-                          </select>
-                        </div>
-                        <div className="md-field">
-                          <label htmlFor={`${id}-amt`}>Outstanding (₹)</label>
-                          <NumInput id={`${id}-amt`} inputMode="numeric" placeholder="e.g. 350000" value={d.amount} onValue={(n) => setDebt(i, { amount: n })} />
-                        </div>
-                        <div className="md-field">
-                          <label htmlFor={`${id}-rate`}>Interest Rate (%)</label>
-                          <NumInput id={`${id}-rate`} step="0.1" inputMode="decimal" placeholder="e.g. 12.5" value={d.rate} onValue={(n) => setDebt(i, { rate: n })} />
-                        </div>
-                        <div className="md-field">
-                          <label htmlFor={`${id}-emi`}>Monthly EMI (₹)</label>
-                          <NumInput id={`${id}-emi`} inputMode="numeric" placeholder="e.g. 8500" value={d.emi} onValue={(n) => setDebt(i, { emi: n })} />
-                        </div>
-                        <div className="md-field">
-                          <label htmlFor={`${id}-months`}>Months Left</label>
-                          <NumInput id={`${id}-months`} inputMode="numeric" placeholder="e.g. 36" value={d.months} onValue={(n) => setDebt(i, { months: Math.round(n) })} />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            <button type="button" className="md-add-btn" onClick={addDebt}>
-              + Add Another Debt
-            </button>
-            {error && (
-              <div role="alert" style={{ background: '#FEF2F2', border: '1px solid #FECACA', color: '#B91C1C', borderRadius: 10, padding: '10px 14px', fontSize: 13, fontWeight: 600, marginBottom: 12 }}>
-                {error}
-              </div>
-            )}
-            <button type="button" className="md-cta" onClick={analyse} disabled={!ready}>
-              Analyse My Debt Portfolio ➜
-            </button>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider">
+            <Landmark className="w-4 h-4" aria-hidden /> DEBT CONSOLIDATION
           </div>
+          <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            Your Debt <span className="text-blue-600">Portfolio</span>
+          </h1>
+          <p className="mt-1 text-sm text-slate-600 leading-relaxed">Add all your loans &amp; credit cards below</p>
         </div>
-      </div>
+
+        {ready &&
+          debts.map((d, i) => {
+            const id = `md-${i}`;
+            return (
+              <div className="card-fintech p-5 sm:p-6" key={i}>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="badge-blue">Debt #{i + 1}</span>
+                  <button
+                    type="button"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                    onClick={() => removeDebt(i)}
+                    aria-label={`Remove debt #${i + 1}`}
+                  >
+                    <X className="w-4 h-4" aria-hidden />
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label htmlFor={`${id}-type`} className={labelCls}>
+                      Debt Type
+                    </label>
+                    <div className="relative">
+                      <select
+                        id={`${id}-type`}
+                        className={`${inputCls} appearance-none pr-9`}
+                        value={d.type}
+                        onChange={(e) => setDebt(i, { type: e.target.value as DebtEntry['type'] })}
+                      >
+                        <option value="personal_loan">Personal Loan</option>
+                        <option value="credit_card">Credit Card</option>
+                      </select>
+                      <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor={`${id}-amt`} className={labelCls}>
+                      Outstanding (₹)
+                    </label>
+                    <NumInput id={`${id}-amt`} className={inputCls} inputMode="numeric" placeholder="e.g. 350000" value={d.amount} onValue={(n) => setDebt(i, { amount: n })} />
+                  </div>
+                  <div>
+                    <label htmlFor={`${id}-rate`} className={labelCls}>
+                      Interest Rate (%)
+                    </label>
+                    <NumInput id={`${id}-rate`} className={inputCls} step="0.1" inputMode="decimal" placeholder="e.g. 12.5" value={d.rate} onValue={(n) => setDebt(i, { rate: n })} />
+                  </div>
+                  <div>
+                    <label htmlFor={`${id}-emi`} className={labelCls}>
+                      Monthly EMI (₹)
+                    </label>
+                    <NumInput id={`${id}-emi`} className={inputCls} inputMode="numeric" placeholder="e.g. 8500" value={d.emi} onValue={(n) => setDebt(i, { emi: n })} />
+                  </div>
+                  <div>
+                    <label htmlFor={`${id}-months`} className={labelCls}>
+                      Months Left
+                    </label>
+                    <NumInput id={`${id}-months`} className={inputCls} inputMode="numeric" placeholder="e.g. 36" value={d.months} onValue={(n) => setDebt(i, { months: Math.round(n) })} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+        <button
+          type="button"
+          className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white py-3 text-sm font-semibold text-blue-600 hover:border-blue-600 hover:bg-blue-50 transition-colors"
+          onClick={addDebt}
+        >
+          <Plus className="w-4 h-4" aria-hidden /> Add Another Debt
+        </button>
+
+        {error && (
+          <div role="alert" className="flex items-start gap-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium p-3">
+            <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden />
+            {error}
+          </div>
+        )}
+
+        <button type="button" className="btn-accent w-full sm:w-auto" onClick={analyse} disabled={!ready}>
+          Analyse My Debt Portfolio <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
+        </button>
+      </main>
     </ConsolidationShell>
   );
 }

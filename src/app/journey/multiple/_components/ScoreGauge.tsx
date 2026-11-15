@@ -6,10 +6,10 @@ const R = 73;
 const SW = 20;
 
 const ZONES = [
-  { min: 300, max: 580, color: '#DDA87A', label: 'POOR' },
-  { min: 580, max: 670, color: '#F08A30', label: 'FAIR' },
-  { min: 670, max: 740, color: '#D4B200', label: 'GOOD' },
-  { min: 740, max: 900, color: '#3BAD6B', label: 'EXCELLENT' },
+  { min: 300, max: 580, color: '#F43F5E', label: 'POOR' },
+  { min: 580, max: 670, color: '#F59E0B', label: 'FAIR' },
+  { min: 670, max: 740, color: '#3B82F6', label: 'GOOD' },
+  { min: 740, max: 900, color: '#10B981', label: 'EXCELLENT' },
 ];
 
 const toRad = (d: number) => (d * Math.PI) / 180;
@@ -26,7 +26,7 @@ export default function ScoreGauge({ score }: { score: number | null }) {
   const needle = clamped == null ? null : pt(scoreToAngle(clamped), 55);
 
   return (
-    <svg viewBox="0 0 200 118" width="188" height="111" style={{ display: 'block', margin: '0 auto' }} role="img" aria-label={score == null ? 'Credit score gauge' : `Credit score gauge showing ${score}`}>
+    <svg viewBox="0 0 200 118" width="188" height="111" className="block mx-auto max-w-full h-auto" role="img" aria-label={score == null ? 'Credit score gauge' : `Credit score gauge showing ${score}`}>
       {ZONES.map((z) => (
         <path key={z.label} d={arcD(scoreToAngle(z.min), scoreToAngle(z.max))} fill="none" stroke={z.color} strokeWidth={SW} strokeLinecap="butt" />
       ))}
@@ -50,13 +50,13 @@ export default function ScoreGauge({ score }: { score: number | null }) {
           </text>
         );
       })}
-      {needle && <line x1={CX} y1={CY} x2={needle[0]} y2={needle[1]} stroke="#1A2E3F" strokeWidth="3.5" strokeLinecap="round" />}
-      <circle cx={CX} cy={CY} r="8" fill="#1A2E3F" />
+      {needle && <line x1={CX} y1={CY} x2={needle[0]} y2={needle[1]} stroke="#0F172A" strokeWidth="3.5" strokeLinecap="round" />}
+      <circle cx={CX} cy={CY} r="8" fill="#0F172A" />
       <circle cx={CX} cy={CY} r="4" fill="#fff" />
-      <text x="26" y={CY + 14} fill="rgba(26,46,63,0.4)" fontSize="9" fontFamily="sans-serif" textAnchor="middle">
+      <text x="26" y={CY + 14} fill="#64748B" fontSize="9" fontFamily="sans-serif" textAnchor="middle">
         300
       </text>
-      <text x="174" y={CY + 14} fill="rgba(26,46,63,0.4)" fontSize="9" fontFamily="sans-serif" textAnchor="middle">
+      <text x="174" y={CY + 14} fill="#64748B" fontSize="9" fontFamily="sans-serif" textAnchor="middle">
         900
       </text>
     </svg>

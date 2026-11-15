@@ -3,28 +3,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, ArrowRight, ChevronDown, Layers, PiggyBank, RefreshCw, TrendingDown } from 'lucide-react';
 import JourneyGate from '@/components/design/JourneyGate';
 import JourneyHeader from '@/components/design/JourneyHeader';
 import { DEFAULT_LOAN_JOURNEY, fmtCompact, useJourney, type LoanJourney } from '@/lib/journey';
 import { fetchOffers, type Offer } from '@/lib/applyOffer';
 import { FIXES_TYPE_LABEL, analyzeLoan, fmtRate, interestSavedAtRate, isUsableLoan, payChartSeries, simulatePrepay, type PayPoint } from '@/lib/loanMath';
 
-// Design: #loan-fixes-page (Navesta_Website_22Sep26.html ~5093–5296, JS ~8742–8944 and ~9434–9591)
-
 const fmt = (n: number) => Math.round(n).toLocaleString('en-IN');
-
-const whiteCard: React.CSSProperties = {
-  background: '#fff',
-  borderRadius: 20,
-  marginBottom: 14,
-  boxShadow: '0 1px 4px rgba(28,8,0,0.05),0 6px 20px rgba(28,8,0,0.09)',
-};
-
-const tile: React.CSSProperties = { background: 'rgba(255,255,255,0.09)', borderRadius: 12, padding: '14px 12px' };
-const tileNum: React.CSSProperties = { fontSize: 22, fontWeight: 800, color: '#fff', fontVariantNumeric: 'tabular-nums' };
-const tileLbl: React.CSSProperties = { fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 3 };
-const statTile: React.CSSProperties = { background: '#F5F0EA', borderRadius: 14, padding: '14px 12px' };
-const statLbl: React.CSSProperties = { fontSize: 10, fontWeight: 800, letterSpacing: 1, color: 'rgba(42,22,6,0.45)', marginBottom: 6 };
 
 const CHIPS = [
   { label: '10%', pct: 0.1 },
@@ -86,85 +72,82 @@ function LoanFixes() {
   const btSave = better ? interestSavedAtRate(loan, better.offeredRatePercent) : 0;
 
   return (
-    <div className="nv" style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#FFF8F2 0%,#FFF0E3 50%,#FDE8D0 100%)', fontFamily: 'var(--sans)', overflowX: 'hidden' }}>
+    <div className="min-h-screen bg-slate-50">
       <JourneyHeader backHref="/journey/loan/analysis" />
 
-      <div style={{ padding: '28px 20px 4px', maxWidth: 560, margin: '0 auto', boxSizing: 'border-box' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(196,96,16,0.08)', border: '1px solid rgba(196,96,16,0.2)', borderRadius: 20, padding: '5px 14px', marginBottom: 14 }}>
-          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, color: '#C96010', textTransform: 'uppercase' }}>{typeStr} · LOAN FIXES</span>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider">
+            <Layers className="w-4 h-4" aria-hidden />
+            {typeStr} · LOAN FIXES
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Your Loan Fixes</h1>
+          <p className="text-sm text-slate-600 leading-relaxed">Refinance · prepay · restructure · foreclose</p>
         </div>
-        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(24px,5.5vw,30px)', fontWeight: 900, lineHeight: 1.2, color: '#2A1606', marginBottom: 6 }}>Your Loan Fixes</h1>
-        <p style={{ fontSize: 14, color: 'rgba(42,22,6,0.55)', marginBottom: 0 }}>Refinance · prepay · restructure · foreclose</p>
-      </div>
 
-      <div style={{ padding: '16px 16px 60px', maxWidth: 560, margin: '0 auto', boxSizing: 'border-box' }}>
         {!usable ? (
-          <div style={{ ...whiteCard, padding: 20, textAlign: 'center' }}>
-            <p style={{ fontSize: 14, color: '#7A5E44', marginBottom: 16 }}>We need your outstanding amount, tenure left and interest rate first.</p>
-            <Link href="/journey/loan" style={{ color: '#0D9488', fontWeight: 700 }}>
+          <div className="card-fintech p-5 sm:p-6 text-center space-y-4">
+            <p className="text-sm text-slate-600">We need your outstanding amount, tenure left and interest rate first.</p>
+            <Link href="/journey/loan" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
               Enter loan details →
             </Link>
           </div>
         ) : (
           <>
             {/* LOAN SNAPSHOT dark card */}
-            <div style={{ background: 'linear-gradient(145deg,#0D2B3E 0%,#0A1E2E 100%)', borderRadius: 20, padding: 20, marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, color: '#0D9488', marginBottom: 14 }}>{typeStr} · LOAN SNAPSHOT</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-                <div style={tile}>
-                  <div style={tileNum}>₹{fmt(loan.outstanding)}</div>
-                  <div style={tileLbl}>Outstanding</div>
+            <div className="rounded-2xl bg-slate-900 text-white p-5 sm:p-6">
+              <div className="text-xs text-slate-400 uppercase tracking-wider mb-4">{typeStr} · LOAN SNAPSHOT</div>
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                <div className="rounded-lg bg-white/10 p-3">
+                  <div className="text-lg sm:text-2xl font-bold tabular-nums">₹{fmt(loan.outstanding)}</div>
+                  <div className="text-xs text-slate-400 mt-1">Outstanding</div>
                 </div>
-                <div style={tile}>
-                  <div style={tileNum}>{fmtRate(loan.rate)}% yearly</div>
-                  <div style={tileLbl}>Interest rate</div>
+                <div className="rounded-lg bg-white/10 p-3">
+                  <div className="text-lg sm:text-2xl font-bold tabular-nums">{fmtRate(loan.rate)}% yearly</div>
+                  <div className="text-xs text-slate-400 mt-1">Interest rate</div>
                 </div>
-                <div style={tile}>
-                  <div style={tileNum}>₹{fmt(a.emi)}/mo</div>
-                  <div style={tileLbl}>Monthly EMI</div>
+                <div className="rounded-lg bg-white/10 p-3">
+                  <div className="text-lg sm:text-2xl font-bold tabular-nums">₹{fmt(a.emi)}/mo</div>
+                  <div className="text-xs text-slate-400 mt-1">Monthly EMI</div>
                 </div>
-                <div style={tile}>
-                  <div style={tileNum}>{loan.tenureLeft} months</div>
-                  <div style={tileLbl}>Remaining tenure</div>
+                <div className="rounded-lg bg-white/10 p-3">
+                  <div className="text-lg sm:text-2xl font-bold tabular-nums">{loan.tenureLeft} months</div>
+                  <div className="text-xs text-slate-400 mt-1">Remaining tenure</div>
                 </div>
               </div>
-              <div style={{ display: 'flex', height: 8, borderRadius: 8, overflow: 'hidden', marginBottom: 7 }} role="img" aria-label={`Principal ${pp}%, interest ${ip}%`}>
-                <div style={{ background: '#10B981', transition: 'width .5s', width: `${pp}%` }} />
-                <div style={{ background: '#F87171', flex: 1 }} />
+              <div className="flex h-2 rounded-full overflow-hidden mb-2" role="img" aria-label={`Principal ${pp}%, interest ${ip}%`}>
+                <div className="bg-emerald-400 transition-all duration-500" style={{ width: `${pp}%` }} />
+                <div className="bg-rose-400 flex-1" />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, gap: 8, flexWrap: 'wrap' }}>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>Principal {pp}%</div>
-                <div style={{ fontSize: 13, color: '#F87171', fontWeight: 600 }}>
+              <div className="flex justify-between flex-wrap gap-2 mb-3 text-sm">
+                <div className="text-slate-300">Principal {pp}%</div>
+                <div className="text-rose-400 font-semibold">
                   Interest {ip}% = ₹{fmt(a.totalInterest)}
                 </div>
               </div>
-              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', lineHeight: 1.55 }}>Of every rupee you repay from here, {ip}¢ goes to interest. The tools below help cut that.</div>
+              <div className="text-xs text-slate-400 leading-relaxed">Of every rupee you repay from here, {ip}¢ goes to interest. The tools below help cut that.</div>
             </div>
 
             {/* WHAT YOU'LL HAND OVER chart (accordion) */}
-            <div style={{ ...whiteCard, overflow: 'hidden' }}>
+            <div className="card-fintech overflow-hidden">
               <button
                 type="button"
                 aria-expanded={chartOpen}
                 onClick={() => setChartOpen((o) => !o)}
-                style={{ width: '100%', padding: '18px 20px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, userSelect: 'none', background: 'none', border: 'none', textAlign: 'left', fontFamily: 'var(--sans)' }}
+                className="flex w-full items-center justify-between gap-3 p-5 sm:p-6 text-left"
               >
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: '#DC2626', textTransform: 'uppercase', marginBottom: 3 }}>Keep Paying the EMI</div>
-                  <div style={{ fontFamily: 'var(--serif)', fontSize: 19, fontWeight: 700, color: '#2A1606', lineHeight: 1.2 }}>What you&apos;ll hand over</div>
+                  <div className="text-xs font-semibold text-rose-600 uppercase tracking-wider mb-1">Keep Paying the EMI</div>
+                  <div className="text-sm font-semibold text-slate-900">What you&apos;ll hand over</div>
                 </div>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#FFF5EC', border: '1.5px solid rgba(201,96,16,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'transform 0.25s', transform: chartOpen ? 'rotate(180deg)' : undefined }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C96010" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                    <path d="M6 9l6 6 6-6" />
-                  </svg>
-                </div>
+                <ChevronDown className={`w-5 h-5 text-slate-400 shrink-0 transition-transform ${chartOpen ? 'rotate-180' : ''}`} aria-hidden />
               </button>
               {chartOpen && (
-                <div style={{ padding: '0 20px 18px' }}>
-                  <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.5)', marginBottom: 14 }}>Cumulative paid vs balance remaining, month by month.</div>
-                  <div style={{ display: 'flex', gap: 20, marginBottom: 12 }}>
-                    <Legend color="#1e40af" label="Paid to Bank" />
-                    <Legend color="#ea580c" label="Still Owed" />
+                <div className="px-5 sm:px-6 pb-5 sm:pb-6">
+                  <div className="text-xs text-slate-500 mb-3">Cumulative paid vs balance remaining, month by month.</div>
+                  <div className="flex gap-5 mb-3">
+                    <Legend color="#2563EB" label="Paid to Bank" />
+                    <Legend color="#F43F5E" label="Still Owed" />
                   </div>
                   <PayChart points={payChartSeries(loan)} />
                 </div>
@@ -172,39 +155,36 @@ function LoanFixes() {
             </div>
 
             {/* PART-PREPAYMENT */}
-            <div style={{ ...whiteCard, padding: 20 }}>
-              <div onClick={() => setPrepayOpen((o) => !o)} style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-                <div style={{ width: 46, height: 46, borderRadius: 12, background: 'linear-gradient(135deg,#0F766E,#0D9488)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }} aria-hidden>
-                  💰
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#2A1606' }}>Part-prepayment</div>
-                  <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.5)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Lump sum → cuts principal &amp; interest</div>
-                </div>
+            <div className="card-fintech p-5 sm:p-6">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   aria-expanded={prepayOpen}
                   aria-controls="lf-prepay-body"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setPrepayOpen((o) => !o);
-                  }}
-                  style={{ padding: '7px 14px', background: 'transparent', border: '1.5px solid #0D9488', borderRadius: 20, fontSize: 13, fontWeight: 700, color: '#0D9488', cursor: 'pointer', fontFamily: 'var(--sans)', whiteSpace: 'nowrap' }}
+                  onClick={() => setPrepayOpen((o) => !o)}
+                  className="flex flex-1 min-w-0 items-center gap-3 text-left"
                 >
-                  Simulate
+                  <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0" aria-hidden>
+                    <PiggyBank className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-slate-900">Part-prepayment</div>
+                    <div className="text-xs text-slate-500 mt-0.5">Lump sum → cuts principal &amp; interest</div>
+                  </div>
+                  <span className="btn-secondary whitespace-nowrap">Simulate</span>
+                  <ChevronDown className={`w-5 h-5 text-slate-400 shrink-0 transition-transform ${prepayOpen ? 'rotate-180' : ''}`} aria-hidden />
                 </button>
-                <span style={{ fontSize: 16, color: '#0D9488', transition: 'transform .25s', flexShrink: 0, transform: prepayOpen ? 'rotate(180deg)' : undefined }} aria-hidden>
-                  ▾
-                </span>
               </div>
 
               {prepayOpen && (
-                <div id="lf-prepay-body" style={{ marginTop: 18, borderTop: '1px solid rgba(196,168,130,0.2)', paddingTop: 18 }}>
-                  <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, color: '#0D9488', marginBottom: 8 }}>PREPAYMENT SIMULATOR</div>
-                  <p style={{ fontSize: 13, color: 'rgba(42,22,6,0.6)', lineHeight: 1.55, marginBottom: 16 }}>A lump-sum goes straight to your principal — shrinks interest and ends the loan sooner. Try any amount.</p>
+                <div id="lf-prepay-body" className="mt-5 pt-5 border-t border-slate-200 space-y-4">
+                  <div>
+                    <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-2">Prepayment simulator</div>
+                    <p className="text-sm text-slate-600 leading-relaxed">A lump-sum goes straight to your principal — shrinks interest and ends the loan sooner. Try any amount.</p>
+                  </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#FDFAF5', border: '2px solid #0D9488', borderRadius: 16, padding: '16px 18px', marginBottom: 14 }}>
-                    <span style={{ fontSize: 26, fontWeight: 700, color: '#0D9488' }} aria-hidden>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium" aria-hidden>
                       ₹
                     </span>
                     <input
@@ -215,11 +195,11 @@ function LoanFixes() {
                       placeholder="0"
                       value={prepay}
                       onChange={(e) => setPrepay(e.target.value)}
-                      style={{ flex: 1, border: 'none', outline: 'none', fontSize: 26, fontWeight: 700, color: '#2A1606', background: 'transparent', fontFamily: 'var(--sans)', minWidth: 0 }}
+                      className="w-full pl-7 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                     />
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 18 }}>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {CHIPS.map((c, i) => {
                       const amt = Math.round(loan.outstanding * c.pct);
                       const active = i === activeChip;
@@ -229,10 +209,12 @@ function LoanFixes() {
                           key={c.label}
                           aria-pressed={active}
                           onClick={() => setPrepay(String(amt))}
-                          style={{ background: active ? '#0D9488' : '#F5F0EA', borderRadius: 12, padding: '10px 8px', textAlign: 'center', cursor: 'pointer', transition: 'all .2s', border: 'none', fontFamily: 'var(--sans)', minWidth: 0 }}
+                          className={`rounded-xl border-2 p-3 text-center transition-all cursor-pointer min-w-0 ${
+                            active ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-600/10' : 'border-slate-200 bg-white hover:border-slate-300'
+                          }`}
                         >
-                          <div style={{ fontSize: 14, fontWeight: 800, color: active ? '#fff' : '#2A1606' }}>{c.label}</div>
-                          <div style={{ fontSize: 11, color: active ? 'rgba(255,255,255,0.8)' : 'rgba(42,22,6,0.5)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.sub || fmtCompact(amt)}</div>
+                          <div className="text-sm font-bold text-slate-900">{c.label}</div>
+                          <div className="text-[11px] text-slate-500 mt-0.5 truncate">{c.sub || fmtCompact(amt)}</div>
                         </button>
                       );
                     })}
@@ -240,45 +222,45 @@ function LoanFixes() {
 
                   {sim && (
                     <>
-                      <div style={{ background: 'linear-gradient(135deg,#ECFDF5,#D1FAE5)', border: '1.5px solid rgba(13,148,136,0.2)', borderRadius: 16, padding: 18, textAlign: 'center', marginBottom: 14 }}>
-                        <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, color: '#065F46', marginBottom: 6 }}>YOU SAVE</div>
-                        <div style={{ fontFamily: 'var(--serif)', fontSize: 38, fontWeight: 900, color: '#0D9488', lineHeight: 1, marginBottom: 6 }}>₹{fmt(sim.saved)}</div>
-                        <div style={{ fontSize: 13, color: 'rgba(6,95,70,0.7)' }}>in interest · loan closes {sim.monthsFreed} months sooner</div>
+                      <div className="rounded-2xl bg-slate-900 text-white p-5 text-center">
+                        <div className="text-xs text-slate-400 uppercase tracking-wider">You save</div>
+                        <div className="text-3xl font-bold tabular-nums text-emerald-400 mt-1">₹{fmt(sim.saved)}</div>
+                        <div className="text-sm text-slate-300 mt-1">in interest · loan closes {sim.monthsFreed} months sooner</div>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
-                        <div style={statTile}>
-                          <div style={statLbl}>NEW TENURE</div>
-                          <div style={{ fontSize: 22, fontWeight: 800, color: '#0D9488' }}>{sim.newTenure} months</div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                          <div className="text-[11px] font-medium text-slate-500">New tenure</div>
+                          <div className="text-lg font-bold text-blue-600 tabular-nums">{sim.newTenure} months</div>
                         </div>
-                        <div style={statTile}>
-                          <div style={statLbl}>MONTHS FREED</div>
-                          <div style={{ fontSize: 22, fontWeight: 800, color: '#2A1606' }}>{sim.monthsFreed} months</div>
+                        <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                          <div className="text-[11px] font-medium text-slate-500">Months freed</div>
+                          <div className="text-lg font-bold text-slate-900 tabular-nums">{sim.monthsFreed} months</div>
                         </div>
-                        <div style={statTile}>
-                          <div style={statLbl}>INTEREST BEFORE</div>
-                          <div style={{ fontSize: 20, fontWeight: 800, color: '#2A1606' }}>₹{fmt(a.totalInterest)}</div>
+                        <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                          <div className="text-[11px] font-medium text-slate-500">Interest before</div>
+                          <div className="text-lg font-bold text-slate-900 tabular-nums">₹{fmt(a.totalInterest)}</div>
                         </div>
-                        <div style={statTile}>
-                          <div style={statLbl}>INTEREST AFTER</div>
-                          <div style={{ fontSize: 20, fontWeight: 800, color: '#0D9488' }}>₹{fmt(sim.newInterest)}</div>
+                        <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
+                          <div className="text-[11px] font-medium text-slate-500">Interest after</div>
+                          <div className="text-lg font-bold text-emerald-600 tabular-nums">₹{fmt(sim.newInterest)}</div>
                         </div>
                       </div>
 
-                      <div style={{ marginBottom: 6 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                          <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.5)', width: 38, flexShrink: 0 }}>Before</div>
-                          <div style={{ flex: 1, height: 8, borderRadius: 6, background: '#F87171' }} />
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#F87171', whiteSpace: 'nowrap' }}>₹{fmt(a.totalInterest)}</div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <div className="text-xs text-slate-500 w-10 shrink-0">Before</div>
+                          <div className="flex-1 h-2 rounded-full bg-rose-500" />
+                          <div className="text-xs font-semibold text-rose-600 whitespace-nowrap tabular-nums">₹{fmt(a.totalInterest)}</div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                          <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.5)', width: 38, flexShrink: 0 }}>After</div>
-                          <div style={{ flex: 1, display: 'flex' }}>
-                            <div style={{ height: 8, borderRadius: 6, background: '#10B981', transition: 'width .5s', width: `${sim.afterPct}%` }} />
+                        <div className="flex items-center gap-3">
+                          <div className="text-xs text-slate-500 w-10 shrink-0">After</div>
+                          <div className="flex-1 flex">
+                            <div className="h-2 rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${sim.afterPct}%` }} />
                           </div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: '#0D9488', whiteSpace: 'nowrap' }}>₹{fmt(sim.newInterest)}</div>
+                          <div className="text-xs font-semibold text-emerald-600 whitespace-nowrap tabular-nums">₹{fmt(sim.newInterest)}</div>
                         </div>
-                        <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.5)', textAlign: 'center', paddingTop: 4 }}>
+                        <div className="text-xs text-slate-500 text-center pt-1">
                           A {sim.prepayPct}% prepayment eliminates {sim.savePct}% of remaining interest
                         </div>
                       </div>
@@ -289,14 +271,14 @@ function LoanFixes() {
             </div>
 
             {/* BALANCE TRANSFER card */}
-            <div style={{ ...whiteCard, padding: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <div style={{ width: 46, height: 46, borderRadius: 12, background: 'linear-gradient(135deg,#2563EB,#1E40AF)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }} aria-hidden>
-                  🔄
+            <div className="card-fintech p-5 sm:p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0" aria-hidden>
+                  <RefreshCw className="w-5 h-5" />
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#2A1606' }}>Balance transfer</div>
-                  <div style={{ fontSize: 12, color: 'rgba(42,22,6,0.5)', marginTop: 2 }}>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-slate-900">Balance transfer</div>
+                  <div className="text-xs text-slate-500 mt-0.5">
                     {better
                       ? `Move ${fmtRate(loan.rate)}% → ${fmtRate(better.offeredRatePercent)}% · save on interest`
                       : offers && !better
@@ -304,59 +286,49 @@ function LoanFixes() {
                         : 'Move to a lower-rate lender · save on interest'}
                   </div>
                 </div>
-                {better && (
-                  <div style={{ padding: '5px 12px', background: 'rgba(37,99,235,0.1)', borderRadius: 20, fontSize: 12, fontWeight: 700, color: '#2563EB', whiteSpace: 'nowrap' }}>Save ₹{fmt(btSave)}</div>
-                )}
+                {better && <span className="badge-emerald whitespace-nowrap">Save ₹{fmt(btSave)}</span>}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <div style={{ background: '#F5F0EA', borderRadius: 14, padding: 14, textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(42,22,6,0.45)', marginBottom: 5 }}>YOUR RATE NOW</div>
-                  <div style={{ fontSize: 28, fontWeight: 900, color: '#2A1606' }}>{fmtRate(loan.rate)}%</div>
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 text-center">
+                  <div className="text-[11px] font-medium text-slate-500 uppercase mb-1">Your rate now</div>
+                  <div className="text-2xl font-bold text-slate-900 tabular-nums">{fmtRate(loan.rate)}%</div>
                 </div>
-                <div style={{ fontSize: 18, color: 'rgba(42,22,6,0.4)' }} aria-hidden>
-                  →
-                </div>
-                <div style={{ background: 'linear-gradient(135deg,#ECFDF5,#D1FAE5)', border: '1.5px solid rgba(13,148,136,0.2)', borderRadius: 14, padding: 14, textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#065F46', marginBottom: 5 }}>BEST AVAILABLE</div>
-                  <div style={{ fontSize: 28, fontWeight: 900, color: '#0D9488' }}>{best ? `${fmtRate(best.offeredRatePercent)}%` : offersError || (offers && !best) ? '—' : '…'}</div>
+                <TrendingDown className="w-5 h-5 text-slate-400" aria-hidden />
+                <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-center">
+                  <div className="text-[11px] font-medium text-emerald-700 uppercase mb-1">Best available</div>
+                  <div className="text-2xl font-bold text-emerald-600 tabular-nums">{best ? `${fmtRate(best.offeredRatePercent)}%` : offersError || (offers && !best) ? '—' : '…'}</div>
                 </div>
               </div>
               {offersError && (
-                <div role="alert" style={{ fontSize: 12, color: '#DC2626', marginBottom: 12, textAlign: 'center' }}>
+                <div role="alert" className="text-xs font-medium text-rose-600 text-center">
                   {offersError}
                 </div>
               )}
-              <button
-                type="button"
-                onClick={() => router.push('/journey/loan/balance-transfer')}
-                style={{ width: '100%', background: 'linear-gradient(135deg,#2563EB 0%,#1E40AF 100%)', border: 'none', borderRadius: 14, padding: '15px 24px', fontSize: 15, fontWeight: 800, color: '#fff', cursor: 'pointer', fontFamily: 'var(--sans)', letterSpacing: 0.2, boxShadow: '0 6px 20px rgba(37,99,235,0.35)' }}
-              >
-                Check Eligibility for Balance Transfer →
+              <button type="button" onClick={() => router.push('/journey/loan/balance-transfer')} className="btn-accent w-full sm:w-auto">
+                Check Eligibility for Balance Transfer
+                <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
               </button>
             </div>
           </>
         )}
 
-        <button
-          type="button"
-          onClick={() => router.push('/journey/loan')}
-          style={{ width: '100%', background: 'transparent', border: '1.5px solid rgba(196,168,130,0.5)', borderRadius: 14, padding: 15, fontSize: 14, fontWeight: 700, color: 'rgba(42,22,6,0.6)', cursor: 'pointer', fontFamily: 'var(--sans)', marginTop: 4 }}
-        >
-          ← Edit loan details
+        <button type="button" onClick={() => router.push('/journey/loan')} className="btn-secondary w-full sm:w-auto">
+          <ArrowLeft className="w-4 h-4 mr-1.5" aria-hidden />
+          Edit loan details
         </button>
-      </div>
+      </main>
     </div>
   );
 }
 
 function Legend({ color, label }: { color: string; label: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-      <svg width="24" height="6" style={{ flexShrink: 0 }} aria-hidden>
+    <div className="flex items-center gap-2">
+      <svg width="24" height="6" className="shrink-0" aria-hidden>
         <line x1="0" y1="3" x2="24" y2="3" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
         <circle cx="12" cy="3" r="3" fill={color} />
       </svg>
-      <span style={{ fontSize: 11, color: 'rgba(42,22,6,0.6)', fontWeight: 500 }}>{label}</span>
+      <span className="text-[11px] font-medium text-slate-600">{label}</span>
     </div>
   );
 }
@@ -389,7 +361,7 @@ function PayChart({ points }: { points: PayPoint[] }) {
     <svg
       viewBox={`0 0 ${W} ${H}`}
       width="100%"
-      style={{ display: 'block', maxWidth: '100%', overflow: 'hidden' }}
+      className="block max-w-full overflow-hidden"
       shapeRendering="geometricPrecision"
       textRendering="optimizeLegibility"
       role="img"
@@ -397,22 +369,22 @@ function PayChart({ points }: { points: PayPoint[] }) {
     >
       <defs>
         <linearGradient id="lfOGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ea580c" stopOpacity="0.15" />
-          <stop offset="100%" stopColor="#ea580c" stopOpacity="0.02" />
+          <stop offset="0%" stopColor="#F43F5E" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="#F43F5E" stopOpacity="0.02" />
         </linearGradient>
         <linearGradient id="lfPGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1e40af" stopOpacity="0.12" />
-          <stop offset="100%" stopColor="#1e40af" stopOpacity="0.02" />
+          <stop offset="0%" stopColor="#2563EB" stopOpacity="0.12" />
+          <stop offset="100%" stopColor="#2563EB" stopOpacity="0.02" />
         </linearGradient>
       </defs>
       {points.map((_, i) => (
-        <line key={`g${i}`} x1={xAt(i).toFixed(1)} y1={padT} x2={xAt(i).toFixed(1)} y2={base} stroke="rgba(0,0,0,0.06)" strokeWidth="1" strokeDasharray="3,3" />
+        <line key={`g${i}`} x1={xAt(i).toFixed(1)} y1={padT} x2={xAt(i).toFixed(1)} y2={base} stroke="#E2E8F0" strokeWidth="1" strokeDasharray="3,3" />
       ))}
-      <line x1={padL} y1={base} x2={W - padR} y2={base} stroke="rgba(0,0,0,0.1)" strokeWidth="1" />
+      <line x1={padL} y1={base} x2={W - padR} y2={base} stroke="#E2E8F0" strokeWidth="1" />
       <path d={fill(oPts)} fill="url(#lfOGrad)" />
       <path d={fill(pPts)} fill="url(#lfPGrad)" />
-      <path d={line(oPts)} fill="none" stroke="#ea580c" strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round" />
-      <path d={line(pPts)} fill="none" stroke="#1e40af" strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round" />
+      <path d={line(oPts)} fill="none" stroke="#F43F5E" strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round" />
+      <path d={line(pPts)} fill="none" stroke="#2563EB" strokeWidth="2.8" strokeLinejoin="round" strokeLinecap="round" />
       {points.map((p, i) => {
         const anchor = i === 0 ? 'start' : i === N - 1 ? 'end' : 'middle';
         const o = oPts[i];
@@ -420,15 +392,15 @@ function PayChart({ points }: { points: PayPoint[] }) {
         const blueAbove = b.y < o.y;
         return (
           <g key={`d${i}`}>
-            <circle cx={o.x} cy={o.y} r="5.5" fill="#ea580c" stroke="#fff" strokeWidth="2" />
-            <text x={o.x} y={o.y - 11} textAnchor={anchor} fontSize="10.5" fill="#ea580c" fontWeight="800" fontFamily={font}>
+            <circle cx={o.x} cy={o.y} r="5.5" fill="#F43F5E" stroke="#fff" strokeWidth="2" />
+            <text x={o.x} y={o.y - 11} textAnchor={anchor} fontSize="10.5" fill="#F43F5E" fontWeight="800" fontFamily={font}>
               {fmtV(p.owed)}
             </text>
-            <circle cx={b.x} cy={b.y} r="5.5" fill="#1e40af" stroke="#fff" strokeWidth="2" />
-            <text x={b.x} y={blueAbove ? b.y - 11 : b.y + 16} textAnchor={anchor} fontSize="10.5" fill="#1e40af" fontWeight="800" fontFamily={font}>
+            <circle cx={b.x} cy={b.y} r="5.5" fill="#2563EB" stroke="#fff" strokeWidth="2" />
+            <text x={b.x} y={blueAbove ? b.y - 11 : b.y + 16} textAnchor={anchor} fontSize="10.5" fill="#2563EB" fontWeight="800" fontFamily={font}>
               {fmtV(p.paid)}
             </text>
-            <text x={o.x} y={base + 16} textAnchor={anchor} fontSize="10.5" fill="rgba(42,22,6,0.4)" fontFamily={font}>
+            <text x={o.x} y={base + 16} textAnchor={anchor} fontSize="10.5" fill="#64748B" fontFamily={font}>
               {p.month}M
             </text>
           </g>

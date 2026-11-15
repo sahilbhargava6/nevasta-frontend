@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowRight, Briefcase, Building2, Check, ChevronDown, Home, Landmark, Loader2, Search, Store } from 'lucide-react';
 import { DEFAULT_MULTI_JOURNEY, DEFAULT_PROFILE, fmtINR, useJourney } from '@/lib/journey';
 import { isValidPincode, pincodeHint, usePincodeLookup } from '@/lib/pincodes';
 import { fetchOffers, type Offer } from '@/lib/applyOffer';
 import { consolidationSavings, fmtDcCompact, portfolioStats } from '@/lib/consolidationMath';
 import ConsolidationShell from '../_components/ConsolidationShell';
-import styles from '../_components/consolidation.module.css';
 
 /**
  * Design: #dc-eligibility-page, wizard rendered by dceRenderStep1 / dceRenderStep2
@@ -17,117 +17,60 @@ import styles from '../_components/consolidation.module.css';
 type Step = 1 | 2 | 'loading';
 type FieldKey = 'rent' | 'pincode' | 'sector' | 'income';
 
-const BLUE = '#2563EB';
-const IDLE_BORDER = 'rgba(196,168,130,0.4)';
-const RED = '#DC2626';
+const labelCls = 'block text-xs font-semibold text-slate-700 mb-1.5';
+const inputBase =
+  'w-full px-3 py-2.5 bg-slate-50 border rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2';
+const inputOk = 'border-slate-300 focus:ring-blue-600/20 focus:border-blue-600';
+const inputErr = 'border-rose-400 focus:ring-rose-500/20 focus:border-rose-500';
+const inputCls = (error: boolean, extra = '') => `${inputBase} ${error ? inputErr : inputOk} ${extra}`.trim();
+const choiceCls = (selected: boolean, error = false) =>
+  `w-full block rounded-xl border-2 p-4 text-center transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600/40 ${
+    error ? 'border-rose-400 bg-white' : selected ? 'border-blue-600 bg-blue-50 ring-2 ring-blue-600/10' : 'border-slate-200 bg-white hover:border-slate-300'
+  }`;
+const errorCls = 'text-xs font-medium text-rose-600 mt-1';
 
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: 11,
-  fontWeight: 700,
-  letterSpacing: 1.2,
-  color: 'rgba(26,46,63,0.5)',
-  textTransform: 'uppercase',
-  marginBottom: 8,
+const HINT_CLS: Record<string, string> = {
+  checking: 'text-slate-500',
+  verified: 'text-emerald-700',
+  not_found: 'text-rose-600',
+  unavailable: 'text-amber-700',
 };
 
-const inputStyle = (error: boolean, extra?: React.CSSProperties): React.CSSProperties => ({
-  width: '100%',
-  padding: 14,
-  border: `1.5px solid ${error ? RED : IDLE_BORDER}`,
-  borderRadius: 12,
-  fontSize: 15,
-  fontWeight: 500,
-  color: '#1A2E3F',
-  fontFamily: 'var(--sans)',
-  background: '#fff',
-  outline: 'none',
-  boxSizing: 'border-box',
-  transition: 'border-color .2s',
-  ...extra,
-});
-
-const cardStyle = (selected: boolean, error = false): React.CSSProperties => ({
-  cursor: 'pointer',
-  borderRadius: 18,
-  padding: '22px 16px',
-  border: `2px solid ${error ? RED : selected ? BLUE : 'rgba(196,168,130,0.25)'}`,
-  background: selected ? '#EFF6FF' : '#fff',
-  transition: 'all .2s',
-  textAlign: 'center',
-  boxShadow: selected ? '0 4px 16px rgba(37,99,235,0.2)' : '0 2px 10px rgba(0,0,0,0.04)',
-});
-
-const errorText: React.CSSProperties = { fontSize: 12, color: RED, fontWeight: 600, marginTop: 6 };
-
-const primaryBtn: React.CSSProperties = {
-  width: '100%',
-  background: 'linear-gradient(135deg,#2563EB,#1E40AF)',
-  border: 'none',
-  borderRadius: 16,
-  padding: 17,
-  fontSize: 16,
-  fontWeight: 800,
-  color: '#fff',
-  cursor: 'pointer',
-  fontFamily: 'var(--sans)',
-  letterSpacing: 0.2,
-  boxShadow: '0 6px 20px rgba(37,99,235,0.35)',
-};
-
-function Badge() {
+function Eyebrow() {
   return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.25)', borderRadius: 20, padding: '5px 14px', marginBottom: 14 }}>
-      <span style={{ fontSize: 10 }} aria-hidden>
-        🏦
-      </span>
-      <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.5, color: BLUE, textTransform: 'uppercase' }}>Debt Consolidation</span>
+    <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider">
+      <Landmark className="w-4 h-4" aria-hidden /> Debt Consolidation
     </div>
   );
 }
 
 function Dots({ step }: { step: 1 | 2 }) {
   return (
-    <div style={{ textAlign: 'center', marginBottom: 28 }} aria-label={`Step ${step} of 2`}>
-      <div style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+    <div className="text-center" aria-label={`Step ${step} of 2`}>
+      <div className="inline-flex gap-2 items-center">
         {[1, 2].map((d) => (
-          <div
-            key={d}
-            style={
-              d === step
-                ? { width: 20, height: 8, borderRadius: 4, background: BLUE, transition: 'all .3s' }
-                : d < step
-                  ? { width: 8, height: 8, borderRadius: '50%', background: '#93C5FD', transition: 'all .3s' }
-                  : { width: 8, height: 8, borderRadius: '50%', background: 'rgba(26,46,63,0.18)', transition: 'all .3s' }
-            }
-          />
+          <div key={d} className={`h-2 rounded-full transition-all ${d === step ? 'w-5 bg-blue-600' : d < step ? 'w-2 bg-blue-300' : 'w-2 bg-slate-300'}`} />
         ))}
       </div>
     </div>
   );
 }
 
-const CheckIcon = () => (
-  <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  </div>
-);
-
 function CheckRow({ first, active, done, label, value }: { first?: boolean; active: boolean; done: boolean; label: string; value: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 0', ...(first ? {} : { borderTop: '1px solid rgba(196,168,130,0.12)' }), opacity: active ? 1 : 0.35, transition: 'opacity .3s' }}>
+    <div className={`flex items-center gap-3.5 py-3 transition-opacity ${first ? '' : 'border-t border-slate-100'} ${active ? 'opacity-100' : 'opacity-40'}`}>
       {done ? (
-        <CheckIcon />
+        <div className="w-6 h-6 rounded-full shrink-0 bg-emerald-50 text-emerald-600 flex items-center justify-center">
+          <Check className="w-3.5 h-3.5" aria-hidden />
+        </div>
       ) : (
-        <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, overflow: 'hidden' }}>
-          <div className="lfbt-spinner" />
+        <div className="w-6 h-6 shrink-0 flex items-center justify-center text-blue-600">
+          <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
         </div>
       )}
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: '#1A2E3F' }}>{label}</div>
-        <div style={{ fontSize: 12, color: 'rgba(26,46,63,0.45)', marginTop: 2 }}>{done ? value : 'Checking…'}</div>
+      <div className="flex-1">
+        <div className="text-sm font-semibold text-slate-900">{label}</div>
+        <div className="text-xs text-slate-500 mt-0.5">{done ? value : 'Checking…'}</div>
       </div>
     </div>
   );
@@ -261,38 +204,36 @@ export default function ConsolidationEligibilityPage() {
 
   return (
     <ConsolidationShell onBack={onBack}>
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '28px 20px 60px' }}>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {ready && step !== 'loading' && <Dots step={step} />}
 
         {ready && step === 1 && (
-          <div>
-            <Badge />
-            <h1 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 900, color: '#1A2E3F', marginBottom: 8, lineHeight: 1.25 }}>Do you own or rent your home?</h1>
-            <p style={{ fontSize: 14, color: 'rgba(26,46,63,0.55)', marginBottom: 24, lineHeight: 1.6 }}>Property ownership affects your eligibility and the rates lenders will offer you.</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-              <button type="button" className={styles.choice} aria-pressed={profile.housing === 'own'} style={cardStyle(profile.housing === 'own')} onClick={() => selectHousing('own')}>
-                <div style={{ fontSize: 36, marginBottom: 12 }} aria-hidden>
-                  🏠
-                </div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: '#1A2E3F', marginBottom: 4 }}>Own</div>
-                <div style={{ fontSize: 12, color: 'rgba(26,46,63,0.5)', lineHeight: 1.4 }}>Property in my name or family-owned</div>
+          <div className="space-y-6">
+            <div>
+              <Eyebrow />
+              <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Do you own or rent your home?</h1>
+              <p className="mt-1 text-sm text-slate-600 leading-relaxed">Property ownership affects your eligibility and the rates lenders will offer you.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <button type="button" aria-pressed={profile.housing === 'own'} className={choiceCls(profile.housing === 'own')} onClick={() => selectHousing('own')}>
+                <Home className="w-7 h-7 mx-auto mb-3 text-blue-600" aria-hidden />
+                <div className="text-base font-semibold text-slate-900 mb-1">Own</div>
+                <div className="text-xs text-slate-500 leading-snug">Property in my name or family-owned</div>
               </button>
-              <button type="button" className={styles.choice} aria-pressed={profile.housing === 'rent'} style={cardStyle(profile.housing === 'rent')} onClick={() => selectHousing('rent')}>
-                <div style={{ fontSize: 36, marginBottom: 12 }} aria-hidden>
-                  🏢
-                </div>
-                <div style={{ fontSize: 16, fontWeight: 800, color: '#1A2E3F', marginBottom: 4 }}>Rent</div>
-                <div style={{ fontSize: 12, color: 'rgba(26,46,63,0.5)', lineHeight: 1.4 }}>Currently in rented accommodation</div>
+              <button type="button" aria-pressed={profile.housing === 'rent'} className={choiceCls(profile.housing === 'rent')} onClick={() => selectHousing('rent')}>
+                <Building2 className="w-7 h-7 mx-auto mb-3 text-blue-600" aria-hidden />
+                <div className="text-base font-semibold text-slate-900 mb-1">Rent</div>
+                <div className="text-xs text-slate-500 leading-snug">Currently in rented accommodation</div>
               </button>
             </div>
 
             {profile.housing === 'rent' && (
-              <div style={{ marginTop: 20, animation: 'lfbtFadeIn .3s ease-out both' }}>
-                <label htmlFor="dce-rent" style={{ ...labelStyle, marginBottom: 8 }}>
+              <div className="card-fintech p-5 sm:p-6">
+                <label htmlFor="dce-rent" className={labelCls}>
                   Monthly Rent Amount
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 18, fontWeight: 700, color: 'rgba(26,46,63,0.4)', pointerEvents: 'none' }}>₹</span>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium pointer-events-none">₹</span>
                   <input
                     id="dce-rent"
                     type="number"
@@ -300,17 +241,16 @@ export default function ConsolidationEligibilityPage() {
                     inputMode="numeric"
                     autoFocus
                     placeholder="e.g. 25000"
-                    className={styles.field}
+                    className={inputCls(!!errors.rent, 'pl-7')}
                     aria-invalid={errors.rent || undefined}
                     value={profile.rent || ''}
                     onChange={(e) => setProfile({ rent: parseFloat(e.target.value) || null })}
                     onKeyDown={(e) => e.key === 'Enter' && continueFromRent()}
-                    style={inputStyle(!!errors.rent, { padding: '14px 14px 14px 32px', fontSize: 20, fontWeight: 700 })}
                   />
                 </div>
-                {errors.rent && <div style={errorText}>Please enter your monthly rent.</div>}
-                <button type="button" onClick={continueFromRent} style={{ ...primaryBtn, marginTop: 18, borderRadius: 14, padding: 15, fontSize: 15, boxShadow: '0 6px 20px rgba(37,99,235,0.3)' }}>
-                  Continue →
+                {errors.rent && <div className={errorCls}>Please enter your monthly rent.</div>}
+                <button type="button" onClick={continueFromRent} className="btn-accent w-full sm:w-auto mt-4">
+                  Continue <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
                 </button>
               </div>
             )}
@@ -318,189 +258,185 @@ export default function ConsolidationEligibilityPage() {
         )}
 
         {ready && step === 2 && (
-          <div>
-            <Badge />
-            <h1 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 900, color: '#1A2E3F', marginBottom: 8, lineHeight: 1.25 }}>Where do you live?</h1>
-            <p style={{ fontSize: 14, color: 'rgba(26,46,63,0.55)', marginBottom: 24, lineHeight: 1.6 }}>We use this to surface lenders active in your area.</p>
-
-            <div style={{ marginBottom: 14 }}>
-              <label htmlFor="dce-address" style={labelStyle}>
-                Full Address
-              </label>
-              <textarea
-                id="dce-address"
-                rows={2}
-                placeholder="Flat / House No., Street, Area…"
-                className={styles.field}
-                value={profile.address}
-                onChange={(e) => setProfile({ address: e.target.value })}
-                style={inputStyle(false, { resize: 'none', lineHeight: 1.5 })}
-              />
+          <div className="space-y-6">
+            <div>
+              <Eyebrow />
+              <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Where do you live?</h1>
+              <p className="mt-1 text-sm text-slate-600 leading-relaxed">We use this to surface lenders active in your area.</p>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+            <div className="card-fintech p-5 sm:p-6 space-y-4">
               <div>
-                <label htmlFor="dce-pincode" style={labelStyle}>
-                  Pincode
+                <label htmlFor="dce-address" className={labelCls}>
+                  Full Address
                 </label>
-                <input
-                  id="dce-pincode"
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="postal-code"
-                  maxLength={6}
-                  placeholder="e.g. 400001"
-                  className={styles.field}
-                  aria-invalid={errors.pincode || undefined}
-                  value={profile.pincode}
-                  onChange={(e) => onPincode(e.target.value)}
-                  style={inputStyle(!!errors.pincode, { fontSize: 20, fontWeight: 700 })}
+                <textarea
+                  id="dce-address"
+                  rows={2}
+                  placeholder="Flat / House No., Street, Area…"
+                  className={inputCls(false, 'resize-none')}
+                  value={profile.address}
+                  onChange={(e) => setProfile({ address: e.target.value })}
                 />
               </div>
-              <div>
-                <label htmlFor="dce-city" style={labelStyle}>
-                  City
-                </label>
-                <input
-                  id="dce-city"
-                  type="text"
-                  placeholder={unknownPin ? 'Enter city' : 'Auto-filled'}
-                  readOnly={!unknownPin}
-                  className={styles.field}
-                  value={profile.city}
-                  onChange={(e) => setProfile({ city: e.target.value })}
-                  style={inputStyle(false, { fontSize: 16, fontWeight: 600, background: unknownPin ? '#fff' : '#FAFAF8' })}
-                />
-              </div>
-            </div>
-            {errors.pincode ? (
-              <div role="alert" style={{ ...errorText, marginTop: -8, marginBottom: 12 }}>{pinError}</div>
-            ) : (
-              pinHint && (
-                <div role="status" style={{ fontSize: 12, marginTop: -8, marginBottom: 12, color: pinHint.color }}>
-                  {pinHint.text}
-                </div>
-              )
-            )}
 
-            <div style={{ marginBottom: 22 }}>
-              <label htmlFor="dce-state" style={labelStyle}>
-                State
-              </label>
-              <input
-                id="dce-state"
-                type="text"
-                placeholder={unknownPin ? 'Enter state' : 'Auto-filled'}
-                readOnly={!unknownPin}
-                className={styles.field}
-                value={profile.state}
-                onChange={(e) => setProfile({ state: e.target.value })}
-                style={inputStyle(false, { fontSize: 16, fontWeight: 600, background: unknownPin ? '#fff' : '#FAFAF8' })}
-              />
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <label htmlFor="dce-edu" style={labelStyle}>
-                Highest Education Level
-              </label>
-              <div style={{ position: 'relative' }}>
-                <select
-                  id="dce-edu"
-                  className={styles.field}
-                  value={profile.education}
-                  onChange={(e) => setProfile({ education: e.target.value })}
-                  style={inputStyle(false, { padding: '14px 40px 14px 14px', fontWeight: 600, cursor: 'pointer', appearance: 'none', WebkitAppearance: 'none' })}
-                >
-                  <option value="">Select your education level</option>
-                  <option value="graduate">Graduate (B.A. / B.Sc. / B.Com / B.E.)</option>
-                  <option value="postgrad">Post Graduate (M.A. / M.Sc. / MBA)</option>
-                  <option value="doctorate">Doctorate / PhD</option>
-                  <option value="diploma">Diploma / Vocational</option>
-                  <option value="other">Other</option>
-                </select>
-                <svg style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B8BA4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <path d="M6 9l6 6 6-6" />
-                </svg>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 16 }} role="group" aria-labelledby="dce-sector-lbl">
-              <div id="dce-sector-lbl" style={{ ...labelStyle, marginBottom: 10 }}>
-                Working Sector
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <button type="button" className={styles.choice} aria-pressed={salSel} style={cardStyle(salSel, !!errors.sector)} onClick={() => setProfile({ sector: 'salaried' })}>
-                  <div style={{ fontSize: 30, marginBottom: 10 }} aria-hidden>
-                    💼
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: '#1A2E3F', marginBottom: 3 }}>Salaried</div>
-                  <div style={{ fontSize: 11, color: 'rgba(26,46,63,0.5)', lineHeight: 1.4 }}>Fixed monthly income</div>
-                </button>
-                <button type="button" className={styles.choice} aria-pressed={selfSel} style={cardStyle(selfSel, !!errors.sector)} onClick={() => setProfile({ sector: 'self' })}>
-                  <div style={{ fontSize: 30, marginBottom: 10 }} aria-hidden>
-                    🏪
-                  </div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: '#1A2E3F', marginBottom: 3 }}>Self Employed</div>
-                  <div style={{ fontSize: 11, color: 'rgba(26,46,63,0.5)', lineHeight: 1.4 }}>Business / Freelance</div>
-                </button>
-              </div>
-              {errors.sector && <div style={errorText}>Please choose your working sector.</div>}
-            </div>
-
-            {profile.sector && (
-              <div style={{ marginBottom: 24, animation: 'lfbtFadeIn .3s ease-out both' }}>
-                <label htmlFor="dce-income" style={{ ...labelStyle, marginBottom: 6 }}>
-                  {salSel ? 'Monthly Take-Home Salary' : 'Average Monthly Income'}
-                </label>
-                <div style={{ fontSize: 12, color: 'rgba(26,46,63,0.45)', marginBottom: 10 }}>
-                  {salSel ? 'Your net in-hand salary after all deductions' : 'Average net income per month from your business / freelance'}
-                </div>
-                <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: 'rgba(26,46,63,0.5)', pointerEvents: 'none' }}>₹</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="dce-pincode" className={labelCls}>
+                    Pincode
+                  </label>
                   <input
-                    id="dce-income"
-                    type="number"
-                    min={0}
+                    id="dce-pincode"
+                    type="text"
                     inputMode="numeric"
-                    placeholder="e.g. 75000"
-                    className={styles.field}
-                    aria-invalid={errors.income || undefined}
-                    value={profile.income || ''}
-                    onChange={(e) => setProfile({ income: parseFloat(e.target.value) || null })}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        submitStep2();
-                      }
-                    }}
-                    style={inputStyle(!!errors.income, { padding: '14px 14px 14px 32px', fontSize: 16, fontWeight: 400, borderRadius: 14 })}
+                    autoComplete="postal-code"
+                    maxLength={6}
+                    placeholder="e.g. 400001"
+                    className={inputCls(!!errors.pincode)}
+                    aria-invalid={errors.pincode || undefined}
+                    value={profile.pincode}
+                    onChange={(e) => onPincode(e.target.value)}
                   />
                 </div>
-                {errors.income && <div style={errorText}>Please enter your monthly income.</div>}
+                <div>
+                  <label htmlFor="dce-city" className={labelCls}>
+                    City
+                  </label>
+                  <input
+                    id="dce-city"
+                    type="text"
+                    placeholder={unknownPin ? 'Enter city' : 'Auto-filled'}
+                    readOnly={!unknownPin}
+                    className={inputCls(false, unknownPin ? '' : 'text-slate-600')}
+                    value={profile.city}
+                    onChange={(e) => setProfile({ city: e.target.value })}
+                  />
+                </div>
               </div>
-            )}
+              {errors.pincode ? (
+                <div role="alert" className={errorCls}>
+                  {pinError}
+                </div>
+              ) : (
+                pinHint && (
+                  <div role="status" className={`text-xs ${HINT_CLS[pinCheck.status] ?? 'text-slate-500'}`}>
+                    {pinHint.text}
+                  </div>
+                )
+              )}
 
-            <button type="button" onClick={submitStep2} style={primaryBtn}>
-              Find My Consolidation Plan →
+              <div>
+                <label htmlFor="dce-state" className={labelCls}>
+                  State
+                </label>
+                <input
+                  id="dce-state"
+                  type="text"
+                  placeholder={unknownPin ? 'Enter state' : 'Auto-filled'}
+                  readOnly={!unknownPin}
+                  className={inputCls(false, unknownPin ? '' : 'text-slate-600')}
+                  value={profile.state}
+                  onChange={(e) => setProfile({ state: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="dce-edu" className={labelCls}>
+                  Highest Education Level
+                </label>
+                <div className="relative">
+                  <select
+                    id="dce-edu"
+                    className={inputCls(false, 'appearance-none pr-9 cursor-pointer')}
+                    value={profile.education}
+                    onChange={(e) => setProfile({ education: e.target.value })}
+                  >
+                    <option value="">Select your education level</option>
+                    <option value="graduate">Graduate (B.A. / B.Sc. / B.Com / B.E.)</option>
+                    <option value="postgrad">Post Graduate (M.A. / M.Sc. / MBA)</option>
+                    <option value="doctorate">Doctorate / PhD</option>
+                    <option value="diploma">Diploma / Vocational</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden />
+                </div>
+              </div>
+            </div>
+
+            <div className="card-fintech p-5 sm:p-6 space-y-4">
+              <div role="group" aria-labelledby="dce-sector-lbl">
+                <div id="dce-sector-lbl" className={labelCls}>
+                  Working Sector
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <button type="button" aria-pressed={salSel} className={choiceCls(salSel, !!errors.sector)} onClick={() => setProfile({ sector: 'salaried' })}>
+                    <Briefcase className="w-6 h-6 mx-auto mb-2 text-blue-600" aria-hidden />
+                    <div className="text-sm font-semibold text-slate-900 mb-0.5">Salaried</div>
+                    <div className="text-xs text-slate-500 leading-snug">Fixed monthly income</div>
+                  </button>
+                  <button type="button" aria-pressed={selfSel} className={choiceCls(selfSel, !!errors.sector)} onClick={() => setProfile({ sector: 'self' })}>
+                    <Store className="w-6 h-6 mx-auto mb-2 text-blue-600" aria-hidden />
+                    <div className="text-sm font-semibold text-slate-900 mb-0.5">Self Employed</div>
+                    <div className="text-xs text-slate-500 leading-snug">Business / Freelance</div>
+                  </button>
+                </div>
+                {errors.sector && <div className={errorCls}>Please choose your working sector.</div>}
+              </div>
+
+              {profile.sector && (
+                <div>
+                  <label htmlFor="dce-income" className={labelCls}>
+                    {salSel ? 'Monthly Take-Home Salary' : 'Average Monthly Income'}
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-medium pointer-events-none">₹</span>
+                    <input
+                      id="dce-income"
+                      type="number"
+                      min={0}
+                      inputMode="numeric"
+                      placeholder="e.g. 75000"
+                      className={inputCls(!!errors.income, 'pl-7')}
+                      aria-invalid={errors.income || undefined}
+                      value={profile.income || ''}
+                      onChange={(e) => setProfile({ income: parseFloat(e.target.value) || null })}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          submitStep2();
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    {salSel ? 'Your net in-hand salary after all deductions' : 'Average net income per month from your business / freelance'}
+                  </div>
+                  {errors.income && <div className={errorCls}>Please enter your monthly income.</div>}
+                </div>
+              )}
+            </div>
+
+            <button type="button" onClick={submitStep2} className="btn-accent w-full sm:w-auto">
+              Find My Consolidation Plan <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
             </button>
           </div>
         )}
 
         {step === 'loading' && (
-          <div aria-live="polite">
-            <div style={{ textAlign: 'center', padding: '52px 20px 44px' }}>
-              <div style={{ fontSize: 58, marginBottom: 22, display: 'inline-block', animation: 'lfbtPulse 1.4s ease-in-out infinite' }} aria-hidden>
-                🔍
+          <div aria-live="polite" className="space-y-6">
+            <div className="text-center py-8">
+              <div className="w-14 h-14 mx-auto mb-5 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center animate-pulse" aria-hidden>
+                <Search className="w-7 h-7" />
               </div>
-              <h1 style={{ fontFamily: 'var(--serif)', fontSize: 23, fontWeight: 900, color: '#1A2E3F', marginBottom: 10, lineHeight: 1.25 }}>Finding your consolidation plan…</h1>
-              <div style={{ fontSize: 13.5, color: 'rgba(26,46,63,0.45)', marginBottom: 28 }}>Matching your profile with lender criteria</div>
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 9 }} aria-hidden>
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">Finding your consolidation plan…</h1>
+              <div className="text-sm text-slate-600 mb-6">Matching your profile with lender criteria</div>
+              <div className="flex justify-center items-center gap-2" aria-hidden>
                 {[0, 0.2, 0.4].map((delay) => (
-                  <div key={delay} style={{ width: 9, height: 9, borderRadius: '50%', background: BLUE, animation: `lfbtBounce 1.2s ease-in-out ${delay}s infinite` }} />
+                  <div key={delay} className="w-2 h-2 rounded-full bg-blue-600 animate-bounce" style={{ animationDelay: `${delay}s` }} />
                 ))}
               </div>
             </div>
-            <div style={{ background: '#fff', borderRadius: 20, padding: '4px 20px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+            <div className="card-fintech px-5 py-1">
               <CheckRow first active done={phase >= 1} label="Analysing your debt profile" value={`${fmtINR(stats.totalOutstanding)} outstanding`} />
               <CheckRow
                 active={phase >= 1}
@@ -517,7 +453,7 @@ export default function ConsolidationEligibilityPage() {
             </div>
           </div>
         )}
-      </div>
+      </main>
     </ConsolidationShell>
   );
 }

@@ -5,38 +5,33 @@ import { useRouter } from 'next/navigation';
 import JourneyGate from '@/components/design/JourneyGate';
 import JourneyHeader from '@/components/design/JourneyHeader';
 import { useSession } from '@/components/session/SessionProvider';
-
-// Design: #dm-page (Navesta_Website_22Sep26.html ~4498–4687)
+import { api } from '@/lib/api';
+import { trackStep } from '@/lib/track';
+import { AlertTriangle, ArrowRight, ChevronRight, CreditCard, Landmark, Layers, Lock, Wallet, type LucideIcon } from 'lucide-react';
 
 type DebtType = 'cc' | 'loan' | 'multiple';
 
-const OPTIONS: { type: DebtType; title: string; body: string; icon: string; color: string; grad: string; glow: string }[] = [
+const OPTIONS: { type: DebtType; title: string; body: string; Icon: LucideIcon; tint: string }[] = [
   {
     type: 'cc',
     title: 'Credit card debt',
     body: 'Paying only the minimum? Bleeding interest every month? Break the cycle.',
-    icon: '💳',
-    color: '#DC2626',
-    grad: 'linear-gradient(135deg,#DC2626,#991B1B)',
-    glow: '220,38,38',
+    Icon: CreditCard,
+    tint: 'bg-rose-50 text-rose-600',
   },
   {
     type: 'loan',
     title: 'Loan',
     body: 'Have a personal, home, car or education loan? Cut the rate, the EMI or the tenure.',
-    icon: '🏦',
-    color: '#2563EB',
-    grad: 'linear-gradient(135deg,#2563EB,#1E40AF)',
-    glow: '37,99,235',
+    Icon: Landmark,
+    tint: 'bg-blue-50 text-blue-600',
   },
   {
     type: 'multiple',
     title: 'Multiple debts',
     body: 'Juggling several cards or loans? We will simplify into one clear plan.',
-    icon: '🔀',
-    color: '#7C3AED',
-    grad: 'linear-gradient(135deg,#7C3AED,#5B21B6)',
-    glow: '124,58,237',
+    Icon: Layers,
+    tint: 'bg-violet-50 text-violet-600',
   },
 ];
 
@@ -63,6 +58,8 @@ function DebtManagement() {
   const [c2, setC2] = useState(false);
   const [c3, setC3] = useState(false);
   const [showErr, setShowErr] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveErr, setSaveErr] = useState('');
   const timers = useRef<number[]>([]);
   const sheetRef = useRef<HTMLDivElement>(null);
 
@@ -78,6 +75,7 @@ function DebtManagement() {
     setC2(false);
     setC3(false);
     setShowErr(false);
+    setSaveErr('');
     later(() => {
       setSheetIn(true);
       sheetRef.current?.focus();
@@ -89,13 +87,25 @@ function DebtManagement() {
     later(() => setSelected(null), 300);
   };
 
-  const proceedDebtType = () => {
+  const proceedDebtType = async () => {
     if (!c1 || !c2) {
       setShowErr(true);
       return;
     }
     setShowErr(false);
+    setSaveErr('');
+    setSaving(true);
+    try {
+      await api.post('/users/me/consents', { purpose: 'debt_guidance', granted: true });
+      await api.post('/users/me/consents', { purpose: 'marketing', granted: c3 });
+    } catch (err: any) {
+      setSaveErr(err?.response?.data?.message || err?.message || 'Could not save your consent. Please try again.');
+      setSaving(false);
+      return;
+    }
+    setSaving(false);
     const type = selected;
+    if (type) trackStep('debt_management', 'consent_given', type);
     setSheetIn(false);
     later(() => {
       if (type) router.push(ROUTES[type]);
@@ -112,150 +122,128 @@ function DebtManagement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
+  const checkbox = 'w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600/30 mt-0.5 shrink-0 cursor-pointer';
+
   return (
-    <div className="nv" style={{ minHeight: '100vh', background: 'linear-gradient(160deg,#FFF8F2 0%,#FFF0E3 50%,#FDE8D0 100%)', fontFamily: 'var(--sans)', overflowX: 'hidden', width: '100%' }}>
+    <div className="min-h-screen bg-slate-50">
       <JourneyHeader backHref="/" />
 
-      <div style={{ padding: '36px 24px 160px', maxWidth: 560, margin: '0 auto' }}>
-        {/* Eyebrow */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(201,96,16,0.12)', border: '1px solid rgba(201,96,16,0.25)', borderRadius: 20, padding: '5px 14px', marginBottom: 20 }}>
-          <span style={{ fontSize: 12 }} aria-hidden>
-            💸
-          </span>
-          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '1.5px', color: '#7C3200', textTransform: 'uppercase' }}>Debt Management</span>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wider mb-3">
+            <Wallet className="w-4 h-4" aria-hidden /> Debt Management
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            {firstName}, you are in the <span className="text-blue-600">right place.</span>
+          </h1>
+          <p className="text-sm text-slate-600 leading-relaxed mt-3">
+            Feeling stuck in debt is exhausting — but there is always a way out, and it is closer than you think. Tell us what is weighing on you and we will build your personal escape plan in minutes.
+          </p>
         </div>
 
-        {/* Hero heading */}
-        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(28px,6vw,36px)', fontWeight: 900, lineHeight: 1.15, color: '#2A1606', marginBottom: 14 }}>
-          {firstName}, you are in the
-          <br />
-          <span style={{ color: '#1099CF', fontStyle: 'italic' }}>right place.</span>
-        </h1>
-
-        <p style={{ fontSize: 15, color: 'rgba(42,22,6,0.62)', lineHeight: 1.7, marginBottom: 32 }}>
-          Feeling stuck in debt is exhausting — but there is always a way out, and it is closer than you think. Tell us what is weighing on you and we will build your personal escape plan in minutes.
-        </p>
-
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#2A1606', marginBottom: 16 }} id="dm-question">
-          What do you need help with?
+        <div>
+          <div className="text-sm font-semibold text-slate-900 mb-3" id="dm-question">
+            What do you need help with?
+          </div>
+          <div role="group" aria-labelledby="dm-question" className="space-y-3">
+            {OPTIONS.map((o) => (
+              <button key={o.type} type="button" onClick={() => selectDebtType(o.type)} className="card-fintech-interactive w-full text-left p-4 sm:p-5 flex items-center gap-4">
+                <div aria-hidden className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${o.tint}`}>
+                  <o.Icon className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-slate-900">{o.title}</div>
+                  <div className="text-xs text-slate-500 leading-relaxed mt-0.5">{o.body}</div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-slate-400 shrink-0" aria-hidden />
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div role="group" aria-labelledby="dm-question">
-          {OPTIONS.map((o) => (
-            <button
-              key={o.type}
-              type="button"
-              className="dm-option"
-              onClick={() => selectDebtType(o.type)}
-              style={{ width: '100%', textAlign: 'left', fontFamily: 'inherit', background: '#fff', border: '1.5px solid rgba(196,168,130,0.3)', borderLeft: `4px solid ${o.color}`, borderRadius: 16, padding: 20, marginBottom: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14, transition: 'all .2s', boxShadow: '0 2px 12px rgba(58,35,16,0.05)' }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.boxShadow = `0 6px 24px rgba(${o.glow},0.12)`;
-                e.currentTarget.style.borderColor = `rgba(${o.glow},0.5)`;
-                e.currentTarget.style.borderLeftColor = o.color;
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.boxShadow = '0 2px 12px rgba(58,35,16,0.05)';
-                e.currentTarget.style.borderColor = 'rgba(196,168,130,0.3)';
-                e.currentTarget.style.borderLeftColor = o.color;
-              }}
-            >
-              <div aria-hidden style={{ width: 46, height: 46, borderRadius: 13, background: o.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0, boxShadow: `0 4px 12px rgba(${o.glow},0.3)` }}>
-                {o.icon}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#2A1606', marginBottom: 4 }}>{o.title}</div>
-                <div style={{ fontSize: 13, color: 'rgba(42,22,6,0.58)', lineHeight: 1.45 }}>{o.body}</div>
-              </div>
-              <div aria-hidden style={{ fontSize: 20, color: 'rgba(42,22,6,0.3)' }}>
-                ›
-              </div>
-            </button>
-          ))}
+        <div className="rounded-lg bg-blue-50 border border-blue-200 text-blue-800 text-xs p-3 flex gap-2 items-start">
+          <Lock className="w-4 h-4 shrink-0" aria-hidden />
+          <span>Your information is fully encrypted and never shared. Navesta is RBI-compliant and NBFC registered.</span>
         </div>
-
-        {/* Reassurance note */}
-        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: 'rgba(201,96,16,0.06)', borderRadius: 14, padding: '14px 16px', marginTop: 8 }}>
-          <span style={{ fontSize: 18, flexShrink: 0 }} aria-hidden>
-            🔒
-          </span>
-          <span style={{ fontSize: 12, color: 'rgba(42,22,6,0.55)', lineHeight: 1.55 }}>Your information is fully encrypted and never shared. Navesta is RBI-compliant and NBFC registered.</span>
-        </div>
-      </div>
+      </main>
 
       {selected && (
-        <>
-          {/* Consent bottom sheet backdrop */}
-          <div onClick={closeConsent} style={{ position: 'fixed', inset: 0, background: 'rgba(22,10,2,0.45)', zIndex: 820, opacity: sheetIn ? 1 : 0, transition: 'opacity .25s' }} aria-hidden />
-
-          {/* Consent bottom sheet */}
+        <div
+          onClick={closeConsent}
+          className={`fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3 sm:p-6 transition-opacity duration-200 ${sheetIn ? 'opacity-100' : 'opacity-0'}`}
+        >
           <div
             ref={sheetRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="dm-consent-title"
             tabIndex={-1}
-            style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#FFFDF9', borderRadius: '24px 24px 0 0', padding: '0 24px 40px', boxShadow: '0 -8px 48px rgba(42,22,6,0.14)', zIndex: 830, transform: sheetIn ? 'translateY(0)' : 'translateY(100%)', transition: 'transform .3s cubic-bezier(.34,1.26,.64,1)', maxWidth: 540, margin: '0 auto', overflowY: 'auto', maxHeight: '90vh', outline: 'none' }}
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full max-w-md bg-white rounded-2xl shadow-elevated border border-slate-200 p-5 sm:p-6 max-h-[90vh] overflow-y-auto outline-none transition-transform duration-300 ${sheetIn ? 'translate-y-0' : 'translate-y-full'}`}
           >
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 4px' }}>
-              <div style={{ width: 40, height: 4, background: 'rgba(42,22,6,0.15)', borderRadius: 2 }} />
-            </div>
-
-            <div id="dm-consent-title" style={{ fontFamily: 'var(--serif)', fontSize: 20, fontWeight: 800, color: '#2A1606', marginBottom: 4, marginTop: 10 }}>
+            <div id="dm-consent-title" className="text-lg font-bold text-slate-900">
               Before we continue
             </div>
-            <p style={{ fontSize: 13, color: 'rgba(42,22,6,0.58)', marginBottom: 16, lineHeight: 1.55 }}>
+            <p className="text-sm text-slate-600 leading-relaxed mt-1 mb-4">
               To build your personalised {LABELS[selected]} escape plan, we need your agreement on the following.
             </p>
 
-            <div style={{ background: '#FFF8EE', border: '1.5px solid rgba(196,168,130,0.3)', borderRadius: 14, padding: '14px 16px', marginBottom: 18 }}>
-              <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 1, color: '#7C3200', textTransform: 'uppercase', marginBottom: 8 }}>What we collect &amp; why</div>
-              <p style={{ fontSize: 13, color: 'rgba(42,22,6,0.72)', lineHeight: 1.6, margin: 0 }}>
+            <div className="rounded-lg bg-slate-50 border border-slate-200 p-3 mb-4">
+              <div className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">What we collect &amp; why</div>
+              <p className="text-xs text-slate-600 leading-relaxed">
                 Your card outstanding, minimum due, payment history and — if you upload one — statement details. Used only to calculate your interest cost and build your payoff plan. Nothing else.
               </p>
             </div>
 
-            <label style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12, cursor: 'pointer', padding: 14, background: '#fff', borderRadius: 14, border: '1.5px solid rgba(196,168,130,0.28)' }}>
-              <input type="checkbox" checked={c1} onChange={(e) => setC1(e.target.checked)} required style={{ width: 20, height: 20, marginTop: 1, accentColor: '#2D7A3A', flexShrink: 0, cursor: 'pointer' }} />
-              <span style={{ fontSize: 13, color: 'rgba(42,22,6,0.85)', lineHeight: 1.6 }}>
-                I <strong>consent</strong> to Navesta collecting and processing my financial data to generate personalised debt guidance. <span style={{ color: '#C96010', fontWeight: 700 }}>*</span>
-              </span>
-            </label>
-
-            <label style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12, cursor: 'pointer', padding: 14, background: '#fff', borderRadius: 14, border: '1.5px solid rgba(196,168,130,0.28)' }}>
-              <input type="checkbox" checked={c2} onChange={(e) => setC2(e.target.checked)} required style={{ width: 20, height: 20, marginTop: 1, accentColor: '#2D7A3A', flexShrink: 0, cursor: 'pointer' }} />
-              <span style={{ fontSize: 13, color: 'rgba(42,22,6,0.85)', lineHeight: 1.6 }}>
-                I understand my data is <strong>encrypted</strong>, used only for this purpose, <strong>never sold</strong>, and that I can <strong>withdraw consent anytime</strong>.{' '}
-                <span style={{ color: '#C96010', fontWeight: 700 }}>*</span>
-              </span>
-            </label>
-
-            <label style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 20, cursor: 'pointer', padding: 14, background: '#fff', borderRadius: 14, border: '1.5px solid rgba(196,168,130,0.18)' }}>
-              <input type="checkbox" checked={c3} onChange={(e) => setC3(e.target.checked)} style={{ width: 20, height: 20, marginTop: 1, accentColor: '#2D7A3A', flexShrink: 0, cursor: 'pointer' }} />
-              <span style={{ fontSize: 13, color: 'rgba(42,22,6,0.65)', lineHeight: 1.6 }}>
-                Send me money tips &amp; product updates from Navesta <span style={{ color: 'rgba(42,22,6,0.4)', fontStyle: 'italic' }}>(optional)</span>.
-              </span>
-            </label>
+            <div className="space-y-3 mb-4">
+              <label className="flex gap-3 items-start cursor-pointer rounded-lg border border-slate-200 p-3">
+                <input type="checkbox" checked={c1} onChange={(e) => setC1(e.target.checked)} required className={checkbox} />
+                <span className="text-xs text-slate-700 leading-relaxed">
+                  I <strong>consent</strong> to Navesta collecting and processing my financial data to generate personalised debt guidance. <span className="text-rose-600 font-bold">*</span>
+                </span>
+              </label>
+              <label className="flex gap-3 items-start cursor-pointer rounded-lg border border-slate-200 p-3">
+                <input type="checkbox" checked={c2} onChange={(e) => setC2(e.target.checked)} required className={checkbox} />
+                <span className="text-xs text-slate-700 leading-relaxed">
+                  I understand my data is <strong>encrypted</strong>, used only for this purpose, <strong>never sold</strong>, and that I can <strong>withdraw consent anytime</strong>.{' '}
+                  <span className="text-rose-600 font-bold">*</span>
+                </span>
+              </label>
+              <label className="flex gap-3 items-start cursor-pointer rounded-lg border border-slate-200 p-3">
+                <input type="checkbox" checked={c3} onChange={(e) => setC3(e.target.checked)} className={checkbox} />
+                <span className="text-xs text-slate-700 leading-relaxed">
+                  Send me money tips &amp; product updates from Navesta <span className="text-slate-400 italic">(optional)</span>.
+                </span>
+              </label>
+            </div>
 
             {showErr && (
-              <div role="alert" style={{ fontSize: 13, color: '#DC2626', fontWeight: 500, marginBottom: 12, padding: '10px 14px', background: '#FEF2F2', borderRadius: 8 }}>
-                ⚠ Please accept the required consents to continue.
+              <div role="alert" className="rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs p-3 flex gap-2 items-start mb-3">
+                <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden />
+                <span>Please accept the required consents to continue.</span>
+              </div>
+            )}
+            {saveErr && (
+              <div role="alert" className="rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs p-3 flex gap-2 items-start mb-3">
+                <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden />
+                <span>{saveErr}</span>
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={proceedDebtType}
-              style={{ width: '100%', background: 'linear-gradient(135deg,#F09020,#C96010)', border: 'none', borderRadius: 14, padding: 16, fontSize: 16, fontWeight: 700, color: '#fff', cursor: 'pointer', fontFamily: 'var(--sans)', letterSpacing: '.2px', boxShadow: '0 6px 20px rgba(201,96,16,0.35)', transition: 'all .2s' }}
-              onMouseOver={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-              onMouseOut={(e) => (e.currentTarget.style.transform = '')}
-            >
-              Continue →
+            <button type="button" onClick={proceedDebtType} disabled={saving} aria-busy={saving} className="btn-accent w-full disabled:opacity-60 disabled:cursor-not-allowed">
+              {saving ? (
+                'Saving…'
+              ) : (
+                <>
+                  Continue <ArrowRight className="w-4 h-4 ml-1.5" aria-hidden />
+                </>
+              )}
             </button>
-            <button type="button" onClick={closeConsent} style={{ width: '100%', background: 'transparent', border: 'none', padding: 12, fontSize: 14, color: 'rgba(42,22,6,0.45)', cursor: 'pointer', fontFamily: 'var(--sans)', marginTop: 6 }}>
+            <button type="button" onClick={closeConsent} disabled={saving} className="btn-secondary w-full mt-2">
               Cancel
             </button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
